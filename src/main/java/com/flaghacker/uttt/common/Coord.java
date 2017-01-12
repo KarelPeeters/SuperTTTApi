@@ -39,7 +39,7 @@ public class Coord
 
 	public static Coord coord(int x, int y)
 	{
-		return new Coord(x, y);
+		return instances[x][y];
 	}
 
 	public static Coord coord(int xm, int ym, int xs, int ys)

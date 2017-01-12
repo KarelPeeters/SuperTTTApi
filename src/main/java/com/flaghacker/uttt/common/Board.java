@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class Board
 {
-	public static final byte EMPTY = 0;
+	public static final byte NEUTRAL = 0;
 	public static final byte PLAYER = 1;
 	public static final byte ENEMY = - 1;
 	public static final byte FULL = 64;        //todo add checks for this
@@ -17,7 +17,7 @@ public class Board
 	private byte[][][][] tiles;
 	private byte[][] macroTiles;
 	private boolean[][] nextMacros;
-	private byte wonBy = EMPTY;
+	private byte wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
 
 	public Board(Board other)
@@ -49,7 +49,7 @@ public class Board
 		freeTiles.addAll(
 				Coord.list()
 						.stream()
-						.filter(coord -> tile(coord) == EMPTY)
+						.filter(coord -> tile(coord) == NEUTRAL)
 						.collect(Collectors.toList())
 		);
 
@@ -88,18 +88,16 @@ public class Board
 
 	public boolean play(Coord coord, byte player)
 	{
-		if (player == EMPTY)
-			return false;
-
 		if (! availableMoves().contains(coord))
 			throw new IllegalArgumentException(coord + " is not available, choose one of: " + availableMoves());
 
-		tiles[coord.xm()][coord.ys()][coord.xs()][coord.ys()] = player;
+		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
 		freeTiles.remove(coord);
 
+		boolean won = macro(coord.xs(), coord.ys()) != NEUTRAL;
 		for (int xm = 0; xm < 3; xm++)
 			for (int ym = 0; ym < 3; ym++)
-				nextMacros[xm][ym] = (coord.xs() == xm && coord.ys() == xm);
+				nextMacros[xm][ym] = (won || (coord.xs() == xm && coord.ys() == ym)) && ! macroFull(xm, ym);
 
 		return isWon(coord);
 	}
@@ -143,7 +141,7 @@ public class Board
 
 	private boolean isDone()
 	{
-		return wonBy() != EMPTY;
+		return wonBy() != NEUTRAL;
 	}
 
 
@@ -191,7 +189,12 @@ public class Board
 
 	public boolean isMacroEmpty(int xm, int ym)
 	{
-		return macro(xm, ym) == EMPTY;
+		for (int xs = 0; xs <= 2; xs++)
+			for (int ys = 0; ys <= 2; ys++)
+				if (tile(Coord.coord(xm, ym, xs, ys)) != NEUTRAL)
+					return false;
+
+		return true;
 	}
 
 	public boolean singleMacro()
@@ -216,7 +219,7 @@ public class Board
 		int count = 0;
 		for (int x = 3 * xm; x < 3 * xm + 3; x++)
 			for (int y = 3 * ym; y < 3 * ym + 3; y++)
-				if (tile(x, y) != EMPTY)
+				if (tile(x, y) != NEUTRAL)
 					count++;
 
 		return count == 9;
@@ -224,7 +227,7 @@ public class Board
 
 	public Coord currMacro()
 	{
-		if (!singleMacro())
+		if (! singleMacro())
 			return null;
 
 		for (int xm = 0; xm < 3; xm++)
@@ -233,6 +236,20 @@ public class Board
 					return Coord.coord(xm, 0, ym, 0);
 
 		throw new RuntimeException();
+	}
+
+	public List<Coord> getAvailableCorners(List<Coord> moves)
+	{
+		return moves.stream()
+				.filter(coord -> coord.xs() % 2 == 0 && coord.ys() % 2 == 0)
+				.collect(Collectors.toList());
+	}
+
+	public List<Coord> getAvailableSides(List<Coord> moves)
+	{
+		return moves.stream()
+				.filter(coord -> (coord.xs() + coord.ys() == 1 || coord.xs() + coord.ys() == 3))
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -244,17 +261,14 @@ public class Board
 				.map(cell -> String.join("", tile(cell) == PLAYER ? "X" : (tile(cell) == ENEMY ? "O" : " ")))
 				.collect(Collectors.toList());
 
-		int width = strings.stream()
-				.mapToInt(String::length)
-				.max().orElse(0);
-		String line = StringUtils.removeEnd(StringUtils.repeat(StringUtils.repeat("-", 3 * width + 3) + "+", 3), "+");
+		String line = StringUtils.removeEnd(StringUtils.repeat(StringUtils.repeat("-", 3) + "+", 3), "+");
 
 		String result = "";
 		for (int y = 0; y < 9; y++)
 		{
 			for (int x = 0; x < 9; x++)
 			{
-				result += StringUtils.center(strings.get(3 * y + x), width) + " ";
+				result += strings.get(9 * y + x);
 
 				if (x == 2 || x == 5)
 					result += "|";
