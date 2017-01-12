@@ -186,4 +186,37 @@ public class Board
 	{
 		return new Board(this);
 	}
+
+	public boolean isMacroEmpty(int xm, int ym)
+	{
+		return macro(xm, ym) == EMPTY;
+	}
+
+	public boolean singleMacro()
+	{
+		int count = 0;
+		for (int xm = 0; xm < 3; xm++)
+		{
+			for (int ym = 0; ym < 3; ym++)
+			{
+				if (nextMacros[xm][ym])
+					count++;
+				if (count > 1)
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	public boolean macroFull(int xm, int ym)
+	{
+		int count = 0;
+		for (int x = 3 * xm; x < 3 * xm + 3; x++)
+			for (int y = 3 * ym; y < 3 * ym + 3; y++)
+				if (tile(x, y) != EMPTY)
+					count++;
+
+		return count == 9;
+	}
 }
