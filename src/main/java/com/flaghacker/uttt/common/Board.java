@@ -219,4 +219,17 @@ public class Board
 
 		return count == 9;
 	}
+
+	public Coord currMacro()
+	{
+		if (!singleMacro())
+			return null;
+
+		for (int xm = 0; xm < 3; xm++)
+			for (int ym = 0; ym < 3; ym++)
+				if (nextMacros[xm][ym])
+					return Coord.coord(xm, 0, ym, 0);
+
+		throw new RuntimeException();
+	}
 }
