@@ -99,7 +99,8 @@ public class Board
 			for (int ym = 0; ym < 3; ym++)
 				nextMacros[xm][ym] = (won || (coord.xs() == xm && coord.ys() == ym)) && ! macroFull(xm, ym);
 
-		return isWon(coord);
+		isWon(coord);
+		return macro(coord.xm(), coord.ym()) != NEUTRAL;
 	}
 
 	public byte wonBy()
