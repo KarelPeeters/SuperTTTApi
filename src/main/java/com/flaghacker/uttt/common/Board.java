@@ -1,5 +1,7 @@
 package com.flaghacker.uttt.common;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -231,5 +233,38 @@ public class Board
 					return Coord.coord(xm, 0, ym, 0);
 
 		throw new RuntimeException();
+	}
+
+	@Override
+	public String toString()
+	{
+		List<Coord> coordList = Coord.list();
+
+		List<String> strings = coordList.stream()
+				.map(cell -> String.join("", tile(cell) == PLAYER ? "X" : (tile(cell) == ENEMY ? "O" : " ")))
+				.collect(Collectors.toList());
+
+		int width = strings.stream()
+				.mapToInt(String::length)
+				.max().orElse(0);
+		String line = StringUtils.removeEnd(StringUtils.repeat(StringUtils.repeat("-", 3 * width + 3) + "+", 3), "+");
+
+		String result = "";
+		for (int y = 0; y < 9; y++)
+		{
+			for (int x = 0; x < 9; x++)
+			{
+				result += StringUtils.center(strings.get(3 * y + x), width) + " ";
+
+				if (x == 2 || x == 5)
+					result += "|";
+			}
+
+			if (y == 2 || y == 5)
+				result += "\n" + line;
+			result += "\n";
+		}
+
+		return result;
 	}
 }
