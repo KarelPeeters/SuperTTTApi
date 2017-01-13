@@ -185,6 +185,13 @@ public class Board
 		throw new AssertionError();
 	}
 
+	public List<Coord> getEnemyTiles(int xm, int ym)
+	{
+		return Coord.macro(xm, ym).stream()
+				.filter(coord -> tile(coord) == ENEMY)
+				.collect(Collectors.toList());
+	}
+
 	public byte nextPlayer()
 	{
 		return nextPlayer;
