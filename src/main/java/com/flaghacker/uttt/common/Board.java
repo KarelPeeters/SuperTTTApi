@@ -91,12 +91,10 @@ public class Board
 		if (! availableMoves().contains(coord))
 			throw new IllegalArgumentException(coord + " is not available, choose one of: " + availableMoves());
 
-		if (player == PLAYER)
-			nextPlayer = ENEMY;
-		else if (player == ENEMY)
-			nextPlayer = PLAYER;
-		else
-			throw new IllegalArgumentException("player should be one of PLAYER, ENEMY; was " + player);
+		if (!(nextPlayer == player))
+			throw new IllegalArgumentException(nextPlayer + " must play instead of " + player);
+
+		nextPlayer = other(player);
 
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
 		freeTiles.remove(coord);
@@ -300,6 +298,16 @@ public class Board
 		}
 
 		return result;
+	}
+
+	public static byte other(byte player)
+	{
+		if (player == PLAYER)
+			return ENEMY;
+		else if (player == ENEMY)
+			return PLAYER;
+		else
+			throw new IllegalArgumentException("player should be one of PLAYER, ENEMY; was " + player);
 	}
 
 	private static String repeat(String str, int count)
