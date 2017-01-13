@@ -147,9 +147,9 @@ public class Board
 		return false;
 	}
 
-	private boolean isDone()
+	public boolean isDone()
 	{
-		return wonBy() != NEUTRAL;
+		return wonBy() != NEUTRAL || freeTiles.isEmpty();
 	}
 
 
