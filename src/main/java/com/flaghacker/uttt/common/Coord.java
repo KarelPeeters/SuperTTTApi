@@ -11,12 +11,15 @@ public class Coord
 	private final int y;
 
 	private static final Coord[][] instances;
+	private static final List<Coord>[][] macroLists;
 	private static final List<Coord> coordList;
 
 	static
 	{
-		List<Coord> tmpCoordList = new ArrayList<>(9*9);
+		List<Coord> tmpCoordList = new ArrayList<>(9 * 9);
 		instances = new Coord[9][9];
+		@SuppressWarnings("unchecked")
+		List<Coord>[][] tmpMacroLists = (List<Coord>[][]) new List[3][3];
 
 		for (int x = 0; x < 9; x++)
 		{
@@ -25,8 +28,18 @@ public class Coord
 				Coord coord = new Coord(x, y);
 				instances[x][y] = coord;
 				tmpCoordList.add(coord);
+
+				if (tmpMacroLists[x / 3][y / 3] == null)
+					tmpMacroLists[x / 3][y / 3] = new ArrayList<>(9);
+				tmpMacroLists[x / 3][y / 3].add(coord);
 			}
 		}
+
+		macroLists = (List<Coord>[][]) new List[3][3];
+
+		for (int xm = 0; xm < 3; xm++)
+			for (int ym = 0; ym < 3; ym++)
+				macroLists[xm][ym] = Collections.unmodifiableList(tmpMacroLists[xm][ym]);
 
 		coordList = Collections.unmodifiableList(tmpCoordList);
 	}
@@ -80,6 +93,11 @@ public class Coord
 	public static List<Coord> list()
 	{
 		return coordList;
+	}
+
+	public static List<Coord> macro(int mx, int my)
+	{
+		return macroLists[mx][my];
 	}
 
 	@Override
