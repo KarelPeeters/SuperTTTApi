@@ -18,5 +18,6 @@ task aizip (type:Zip) {
     description 'Zips the code for uploading to AIGames'
 
     from 'src/main/java'
+    exclude 'Main.java'
     destinationDir file('ignored')
 }

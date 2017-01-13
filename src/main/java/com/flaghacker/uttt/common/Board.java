@@ -1,7 +1,5 @@
 package com.flaghacker.uttt.common;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +17,7 @@ public class Board
 	private boolean[][] nextMacros;
 	private byte wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
+	private byte nextPlayer = PLAYER;
 
 	public Board(Board other)
 	{
@@ -38,6 +37,7 @@ public class Board
 
 		this.wonBy = other.wonBy;
 		this.freeTiles = new ArrayList<>(other.freeTiles);
+		this.nextPlayer = other.nextPlayer;
 	}
 
 	public Board(byte[][][][] tiles, byte[][] macroTiles, boolean[][] nextMacros)
@@ -91,13 +91,20 @@ public class Board
 		if (! availableMoves().contains(coord))
 			throw new IllegalArgumentException(coord + " is not available, choose one of: " + availableMoves());
 
+		if (player == PLAYER)
+			nextPlayer = ENEMY;
+		else if (player == ENEMY)
+			nextPlayer = PLAYER;
+		else
+			throw new IllegalArgumentException("player should be one of PLAYER, ENEMY; was " + player);
+
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
 		freeTiles.remove(coord);
 
-		boolean won = macro(coord.xs(), coord.ys()) != NEUTRAL;
+		boolean free = macro(coord.xs(), coord.ys()) != NEUTRAL;
 		for (int xm = 0; xm < 3; xm++)
 			for (int ym = 0; ym < 3; ym++)
-				nextMacros[xm][ym] = (won || (coord.xs() == xm && coord.ys() == ym)) && ! macroFull(xm, ym);
+				nextMacros[xm][ym] = free || (coord.xs() == xm && coord.ys() == ym);
 
 		isWon(coord);
 		return macro(coord.xm(), coord.ym()) != NEUTRAL;
@@ -176,6 +183,11 @@ public class Board
 					|| (check(1, 1, grid, player) && check(1, 2 - y, grid, player));
 
 		throw new AssertionError();
+	}
+
+	public byte nextPlayer()
+	{
+		return nextPlayer;
 	}
 
 	private boolean check(int x, int y, byte[][] grid, byte player)
@@ -262,7 +274,7 @@ public class Board
 				.map(cell -> String.join("", tile(cell) == PLAYER ? "X" : (tile(cell) == ENEMY ? "O" : " ")))
 				.collect(Collectors.toList());
 
-		String line = StringUtils.removeEnd(StringUtils.repeat(StringUtils.repeat("-", 3) + "+", 3), "+");
+		String line = removeEnd(repeat(repeat("-", 3) + "+", 3), "+");
 
 		String result = "";
 		for (int y = 0; y < 9; y++)
@@ -281,5 +293,21 @@ public class Board
 		}
 
 		return result;
+	}
+
+	private static String repeat(String str, int count)
+	{
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < count; i++)
+			builder.append(str);
+		return builder.toString();
+	}
+
+	private static String removeEnd(String str, String end)
+	{
+		if (str.endsWith(end)) {
+			return str.substring(0, str.length() - end.length());
+		}
+		return str;
 	}
 }

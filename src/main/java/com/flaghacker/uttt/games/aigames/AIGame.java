@@ -6,8 +6,8 @@ import com.flaghacker.uttt.common.Coord;
 
 import java.util.Scanner;
 
-import static com.flaghacker.uttt.common.Board.EMPTY;
 import static com.flaghacker.uttt.common.Board.ENEMY;
+import static com.flaghacker.uttt.common.Board.NEUTRAL;
 import static com.flaghacker.uttt.common.Board.PLAYER;
 
 public class AIGame
@@ -20,6 +20,7 @@ public class AIGame
 	private boolean[][] tmpNextMacro;
 
 	private int botId = 0;
+	private int timePerMove;
 
 	public AIGame(Bot bot)
 	{
@@ -43,6 +44,10 @@ public class AIGame
 						case "your_botid":
 							botId = Integer.parseInt(parts[2]);
 							break;
+						case "time_per_move":
+							timePerMove = Integer.parseInt(parts[2]);
+							System.err.println("timePerMove: " + timePerMove);
+							break;
 					}
 					break;
 				case "update":
@@ -51,17 +56,48 @@ public class AIGame
 					break;
 				case "action":
 					if (parts[1].equals("move"))
-					{
-						Board board = new Board(tmpTiles, tmpMacro, tmpNextMacro);
-						Coord move = bot.move(board.copy());
-						System.out.println("place_move " + move.x() + " " + move.y());
-					}
+						moveBot();
 					break;
 				default:
 					System.out.println("unknown command");
 					break;
 			}
 		}
+	}
+
+	private void moveBot()
+	{
+		long delta = (long) (0.9 * timePerMove);
+		long start = System.currentTimeMillis();
+
+		Thread thread = new Thread(() -> {
+
+			while (System.currentTimeMillis() - start < delta)
+			{
+				try
+				{
+					Thread.sleep(delta - (System.currentTimeMillis() - start));
+				}
+				catch (InterruptedException e)
+				{
+					//NOP
+				}
+			}
+			bot.timeUp();
+
+		});
+		thread.start();
+
+		Board board = new Board(tmpTiles, tmpMacro, tmpNextMacro);
+		Coord move = bot.move(board);
+		thread.stop();
+
+		System.out.println("place_move " + move.x() + " " + move.y());
+	}
+
+	public Board getBoard()
+	{
+		return new Board(tmpTiles, tmpMacro, tmpNextMacro);
 	}
 
 	private int roundNr;
@@ -126,7 +162,7 @@ public class AIGame
 	private byte toPlayer(int i)
 	{
 		if (i == 0 || i == -1)
-			return EMPTY;
+			return NEUTRAL;
 		if (i == botId)
 			return PLAYER;
 		if (i == 3-botId)
@@ -137,7 +173,7 @@ public class AIGame
 
 	private int fromPlayer(byte b)
 	{
-		if (b == EMPTY)
+		if (b == NEUTRAL)
 			return 0;
 		if (b == PLAYER)
 			return botId;
