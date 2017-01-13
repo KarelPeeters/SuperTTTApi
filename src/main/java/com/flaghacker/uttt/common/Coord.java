@@ -95,9 +95,9 @@ public class Coord
 		return coordList;
 	}
 
-	public static List<Coord> macro(int mx, int my)
+	public static List<Coord> macro(int xm, int ym)
 	{
-		return macroLists[mx][my];
+		return macroLists[xm][ym];
 	}
 
 	@Override
