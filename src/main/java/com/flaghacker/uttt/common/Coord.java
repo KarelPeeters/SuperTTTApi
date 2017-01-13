@@ -21,9 +21,9 @@ public class Coord
 		@SuppressWarnings("unchecked")
 		List<Coord>[][] tmpMacroLists = (List<Coord>[][]) new List[3][3];
 
-		for (int x = 0; x < 9; x++)
+		for (int y = 0; y < 9; y++)
 		{
-			for (int y = 0; y < 9; y++)
+			for (int x = 0; x < 9; x++)
 			{
 				Coord coord = new Coord(x, y);
 				instances[x][y] = coord;

@@ -99,7 +99,7 @@ public class Board
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
 		freeTiles.remove(coord);
 
-		boolean free = macro(coord.xs(), coord.ys()) != NEUTRAL;
+		boolean free = (macro(coord.xs(), coord.ys()) != NEUTRAL) && ! macroFull(coord.xs(), coord.ys());
 		for (int xm = 0; xm < 3; xm++)
 			for (int ym = 0; ym < 3; ym++)
 				nextMacros[xm][ym] = free || (coord.xs() == xm && coord.ys() == ym);
