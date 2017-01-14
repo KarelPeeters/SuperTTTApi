@@ -93,7 +93,7 @@ public class Board
 		if (! availableMoves().contains(coord))
 			throw new IllegalArgumentException(coord + " is not available, choose one of: " + availableMoves());
 
-		if (!(nextPlayer == player))
+		if (! (nextPlayer == player))
 			throw new IllegalArgumentException(nextPlayer + " must play instead of " + player);
 
 		nextPlayer = other(player);
@@ -101,12 +101,14 @@ public class Board
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
 		freeTiles.remove(coord);
 
-		boolean free = macro(coord.xs(), coord.ys()) != NEUTRAL;
+		isWon(coord);
+
+		boolean free = (macro(coord.xs(), coord.ys()) != NEUTRAL) || macroFull(coord.xs(), coord.ys());
 		for (int xm = 0; xm < 3; xm++)
 			for (int ym = 0; ym < 3; ym++)
-				nextMacros[xm][ym] = free || (coord.xs() == xm && coord.ys() == ym);
+				nextMacros[xm][ym] = ((free || (coord.xs() == xm && coord.ys() == ym)) && ! macroFull(xm, ym)
+						&& macro(xm, ym) == NEUTRAL);
 
-		isWon(coord);
 		return macro(coord.xm(), coord.ym()) != NEUTRAL;
 	}
 
@@ -149,7 +151,7 @@ public class Board
 
 	public boolean isDone()
 	{
-		return wonBy() != NEUTRAL || freeTiles.isEmpty();
+		return availableMoves().size() == 0;
 	}
 
 
@@ -322,7 +324,8 @@ public class Board
 
 	private static String removeEnd(String str, String end)
 	{
-		if (str.endsWith(end)) {
+		if (str.endsWith(end))
+		{
 			return str.substring(0, str.length() - end.length());
 		}
 		return str;

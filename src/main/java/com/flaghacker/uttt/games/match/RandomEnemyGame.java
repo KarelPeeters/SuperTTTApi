@@ -23,8 +23,11 @@ public class RandomEnemyGame
 
 	public void run()
 	{
+		int i = 0;
 		while (!board.isDone())
 		{
+			System.out.println("Round #" + i++);
+
 			Coord pMove = player.move(board.copy());
 			System.out.println("player move: " + pMove);
 			board.play(pMove, PLAYER);
@@ -33,7 +36,7 @@ public class RandomEnemyGame
 				continue;
 
 			Coord rMove = random.move(board.copy());
-			System.out.println("random move: " + pMove);
+			System.out.println("random move: " + rMove);
 			board.play(rMove, ENEMY);
 
 			System.out.println(board);
