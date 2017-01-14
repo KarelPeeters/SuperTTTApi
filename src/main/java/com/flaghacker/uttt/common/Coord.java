@@ -90,6 +90,21 @@ public class Coord
 		return y % 3;
 	}
 
+	public int o()
+	{
+		return x + 9 * y;
+	}
+
+	public int om()
+	{
+		return xm() + 3 * ym();
+	}
+
+	public int os()
+	{
+		return xs() + 3 * ys();
+	}
+
 	public static List<Coord> list()
 	{
 		return coordList;
