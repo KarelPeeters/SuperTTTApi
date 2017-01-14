@@ -1,8 +1,10 @@
 package com.flaghacker.uttt.common;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Board
@@ -324,5 +326,24 @@ public class Board
 			return str.substring(0, str.length() - end.length());
 		}
 		return str;
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Board board = (Board) o;
+		return wonBy == board.wonBy &&
+				nextPlayer == board.nextPlayer &&
+				Arrays.equals(tiles, board.tiles) &&
+				Arrays.equals(macroTiles, board.macroTiles) &&
+				Arrays.equals(nextMacros, board.nextMacros);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(tiles, macroTiles, nextMacros, wonBy, nextPlayer);
 	}
 }
