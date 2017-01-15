@@ -355,4 +355,64 @@ public class Board
 	{
 		return lastMove;
 	}
+
+	public void setNextPlayer(byte nextPlayer)
+	{
+		this.nextPlayer = nextPlayer;
+	}
+
+	public List<Coord> getPlayerTiles(int xm, int ym)
+	{
+		return Coord.macro(xm, ym).stream()
+				.filter(coord -> tile(coord) == PLAYER)
+				.collect(Collectors.toList());
+	}
+
+	public void setNextMacro(int xm, int ym)
+	{
+		for (int _xm = 0; _xm < 3; _xm++)
+			for (int _ym = 0; _ym < 3; _ym++)
+				this.nextMacros[_xm][_ym] = false;
+
+		this.nextMacros[xm][ym] = true;
+	}
+
+	public void enableAllMacro()
+	{
+		for (int _xm = 0; _xm < 3; _xm++)
+			for (int _ym = 0; _ym < 3; _ym++)
+				this.nextMacros[_xm][_ym] = true;
+	}
+
+	public boolean macroFinishesGame(int xm, int ym,byte player)
+	{
+		byte oldByte = macroTiles[xm][ym];
+		macroTiles[xm][ym] = player;
+
+		boolean won = wonGrid(xm,ym,macroTiles);
+		macroTiles[xm][ym] = oldByte;
+
+		return wonGrid(xm,ym,macroTiles);
+	}
+
+	public void setMacro(int xm, int ym,byte player)
+	{
+		macroTiles[xm][ym] = player;
+	}
+
+	public boolean winnableMacro(int xm, int ym,byte player)
+	{
+		Board test = copy();
+		test.setNextMacro(xm,ym);
+		test.setNextPlayer(player);
+
+		for (Coord move:test.availableMoves())
+		{
+			test.play(move,player);
+			test.setNextMacro(xm, ym);
+			test.setNextPlayer(player);
+		}
+
+		return macro(xm,ym)==player;
+	}
 }
