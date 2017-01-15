@@ -20,6 +20,7 @@ public class Board
 	private byte wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
 	private byte nextPlayer = PLAYER;
+	private Coord lastMove;
 
 	public Board(Board other)
 	{
@@ -96,6 +97,7 @@ public class Board
 		if (! (nextPlayer == player))
 			throw new IllegalArgumentException(nextPlayer + " must play instead of " + player);
 
+		lastMove = coord;
 		nextPlayer = other(player);
 
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
@@ -339,14 +341,18 @@ public class Board
 		Board board = (Board) o;
 		return wonBy == board.wonBy &&
 				nextPlayer == board.nextPlayer &&
-				Arrays.equals(tiles, board.tiles) &&
-				Arrays.equals(macroTiles, board.macroTiles) &&
-				Arrays.equals(nextMacros, board.nextMacros);
+				Arrays.deepEquals(tiles, board.tiles) &&
+				Arrays.deepEquals(nextMacros, board.nextMacros);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(tiles, macroTiles, nextMacros, wonBy, nextPlayer);
+		return Objects.hash(Arrays.deepHashCode(tiles), Arrays.deepHashCode(nextMacros), wonBy, nextPlayer);
+	}
+
+	public Coord getLastMove()
+	{
+		return lastMove;
 	}
 }
