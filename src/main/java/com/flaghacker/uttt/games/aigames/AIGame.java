@@ -67,30 +67,33 @@ public class AIGame
 
 	private void moveBot()
 	{
-		long delta = (long) (0.9 * timePerMove);
+		long delay = (long) (0.9 * timePerMove);
 		long start = System.currentTimeMillis();
+
+		boolean[] runTimeUp = {true};
 
 		Thread thread = new Thread(() -> {
 
-			while (System.currentTimeMillis() - start < delta)
+			while (System.currentTimeMillis() - start < delay)
 			{
 				try
 				{
-					Thread.sleep(delta - (System.currentTimeMillis() - start));
+					Thread.sleep(delay - (System.currentTimeMillis() - start));
 				}
 				catch (InterruptedException e)
 				{
 					//NOP
 				}
 			}
-			bot.timeUp();
+			if (runTimeUp[0])
+				bot.timeUp();
 
 		});
 		thread.start();
 
 		Board board = new Board(tmpTiles, tmpMacro, tmpNextMacro);
 		Coord move = bot.move(board);
-		thread.stop();
+		runTimeUp[0] = false;
 
 		System.out.println("place_move " + move.x() + " " + move.y());
 	}
