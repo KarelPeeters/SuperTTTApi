@@ -153,7 +153,7 @@ public class Board
 
 	public boolean isDone()
 	{
-		return availableMoves().size() == 0;
+		return wonBy != NEUTRAL || availableMoves().size() == 0;
 	}
 
 
