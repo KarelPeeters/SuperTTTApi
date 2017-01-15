@@ -21,6 +21,7 @@ public class AIGame
 
 	private int botId = 0;
 	private int timePerMove;
+	private int timeLeft;
 
 	public AIGame(Bot bot)
 	{
@@ -56,7 +57,10 @@ public class AIGame
 					break;
 				case "action":
 					if (parts[1].equals("move"))
+					{
+						timeLeft = Integer.parseInt(parts[2]);
 						moveBot();
+					}
 					break;
 				default:
 					System.out.println("unknown command");
@@ -65,9 +69,16 @@ public class AIGame
 		}
 	}
 
+	private int timeForNextMove()
+	{
+		int time = timePerMove + timeLeft/(81-moveNr);
+		System.err.println("time allocated for next move: " + time);
+		return time;
+	}
+
 	private void moveBot()
 	{
-		long delay = (long) (0.9 * timePerMove);
+		long delay = (long) (0.9 * timeForNextMove());
 		long start = System.currentTimeMillis();
 
 		boolean[] runTimeUp = {true};
