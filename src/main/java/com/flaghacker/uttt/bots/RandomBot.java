@@ -18,4 +18,10 @@ public class RandomBot implements Bot
 		List<Coord> moves = board.availableMoves();
 		return moves.get(random.nextInt(moves.size()));
 	}
+
+	@Override
+	public String toString()
+	{
+		return "RandomBot";
+	}
 }
