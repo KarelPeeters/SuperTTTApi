@@ -31,7 +31,7 @@ public class Util
 		return new Random(seed);
 	}
 
-	public static Coord moveBotWithTimeOut(Bot bot, Board board, int time)
+	public static Coord moveBotWithTimeOut(Bot bot, Board board, long time)
 	{
 		final boolean[] runTimeUp = {true};
 		exec.schedule(() ->

@@ -57,6 +57,8 @@ public class Coord
 
 	public static Coord coord(int xm, int ym, int xs, int ys)
 	{
+		assert (0 < xm && xm < 3) && (0 < ym && ym < 3) && (0 < xs && xs < 3) && (0 < ys && ys < 3);
+
 		return coord(3 * xm + xs, 3 * ym + ys);
 	}
 

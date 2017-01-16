@@ -3,6 +3,7 @@ package com.flaghacker.uttt.games.aigames;
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
+import com.flaghacker.uttt.common.Util;
 
 import java.util.Scanner;
 
@@ -79,32 +80,9 @@ public class AIGame
 	private void moveBot()
 	{
 		long delay = (long) (0.9 * timeForNextMove());
-		long start = System.currentTimeMillis();
-
-		boolean[] runTimeUp = {true};
-
-		Thread thread = new Thread(() -> {
-
-			while (System.currentTimeMillis() - start < delay)
-			{
-				try
-				{
-					Thread.sleep(delay - (System.currentTimeMillis() - start));
-				}
-				catch (InterruptedException e)
-				{
-					//NOP
-				}
-			}
-			if (runTimeUp[0])
-				bot.timeUp();
-
-		});
-		thread.start();
 
 		Board board = new Board(tmpTiles, tmpMacro, tmpNextMacro);
-		Coord move = bot.move(board);
-		runTimeUp[0] = false;
+		Coord move = Util.moveBotWithTimeOut(bot, board, delay);
 
 		System.out.println("place_move " + move.x() + " " + move.y());
 	}
