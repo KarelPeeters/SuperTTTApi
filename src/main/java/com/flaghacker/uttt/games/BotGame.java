@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.games.match;
+package com.flaghacker.uttt.games;
 
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;

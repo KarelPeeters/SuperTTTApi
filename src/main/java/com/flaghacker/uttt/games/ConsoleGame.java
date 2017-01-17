@@ -32,6 +32,7 @@ public class ConsoleGame
 		System.out.println(String.format("You (X) vs %s (O)", bot));
 		System.out.println("\t<undo> to undo");
 		System.out.println("\t<x>,<y> to play at those coordinates");
+		System.out.println("\t<xs>;<ys> to play at those coordinates within the current macro");
 		System.out.println("\t<time> <int> to change the time setting (currently " + time + "ms)");
 
 		while (true)
@@ -67,9 +68,21 @@ public class ConsoleGame
 					history.add(curr.copy());
 					curr.play(coord, PLAYER);
 
+					if (curr.isDone())
+					{
+						System.out.println("Game won by You (X)");
+						return;
+					}
+
 					Coord botMove = Util.moveBotWithTimeOut(bot, curr.copy(), time);
 					System.out.println("bot moves " + botMove);
 					curr.play(botMove, ENEMY);
+
+					if (curr.isDone())
+					{
+						System.out.println("Game won by " + bot + " (O)");
+						return;
+					}
 				}
 				else
 				{
