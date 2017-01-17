@@ -101,7 +101,10 @@ public class Board
 		nextPlayer = other(player);
 
 		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
+
 		freeTiles.remove(coord);
+		if (macroFull(coord.xm(), coord.ym()))
+			freeTiles.removeAll(Coord.macro(coord.xm(), coord.ym()));
 
 		isWon(coord);
 
