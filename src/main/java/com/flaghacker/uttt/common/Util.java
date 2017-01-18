@@ -11,7 +11,13 @@ public class Util
 	private static Random random = new Random();
 	private static int[] seeds = {};
 
-	private static final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+	private static final ScheduledExecutorService exec;
+
+	static
+	{
+		exec = Executors.newSingleThreadScheduledExecutor();
+		exec.execute(() -> Thread.currentThread().setName("Util.moveBotWithTimeOut Thread"));
+	}
 
 	public static Random loggedRandom()
 	{
