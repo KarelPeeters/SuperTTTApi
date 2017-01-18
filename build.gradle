@@ -11,6 +11,7 @@ dependencies {
     compile 'org.json:json:20141113'
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-codec:commons-codec:1.10'
+    compile 'org.seleniumhq.selenium:selenium-java:3.0.1'
 }
 
 task aizip (type:Zip) {
