@@ -20,6 +20,7 @@ public class BotGame
 
 	private int count = 1;
 	private int timePerMove = 500;
+	private boolean logging;
 
 	public BotGame(Bot p1, Bot p2)
 	{
@@ -72,23 +73,32 @@ public class BotGame
 
 	private void prints(Object object)
 	{
-		if (count == 1)
+		if (logging)
 			System.out.println(object);
 	}
 
 	private void printm(Object object)
 	{
-		if (count > 1)
+		if (!logging)
 			System.out.println(object);
 	}
 
-	public void setCount(int count)
+	public BotGame setDetailedLogging(boolean logging)
 	{
-		this.count = count;
+		this.logging = logging;
+		return this;
 	}
 
-	public void setTimePerMove(int time)
+	public BotGame setCount(int count)
+	{
+		this.count = count;
+		this.logging = count == 1;
+		return this;
+	}
+
+	public BotGame setTimePerMove(int time)
 	{
 		this.timePerMove = time;
+		return this;
 	}
 }
