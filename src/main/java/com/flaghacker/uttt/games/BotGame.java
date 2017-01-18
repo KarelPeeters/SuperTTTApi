@@ -19,7 +19,7 @@ public class BotGame
 	private Random random = Util.loggedRandom();
 
 	private int count = 1;
-	private int timePerMove = - 1;
+	private int timePerMove = 500;
 
 	public BotGame(Bot p1, Bot p2)
 	{
