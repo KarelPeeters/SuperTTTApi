@@ -48,6 +48,10 @@ public class ConsoleGame
 
 				curr = history.get(history.size() - 1);
 			}
+			else if (input.equals("exit"))
+			{
+				return;
+			}
 			else if (input.matches("time \\d+"))
 			{
 				String[] arr = input.split(" ");
