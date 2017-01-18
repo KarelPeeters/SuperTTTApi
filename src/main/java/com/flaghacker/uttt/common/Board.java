@@ -12,11 +12,10 @@ public class Board
 	public static final byte NEUTRAL = 0;
 	public static final byte PLAYER = 1;
 	public static final byte ENEMY = - 1;
-	public static final byte FULL = 64;        //todo add checks for this
 
-	private byte[][][][] tiles;
-	private byte[][] macroTiles;
-	private boolean[][] nextMacros;
+	private byte[][] tiles;
+	private byte[] macroTiles;
+	private boolean[] nextMacros;
 	private byte wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
 	private byte nextPlayer = PLAYER;
@@ -24,29 +23,23 @@ public class Board
 
 	public Board(Board other)
 	{
-		this.tiles = new byte[3][3][3][3];
-		for (int xm = 0; xm < 3; xm++)
-			for (int ym = 0; ym < 3; ym++)
-				for (int xs = 0; xs < 3; xs++)
-					System.arraycopy(other.tiles[xm][ym][xs], 0, this.tiles[xm][ym][xs], 0, 3);
+		this.tiles = new byte[9][9];
+		for (int om = 0; om < 9; om++)
+			System.arraycopy(other.tiles[om], 0, tiles[om], 0, 9);
 
-		this.macroTiles = new byte[3][3];
-		this.nextMacros = new boolean[3][3];
-		for (int xm = 0; xm < 3; xm++)
-		{
-			System.arraycopy(other.macroTiles[xm], 0, this.macroTiles[xm], 0, 3);
-			System.arraycopy(other.nextMacros[xm], 0, this.nextMacros[xm], 0, 3);
-		}
+		this.macroTiles = new byte[9];
+		this.nextMacros = new boolean[9];
+		System.arraycopy(other.macroTiles, 0, this.macroTiles, 0, 9);
+		System.arraycopy(other.nextMacros, 0, this.nextMacros, 0, 9);
 
 		this.wonBy = other.wonBy;
 		this.freeTiles = new ArrayList<>(other.freeTiles);
 		this.nextPlayer = other.nextPlayer;
 	}
 
-	public Board(byte[][][][] tiles, byte[][] macroTiles, boolean[][] nextMacros)
+	public Board(byte[][] tiles, byte[] macroTiles, boolean[] nextMacros)
 	{
 		this.tiles = tiles;
-		//todo compute based on tiles
 		this.macroTiles = macroTiles;
 
 		freeTiles.addAll(
@@ -61,32 +54,31 @@ public class Board
 
 	public Board()
 	{
-		this(new byte[3][3][3][3], new byte[3][3], null);
+		this(new byte[9][9], new byte[9], null);
 
-		this.nextMacros = new boolean[3][3];
-		for (int xm = 0; xm < 3; xm++)
-			for (int ym = 0; ym < 3; ym++)
-				nextMacros[xm][ym] = true;
+		this.nextMacros = new boolean[9];
+		for (int om = 0; om < 9; om++)
+			nextMacros[om] = true;
 	}
 
-	public byte[][] tiles(int xm, int ym)
+	public byte[] tiles(int xm, int ym)
 	{
-		return tiles[xm][ym];
+		return tiles[xm + 3 * ym];
 	}
 
 	public byte macro(int xm, int ym)
 	{
-		return macroTiles[xm][ym];
+		return macroTiles[xm + 3 * ym];
 	}
 
 	public byte tile(Coord coord)
 	{
-		return tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()];
+		return tiles[coord.om()][coord.os()];
 	}
 
 	public byte tile(int x, int y)
 	{
-		return tiles[x / 3][y / 3][x % 3][y % 3];
+		return tile(Coord.coord(x, y));
 	}
 
 	public boolean play(Coord coord, byte player)
@@ -100,7 +92,7 @@ public class Board
 		lastMove = coord;
 		nextPlayer = other(player);
 
-		tiles[coord.xm()][coord.ym()][coord.xs()][coord.ys()] = player;
+		tiles[coord.om()][coord.os()] = player;
 
 		freeTiles.remove(coord);
 		if (macroFull(coord.xm(), coord.ym()))
@@ -109,12 +101,21 @@ public class Board
 		isWon(coord);
 
 		boolean free = (macro(coord.xs(), coord.ys()) != NEUTRAL) || macroFull(coord.xs(), coord.ys());
-		for (int xm = 0; xm < 3; xm++)
-			for (int ym = 0; ym < 3; ym++)
-				nextMacros[xm][ym] = ((free || (coord.xs() == xm && coord.ys() == ym)) && ! macroFull(xm, ym)
-						&& macro(xm, ym) == NEUTRAL);
+		for (int om = 0; om < 9; om++)
+			nextMacros[om] = ((free || (coord.os() == om)) && ! macroFull(om)
+					&& macro(om) == NEUTRAL);
 
 		return macro(coord.xm(), coord.ym()) != NEUTRAL;
+	}
+
+	private byte macro(int om)
+	{
+		return macro(om % 3, om / 3);
+	}
+
+	private boolean macroFull(int om)
+	{
+		return macroFull(om % 3, om / 3);
 	}
 
 	public byte wonBy()
@@ -131,7 +132,7 @@ public class Board
 	{
 		return Collections.unmodifiableList(
 				freeTiles.stream()
-						.filter(coord -> nextMacros[coord.xm()][coord.ym()])
+						.filter(coord -> nextMacros[coord.om()])
 						.collect(Collectors.toList())
 		);
 	}
@@ -141,10 +142,10 @@ public class Board
 	{
 		byte player = tile(coord);
 
-		if (wonGrid(coord.xs(), coord.ys(), tiles(coord.xm(), coord.ym())))
+		if (wonGrid(coord.os(), tiles(coord.xm(), coord.ym())))
 		{
-			macroTiles[coord.xm()][coord.ym()] = player;
-			if (wonGrid(coord.xm(), coord.ym(), macroTiles))
+			macroTiles[coord.om()] = player;
+			if (wonGrid(coord.om(), macroTiles))
 			{
 				wonBy = player;
 				return true;
@@ -160,9 +161,11 @@ public class Board
 	}
 
 
-	private boolean wonGrid(int x, int y, byte[][] grid)
+	private boolean wonGrid(int o, byte[] grid)
 	{
-		byte player = grid[x][y];
+		byte player = grid[o];
+		int x = o % 3;
+		int y = o / 3;
 
 		//center
 		if (x == 1 && y == 1)
@@ -204,9 +207,9 @@ public class Board
 		return nextPlayer;
 	}
 
-	private boolean check(int x, int y, byte[][] grid, byte player)
+	private boolean check(int x, int y, byte[] grid, byte player)
 	{
-		return grid[x][y] == player;
+		return grid[x + 3 * y] == player;
 	}
 
 	public Board copy()
@@ -227,15 +230,12 @@ public class Board
 	public boolean singleMacro()
 	{
 		int count = 0;
-		for (int xm = 0; xm < 3; xm++)
+		for (int om = 0; om < 9; om++)
 		{
-			for (int ym = 0; ym < 3; ym++)
-			{
-				if (nextMacros[xm][ym])
-					count++;
-				if (count > 1)
-					return false;
-			}
+			if (nextMacros[om])
+				count++;
+			if (count > 1)
+				return false;
 		}
 
 		return true;
@@ -250,19 +250,6 @@ public class Board
 					count++;
 
 		return count == 9;
-	}
-
-	public Coord currMacro()
-	{
-		if (! singleMacro())
-			return null;
-
-		for (int xm = 0; xm < 3; xm++)
-			for (int ym = 0; ym < 3; ym++)
-				if (nextMacros[xm][ym])
-					return Coord.coord(xm, 0, ym, 0);
-
-		throw new RuntimeException();
 	}
 
 	public List<Coord> getAvailableCorners(List<Coord> moves)
@@ -344,14 +331,14 @@ public class Board
 		Board board = (Board) o;
 		return wonBy == board.wonBy &&
 				nextPlayer == board.nextPlayer &&
-				Arrays.deepEquals(tiles, board.tiles) &&
-				Arrays.deepEquals(nextMacros, board.nextMacros);
+				Arrays.equals(tiles, board.tiles) &&
+				Arrays.equals(nextMacros, board.nextMacros);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(Arrays.deepHashCode(tiles), Arrays.deepHashCode(nextMacros), wonBy, nextPlayer);
+		return Objects.hash(Arrays.deepHashCode(tiles), Arrays.hashCode(nextMacros), wonBy, nextPlayer);
 	}
 
 	public Coord getLastMove()
@@ -373,49 +360,49 @@ public class Board
 
 	public void setNextMacro(int xm, int ym)
 	{
-		for (int _xm = 0; _xm < 3; _xm++)
-			for (int _ym = 0; _ym < 3; _ym++)
-				this.nextMacros[_xm][_ym] = false;
+		for (int _om = 0; _om < 9; _om++)
+			this.nextMacros[_om] = false;
 
-		this.nextMacros[xm][ym] = true;
+		this.nextMacros[xm + 3 * ym] = true;
 	}
 
-	public void enableAllMacro()
+	public void enableAllMacros()
 	{
-		for (int _xm = 0; _xm < 3; _xm++)
-			for (int _ym = 0; _ym < 3; _ym++)
-				this.nextMacros[_xm][_ym] = true;
+		for (int _om = 0; _om < 9; _om++)
+			this.nextMacros[_om] = true;
 	}
 
-	public boolean macroFinishesGame(int xm, int ym,byte player)
+	public boolean macroFinishesGame(int xm, int ym, byte player)
 	{
-		byte oldByte = macroTiles[xm][ym];
-		macroTiles[xm][ym] = player;
+		int om = xm + 3 * ym;
 
-		boolean won = wonGrid(xm,ym,macroTiles);
-		macroTiles[xm][ym] = oldByte;
+		byte tmpPlayer = macroTiles[om];
+		macroTiles[om] = player;
 
-		return wonGrid(xm,ym,macroTiles);
+		boolean won = wonGrid(om, macroTiles);
+		macroTiles[om] = tmpPlayer;
+
+		return wonGrid(om, macroTiles);
 	}
 
-	public void setMacro(int xm, int ym,byte player)
+	public void setMacro(int xm, int ym, byte player)
 	{
-		macroTiles[xm][ym] = player;
+		macroTiles[xm + 3 * ym] = player;
 	}
 
-	public boolean winnableMacro(int xm, int ym,byte player)
+	public boolean winnableMacro(int xm, int ym, byte player)
 	{
 		Board test = copy();
-		test.setNextMacro(xm,ym);
+		test.setNextMacro(xm, ym);
 		test.setNextPlayer(player);
 
-		for (Coord move:test.availableMoves())
+		for (Coord move : test.availableMoves())
 		{
-			test.play(move,player);
+			test.play(move, player);
 			test.setNextMacro(xm, ym);
 			test.setNextPlayer(player);
 		}
 
-		return macro(xm,ym)==player;
+		return macro(xm, ym) == player;
 	}
 }
