@@ -331,7 +331,7 @@ public class Board
 		Board board = (Board) o;
 		return wonBy == board.wonBy &&
 				nextPlayer == board.nextPlayer &&
-				Arrays.equals(tiles, board.tiles) &&
+				Arrays.deepEquals(tiles, board.tiles) &&
 				Arrays.equals(nextMacros, board.nextMacros);
 	}
 
