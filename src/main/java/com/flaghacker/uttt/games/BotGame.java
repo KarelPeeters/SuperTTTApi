@@ -21,6 +21,7 @@ public class BotGame
 	private int count = 1;
 	private int timePerMove = 500;
 	private boolean logging;
+	private boolean shuffling;
 
 	public BotGame(Bot p1, Bot p2)
 	{
@@ -36,7 +37,7 @@ public class BotGame
 			if (count <= 100 || i % (count / 100) == 0)
 				printm(String.format("starting game %d; %.4f", i, (double) i / count));
 
-			boolean swapped = random.nextBoolean();
+			boolean swapped = shuffling && random.nextBoolean();
 			Bot p1 = bots.get(swapped ? 1 : 0);
 			Bot p2 = bots.get(swapped ? 0 : 1);
 
@@ -99,6 +100,12 @@ public class BotGame
 	public BotGame setTimePerMove(int time)
 	{
 		this.timePerMove = time;
+		return this;
+	}
+
+	public BotGame setShuffling(boolean shuffling)
+	{
+		this.shuffling = shuffling;
 		return this;
 	}
 }
