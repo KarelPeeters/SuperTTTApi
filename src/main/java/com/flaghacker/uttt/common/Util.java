@@ -1,8 +1,8 @@
 package com.flaghacker.uttt.common;
 
 import java.util.Random;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Util
@@ -11,13 +11,7 @@ public class Util
 	private static Random random = new Random();
 	private static int[] seeds = {};
 
-	private static final ScheduledExecutorService exec;
-
-	static
-	{
-		exec = Executors.newSingleThreadScheduledExecutor();
-		exec.execute(() -> Thread.currentThread().setName("Util.moveBotWithTimeOut Thread"));
-	}
+	private static ScheduledExecutorService exec;
 
 	public static Random loggedRandom()
 	{
@@ -39,6 +33,8 @@ public class Util
 
 	public static Coord moveBotWithTimeOut(Bot bot, Board board, long time)
 	{
+		checkAndInitExecutor();
+
 		final boolean[] runTimeUp = {true};
 		exec.schedule(() ->
 		{
@@ -51,5 +47,19 @@ public class Util
 		Coord move = bot.move(board);
 		runTimeUp[0] = false;
 		return move;
+	}
+
+	private static void checkAndInitExecutor()
+	{
+		if (exec != null)
+			return;
+
+		exec = new ScheduledThreadPoolExecutor(1, r ->
+		{
+			Thread thread = new Thread();
+			thread.setDaemon(true);
+			thread.setName("Util executor thread");
+			return thread;
+		});
 	}
 }
