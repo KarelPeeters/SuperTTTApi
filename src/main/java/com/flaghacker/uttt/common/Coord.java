@@ -57,9 +57,26 @@ public class Coord
 
 	public static Coord coord(int xm, int ym, int xs, int ys)
 	{
-		assert (0 < xm && xm < 3) && (0 < ym && ym < 3) && (0 < xs && xs < 3) && (0 < ys && ys < 3);
+		assert (0 <= xm && xm < 3) && (0 <= ym && ym < 3) && (0 <= xs && xs < 3) && (0 <= ys && ys < 3);
 
 		return coord(3 * xm + xs, 3 * ym + ys);
+	}
+
+	public static Coord coord(int o)
+	{
+		assert 0 <= o && o < 9 * 9;
+
+		return coord(o % 9, o / 9);
+	}
+
+	public static List<Coord> list()
+	{
+		return coordList;
+	}
+
+	public static List<Coord> macro(int xm, int ym)
+	{
+		return macroLists[xm][ym];
 	}
 
 	public int x()
@@ -105,16 +122,6 @@ public class Coord
 	public int os()
 	{
 		return xs() + 3 * ys();
-	}
-
-	public static List<Coord> list()
-	{
-		return coordList;
-	}
-
-	public static List<Coord> macro(int xm, int ym)
-	{
-		return macroLists[xm][ym];
 	}
 
 	@Override

@@ -108,7 +108,7 @@ public class Board
 		return macro(coord.xm(), coord.ym()) != NEUTRAL;
 	}
 
-	private byte macro(int om)
+	public byte macro(int om)
 	{
 		return macro(om % 3, om / 3);
 	}
