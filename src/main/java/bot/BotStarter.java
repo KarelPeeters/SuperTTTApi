@@ -18,7 +18,7 @@
 package bot;
 
 import com.flaghacker.uttt.bots.RandomBot;
-import com.flaghacker.uttt.games.aigames.AIGame;
+import com.flaghacker.uttt.games.AIGame;
 
 public class BotStarter
 {
