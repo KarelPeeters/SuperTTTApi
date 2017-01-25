@@ -54,9 +54,9 @@ public class Util
 		if (exec != null)
 			return;
 
-		exec = new ScheduledThreadPoolExecutor(1, r ->
+		exec = new ScheduledThreadPoolExecutor(1, runnable ->
 		{
-			Thread thread = new Thread();
+			Thread thread = new Thread(runnable);
 			thread.setDaemon(true);
 			thread.setName("Util executor thread");
 			return thread;
