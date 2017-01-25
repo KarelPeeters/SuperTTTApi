@@ -1,5 +1,6 @@
 package com.flaghacker.uttt.common;
 
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,12 +51,12 @@ public class BoardTest
 	@Test
 	public void testCopySeparate()
 	{
+		JSONObject origJSON = JSONBoardUtil.boardToJSON(board);
 		Board copy = board.copy();
-		Board ref = board.copy();
 
 		play(copy, 15);
-		assertEquals(board, ref);
-		assertNotEquals(ref, copy);
+		assertNotEquals(board, copy);
+		JSONBoardUtil.checkMatch(board, origJSON);
 	}
 
 	@Test
