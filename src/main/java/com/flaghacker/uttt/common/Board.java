@@ -26,9 +26,8 @@ public class Board
 		this.tiles = new byte[9][];
 		System.arraycopy(other.tiles, 0, tiles, 0, 9);
 
-		this.macroTiles = new byte[9];
+		this.macroTiles = other.macroTiles;
 		this.nextMacros = new boolean[9];
-		System.arraycopy(other.macroTiles, 0, this.macroTiles, 0, 9);
 		System.arraycopy(other.nextMacros, 0, this.nextMacros, 0, 9);
 
 		this.wonBy = other.wonBy;
@@ -148,6 +147,7 @@ public class Board
 
 		if (wonGrid(coord.os(), tiles(coord.xm(), coord.ym())))
 		{
+			copyMacroTiles();
 			macroTiles[coord.om()] = player;
 			if (wonGrid(coord.om(), macroTiles))
 			{
@@ -310,6 +310,13 @@ public class Board
 			throw new IllegalArgumentException("player should be one of PLAYER, ENEMY; was " + player);
 	}
 
+	private void copyMacroTiles()
+	{
+		byte[] newMacroTiles = new byte[9];
+		System.arraycopy(macroTiles, 0, newMacroTiles, 0, 9);
+		macroTiles = newMacroTiles;
+	}
+
 	private static String repeat(String str, int count)
 	{
 		StringBuilder builder = new StringBuilder();
@@ -391,6 +398,7 @@ public class Board
 
 	public void setMacro(int xm, int ym, byte player)
 	{
+		copyMacroTiles();
 		macroTiles[xm + 3 * ym] = player;
 	}
 
