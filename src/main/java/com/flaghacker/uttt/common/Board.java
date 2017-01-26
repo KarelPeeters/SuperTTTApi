@@ -382,7 +382,7 @@ public class Board
 		boolean won = wonGrid(om, macroTiles);
 		macroTiles[om] = tmpPlayer;
 
-		return wonGrid(om, macroTiles);
+		return won;
 	}
 
 	public void setMacro(int xm, int ym, byte player)
