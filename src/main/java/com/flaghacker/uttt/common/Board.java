@@ -23,9 +23,8 @@ public class Board
 
 	public Board(Board other)
 	{
-		this.tiles = new byte[9][9];
-		for (int om = 0; om < 9; om++)
-			System.arraycopy(other.tiles[om], 0, tiles[om], 0, 9);
+		this.tiles = new byte[9][];
+		System.arraycopy(other.tiles, 0, tiles, 0, 9);
 
 		this.macroTiles = new byte[9];
 		this.nextMacros = new boolean[9];
@@ -91,6 +90,11 @@ public class Board
 
 		lastMove = coord;
 		nextPlayer = other(player);
+
+		//create separate tile copy
+		byte[] newTiles = new byte[9];
+		System.arraycopy(tiles[coord.om()], 0, newTiles, 0, 9);
+		tiles[coord.om()] = newTiles;
 
 		tiles[coord.om()][coord.os()] = player;
 
