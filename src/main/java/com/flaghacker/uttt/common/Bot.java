@@ -4,8 +4,5 @@ public interface Bot
 {
 	Coord move(Board board);
 
-	default void timeUp()
-	{
-		//NOP
-	}
+	void timeUp();
 }

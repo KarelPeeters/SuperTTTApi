@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class Board
 {
@@ -42,12 +41,9 @@ public class Board
 		this.tiles = tiles;
 		this.macroTiles = macroTiles;
 
-		freeTiles.addAll(
-				Coord.list()
-						.stream()
-						.filter(coord -> tile(coord) == NEUTRAL)
-						.collect(Collectors.toList())
-		);
+		for (Coord coord : Coord.list())
+			if (tile(coord) == NEUTRAL)
+				freeTiles.add(coord);
 
 		this.nextMacros = nextMacros;
 	}
@@ -130,11 +126,13 @@ public class Board
 
 	public List<Coord> availableMoves()
 	{
-		return Collections.unmodifiableList(
-				freeTiles.stream()
-						.filter(coord -> nextMacros[coord.om()])
-						.collect(Collectors.toList())
-		);
+		List<Coord> result = new ArrayList<>();
+
+		for (Coord coord : freeTiles)
+			if (nextMacros[coord.om()])
+				result.add(coord);
+
+		return Collections.unmodifiableList(result);
 	}
 
 	//checks whether the board was won by the tile placed at absolute (x,y)
@@ -197,9 +195,13 @@ public class Board
 
 	public List<Coord> getEnemyTiles(int xm, int ym)
 	{
-		return Coord.macro(xm, ym).stream()
-				.filter(coord -> tile(coord) == ENEMY)
-				.collect(Collectors.toList());
+		List<Coord> result = new ArrayList<>();
+
+		for (Coord coord : Coord.macro(xm, ym))
+			if (tile(coord) == ENEMY)
+				result.add(coord);
+
+		return Collections.unmodifiableList(result);
 	}
 
 	public byte nextPlayer()
@@ -254,16 +256,28 @@ public class Board
 
 	public List<Coord> getAvailableCorners(List<Coord> moves)
 	{
-		return moves.stream()
-				.filter(coord -> coord.xs() % 2 == 0 && coord.ys() % 2 == 0)
-				.collect(Collectors.toList());
+		List<Coord> result = new ArrayList<>();
+
+		for (Coord coord : moves)
+		{
+			if (coord.xs() % 2 == 0 && coord.ys() % 2 == 0)
+				result.add(coord);
+		}
+
+		return Collections.unmodifiableList(result);
 	}
 
 	public List<Coord> getAvailableSides(List<Coord> moves)
 	{
-		return moves.stream()
-				.filter(coord -> (coord.xs() + coord.ys() == 1 || coord.xs() + coord.ys() == 3))
-				.collect(Collectors.toList());
+		List<Coord> result = new ArrayList<>();
+
+		for (Coord coord : moves)
+		{
+			if (coord.xs() + coord.ys() == 1 || coord.xs() + coord.ys() == 3)
+				result.add(coord);
+		}
+
+		return Collections.unmodifiableList(result);
 	}
 
 	@Override
@@ -271,9 +285,9 @@ public class Board
 	{
 		List<Coord> coordList = Coord.list();
 
-		List<String> strings = coordList.stream()
-				.map(cell -> String.join("", tile(cell) == PLAYER ? "X" : (tile(cell) == ENEMY ? "O" : " ")))
-				.collect(Collectors.toList());
+		List<String> strings = new ArrayList<>();
+		for (Coord coord : coordList)
+			strings.add(tile(coord) == PLAYER ? "X" : (tile(coord) == ENEMY ? "O" : " "));
 
 		String line = removeEnd(repeat(repeat("-", 3) + "+", 3), "+");
 
@@ -353,9 +367,13 @@ public class Board
 
 	public List<Coord> getPlayerTiles(int xm, int ym)
 	{
-		return Coord.macro(xm, ym).stream()
-				.filter(coord -> tile(coord) == PLAYER)
-				.collect(Collectors.toList());
+		List<Coord> result = new ArrayList<>();
+
+		for (Coord coord : Coord.macro(xm, ym))
+			if (tile(coord) == PLAYER)
+				result.add(coord);
+
+		return Collections.unmodifiableList(result);
 	}
 
 	public void setNextMacro(int xm, int ym)
