@@ -1,14 +1,14 @@
 package com.flaghacker.uttt.bots;
 
+import com.flaghacker.uttt.common.AbstractBot;
 import com.flaghacker.uttt.common.Board;
-import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
 import com.flaghacker.uttt.common.Util;
 
 import java.util.List;
 import java.util.Random;
 
-public class RandomBot implements Bot
+public class RandomBot extends AbstractBot
 {
 	private Random random = Util.loggedRandom();
 

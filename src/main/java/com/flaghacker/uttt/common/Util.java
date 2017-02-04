@@ -3,6 +3,7 @@ package com.flaghacker.uttt.common;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class Util
@@ -31,17 +32,21 @@ public class Util
 		return new Random(seed);
 	}
 
-	public static Coord moveBotWithTimeOut(Bot bot, Board board, long time)
+	public static Coord moveBotWithTimeOut(final Bot bot, Board board, long time)
 	{
 		checkAndInitExecutor();
 
 		final boolean[] runTimeUp = {true};
-		exec.schedule(() ->
+		exec.schedule(new Runnable()
 		{
-			if (runTimeUp[0])
+			@Override
+			public void run()
 			{
-				runTimeUp[0] = false;
-				bot.timeUp();
+				if (runTimeUp[0])
+				{
+					runTimeUp[0] = false;
+					bot.timeUp();
+				}
 			}
 		}, time, TimeUnit.MILLISECONDS);
 		Coord move = bot.move(board);
@@ -54,12 +59,16 @@ public class Util
 		if (exec != null)
 			return;
 
-		exec = new ScheduledThreadPoolExecutor(1, runnable ->
+		exec = new ScheduledThreadPoolExecutor(1, new ThreadFactory()
 		{
-			Thread thread = new Thread(runnable);
-			thread.setDaemon(true);
-			thread.setName("Util executor thread");
-			return thread;
+			@Override
+			public Thread newThread(Runnable runnable)
+			{
+				Thread thread = new Thread(runnable);
+				thread.setDaemon(true);
+				thread.setName("Util executor thread");
+				return thread;
+			}
 		});
 	}
 }
