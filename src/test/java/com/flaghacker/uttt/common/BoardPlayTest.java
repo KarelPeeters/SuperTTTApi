@@ -12,8 +12,6 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @RunWith(Parameterized.class)
 public class BoardPlayTest
@@ -35,10 +33,11 @@ public class BoardPlayTest
 			URL resource = BoardPlayTest.class.getResource(PLAYTROUGHS_LOCATION);
 			JSONArray json = new JSONArray(IOUtils.toString(resource));
 
-			return IntStream.iterate(0, i -> i++).limit(json.length())
-					.mapToObj(json::getJSONArray)
-					.map(PlayTrough::new)
-					.collect(Collectors.toList());
+			List<PlayTrough> playTroughs = new ArrayList<>();
+			for (int i = 0; i < json.length(); i++)
+				playTroughs.add(new PlayTrough(json.getJSONArray(i)));
+
+			return playTroughs;
 		}
 		catch (IOException e)
 		{
@@ -55,9 +54,9 @@ public class BoardPlayTest
 	public static void savePlayTroughs(List<PlayTrough> playTroughs, OutputStream out) throws IOException
 	{
 		JSONArray arr = new JSONArray();
-		playTroughs.stream()
-				.map(PlayTrough::toJSON)
-				.forEach(arr::put);
+		for (PlayTrough playTrough : playTroughs)
+			arr.put(playTrough.toJSON());
+
 		IOUtils.write(arr.toString(0), out);
 	}
 

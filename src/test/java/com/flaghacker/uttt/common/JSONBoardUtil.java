@@ -24,11 +24,13 @@ public class JSONBoardUtil
 
 		//coord lists
 		JSONArray moves = new JSONArray();
-		board.availableMoves().stream().map(Coord::o).forEach(moves::put);
+		for (Coord coord : board.availableMoves())
+			moves.put(coord.o());
 		json.put("availableMoves", moves);
 
 		JSONArray freeTiles = new JSONArray();
-		board.freeTiles().stream().map(Coord::o).forEach(freeTiles::put);
+		for (Coord coord : board.freeTiles())
+			freeTiles.put(coord.o());
 		json.put("freeTiles", freeTiles);
 
 		//tiles
@@ -65,7 +67,7 @@ public class JSONBoardUtil
 		assertEquals(expectedMoves, moves);
 		List<Coord> free = board.freeTiles();
 		List<Coord> expectedFree = arrToCoordList(exp.getJSONArray("freeTiles"));
-		 assertEquals(expectedFree, free);
+		assertEquals(expectedFree, free);
 
 		//tiles
 		JSONArray tiles = exp.getJSONArray("tiles");
