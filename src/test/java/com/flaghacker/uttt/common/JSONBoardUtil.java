@@ -20,8 +20,8 @@ public class JSONBoardUtil
 		JSONObject json = new JSONObject();
 
 		//single values
-		json.put("nextPlayer", board.nextPlayer());
-		json.put("wonBy", board.wonBy());
+		json.put("nextPlayer", boardToJSONPlayer(board.nextPlayer()));
+		json.put("wonBy", boardToJSONPlayer(board.wonBy()));
 		json.put("done", board.isDone());
 		json.put("singleMacro", board.singleMacro());
 		json.put("lastMove", board.getLastMove() == null ? null : board.getLastMove().o());
@@ -40,11 +40,11 @@ public class JSONBoardUtil
 		//tiles
 		JSONArray tiles = new JSONArray();
 		for (int o = 0; o < 9 * 9; o++)
-			tiles.put(board.tile(Coord.coord(o)));
+			tiles.put(boardToJSONPlayer(board.tile(Coord.coord(o))));
 
 		JSONArray macros = new JSONArray();
 		for (int om = 0; om < 9; om++)
-			macros.put(board.macro(om));
+			macros.put(boardToJSONPlayer(board.macro(om)));
 
 		json.put("tiles", tiles);
 		json.put("macros", macros);
@@ -103,6 +103,21 @@ public class JSONBoardUtil
 				return Board.NEUTRAL;
 			default:
 				throw new IllegalArgumentException(jsonPlayer + " is not a valid JSON player");
+		}
+	}
+
+	private static byte boardToJSONPlayer(int boardPlayer)
+	{
+		switch (boardPlayer)
+		{
+			case Board.PLAYER:
+				return PLAYER_JSON;
+			case Board.ENEMY:
+				return ENEMY_JSON;
+			case Board.NEUTRAL:
+				return NEUTRAL_JSON;
+			default:
+				throw new IllegalArgumentException(boardPlayer + " is not a valid Board player");
 		}
 	}
 }
