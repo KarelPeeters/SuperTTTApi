@@ -3,8 +3,8 @@ package com.flaghacker.uttt.common;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
+@SuppressWarnings("unchecked")
 public class Coord
 {
 	private final int x;
@@ -69,6 +69,11 @@ public class Coord
 		return coord(o % 9, o / 9);
 	}
 
+	public static Coord ordCoord(int om, int os)
+	{
+		return coord(om % 3, om / 3, os % 3, os / 3);
+	}
+
 	public static List<Coord> list()
 	{
 		return coordList;
@@ -124,20 +129,21 @@ public class Coord
 		return xs() + 3 * ys();
 	}
 
+	public int i()
+	{
+		return 9 * om() + os();
+	}
+
 	@Override
 	public boolean equals(Object o)
 	{
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Coord coord = (Coord) o;
-		return x == coord.x &&
-				y == coord.y;
+		return this == o;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(x, y);
+		return o();
 	}
 
 	@Override
