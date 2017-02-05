@@ -1,13 +1,16 @@
 package com.flaghacker.uttt.common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Board
+public class Board implements Serializable
 {
+	private static final long serialVersionUID = -8352590958828628704L;
+
 	public static final byte NEUTRAL = 0;
 	public static final byte PLAYER = 2;
 	public static final byte ENEMY = 3;

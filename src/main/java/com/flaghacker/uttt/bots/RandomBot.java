@@ -10,6 +10,8 @@ import java.util.Random;
 
 public class RandomBot extends AbstractBot
 {
+	private static final long serialVersionUID = -4978779157732236475L;
+
 	private Random random = Util.loggedRandom();
 
 	@Override
