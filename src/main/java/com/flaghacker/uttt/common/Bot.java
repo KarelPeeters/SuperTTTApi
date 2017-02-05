@@ -1,6 +1,8 @@
 package com.flaghacker.uttt.common;
 
-public interface Bot
+import java.io.Serializable;
+
+public interface Bot extends Serializable
 {
 	Coord move(Board board);
 
