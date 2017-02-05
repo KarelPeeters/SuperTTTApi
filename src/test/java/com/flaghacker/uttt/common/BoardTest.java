@@ -67,4 +67,17 @@ public class BoardTest
 		assertTrue(copy.equals(board) && board.equals(copy));
 		assertEquals(board.hashCode(), copy.hashCode());
 	}
+
+	@Test
+	public void testOther()
+	{
+		assertEquals(Board.PLAYER, Board.other(Board.ENEMY));
+		assertEquals(Board.ENEMY, Board.other(Board.PLAYER));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testOtherNeutralFails()
+	{
+		Board.other(Board.NEUTRAL);
+	}
 }

@@ -11,6 +11,10 @@ import static org.junit.Assert.assertNull;
 
 public class JSONBoardUtil
 {
+	private static final byte PLAYER_JSON = 1;
+	private static final byte ENEMY_JSON = -1;
+	private static final byte NEUTRAL_JSON = 0;
+
 	public static JSONObject boardToJSON(Board board)
 	{
 		JSONObject json = new JSONObject();
@@ -51,8 +55,8 @@ public class JSONBoardUtil
 	public static void checkMatch(Board board, JSONObject exp)
 	{
 		//single values
-		assertEquals(exp.getInt("nextPlayer"), board.nextPlayer());
-		assertEquals(exp.getInt("wonBy"), board.wonBy());
+		assertEquals(jsonToBoardPlayer(exp.getInt("nextPlayer")), board.nextPlayer());
+		assertEquals(jsonToBoardPlayer(exp.getInt("wonBy")), board.wonBy());
 		assertEquals(exp.getBoolean("done"), board.isDone());
 		assertEquals(exp.get("singleMacro"), board.singleMacro());
 
@@ -72,11 +76,11 @@ public class JSONBoardUtil
 		//tiles
 		JSONArray tiles = exp.getJSONArray("tiles");
 		for (int o = 0; o < 9 * 9; o++)
-			assertEquals(tiles.getInt(o), board.tile(Coord.coord(o)));
+			assertEquals(jsonToBoardPlayer(tiles.getInt(o)), board.tile(Coord.coord(o)));
 
 		JSONArray macros = exp.getJSONArray("macros");
 		for (int om = 0; om < 9; om++)
-			assertEquals(macros.getInt(om), board.macro(om));
+			assertEquals(jsonToBoardPlayer(macros.getInt(om)), board.macro(om));
 	}
 
 	private static List<Coord> arrToCoordList(JSONArray arr)
@@ -85,5 +89,20 @@ public class JSONBoardUtil
 		for (int i = 0; i < arr.length(); i++)
 			coords.add(Coord.coord(arr.getInt(i)));
 		return coords;
+	}
+
+	private static byte jsonToBoardPlayer(int jsonPlayer)
+	{
+		switch (jsonPlayer)
+		{
+			case PLAYER_JSON:
+				return Board.PLAYER;
+			case ENEMY_JSON:
+				return Board.ENEMY;
+			case NEUTRAL_JSON:
+				return Board.NEUTRAL;
+			default:
+				throw new IllegalArgumentException(jsonPlayer + " is not a valid JSON player");
+		}
 	}
 }
