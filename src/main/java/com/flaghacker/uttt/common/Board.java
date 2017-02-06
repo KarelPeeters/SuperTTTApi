@@ -171,7 +171,7 @@ public class Board implements Serializable
 		//center
 		if (x == 1 && y == 1)
 		{
-			for (int i = 0; i < 2; i++)
+			for (int i = 0; i <= 2; i++)
 				if (check(i, 0, grid, player) && check(2 - i, 2, grid, player))
 					return true;
 			return check(2, 1, grid, player) && check(0, 1, grid, player);
