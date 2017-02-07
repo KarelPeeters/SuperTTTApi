@@ -129,11 +129,6 @@ public class Coord
 		return xs() + 3 * ys();
 	}
 
-	public int i()
-	{
-		return 9 * om() + os();
-	}
-
 	@Override
 	public boolean equals(Object o)
 	{

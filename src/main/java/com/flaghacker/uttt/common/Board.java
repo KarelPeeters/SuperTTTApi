@@ -16,8 +16,8 @@ public class Board implements Serializable
 	public static final byte ENEMY = 3;
 
 	private static final int TILE_START = 0;
-	private static final int MACROTILE_START = 9 * 9;
-	private static final int NEXTMACRO_START = 9 * 9 + 9;
+	private static final int MACRO_TILE_START = TILE_START + 2 * 9 * 9;
+	private static final int NEXT_MACRO_START = MACRO_TILE_START + 2 * 9;
 
 
 	private BitSet data;
@@ -33,6 +33,7 @@ public class Board implements Serializable
 		this.wonBy = other.wonBy;
 		this.freeTiles = new ArrayList<>(other.freeTiles);
 		this.nextPlayer = other.nextPlayer;
+		this.lastMove = other.lastMove;
 	}
 
 	public Board(byte[][] tiles, byte[] macroTiles, boolean[] nextMacros)
@@ -73,38 +74,38 @@ public class Board implements Serializable
 
 	private void writePlayer(int i, byte player)
 	{
-		data.set(i, player == NEUTRAL);
-		data.set(i, player == PLAYER);    //doesn't matter what's set when player==NEUTRAL
+		data.set(i, player != NEUTRAL);
+		data.set(i + 1, player == ENEMY);
 	}
 
 	public byte tile(Coord coord)
 	{
-		return readPlayer(TILE_START + coord.i());
+		return readPlayer(TILE_START + 2*(coord.os() + 9*coord.om()));
 	}
 
 	private void setTile(Coord coord, byte player)
 	{
-		writePlayer(TILE_START + 9 * coord.om() + coord.os(), player);
+		writePlayer(TILE_START + 2* (9 * coord.om() + coord.os()), player);
 	}
 
 	public byte macro(int om)
 	{
-		return readPlayer(MACROTILE_START + om);
+		return readPlayer(MACRO_TILE_START + 2*om);
 	}
 
 	private void setMacro(int om, byte player)
 	{
-		writePlayer(MACROTILE_START + om, player);
+		writePlayer(MACRO_TILE_START + 2*om, player);
 	}
 
 	public boolean nextMacro(int om)
 	{
-		return data.get(NEXTMACRO_START + om);
+		return data.get(NEXT_MACRO_START + om);
 	}
 
-	private void setNextMacro(int om, boolean value)
+	public void setNextMacro(int om, boolean value)
 	{
-		data.set(NEXTMACRO_START + om, value);
+		data.set(NEXT_MACRO_START + om, value);
 	}
 
 	//utility wrappers
@@ -140,8 +141,7 @@ public class Board implements Serializable
 
 		boolean free = (macro(coord.os()) != NEUTRAL) || macroFull(coord.xs(), coord.ys());
 		for (int om = 0; om < 9; om++)
-			setNextMacro(om, ((free || (coord.os() == om)) && !macroFull(om)
-					&& macro(om) == NEUTRAL));
+			setNextMacro(om, ((free || (coord.os() == om)) && !macroFull(om) && macro(om) == NEUTRAL));
 
 		return macro(coord.xm(), coord.ym()) != NEUTRAL;
 	}
@@ -177,10 +177,10 @@ public class Board implements Serializable
 	{
 		byte player = tile(coord);
 
-		if (wonGrid(coord.os(), TILE_START + coord.i()))
+		if (wonGrid(coord.os(), TILE_START + 2*9*coord.om()))
 		{
 			setMacro(coord.om(), player);
-			if (wonGrid(coord.om(), MACROTILE_START))
+			if (wonGrid(coord.om(), MACRO_TILE_START))
 			{
 				wonBy = player;
 				return true;
@@ -197,7 +197,7 @@ public class Board implements Serializable
 
 	private boolean wonGrid(int playedIndex, int dataOffset)
 	{
-		byte player = readPlayer(dataOffset + playedIndex);
+		byte player = readPlayer(dataOffset + 2*playedIndex);
 		int x = playedIndex % 3;
 		int y = playedIndex / 3;
 
@@ -247,7 +247,7 @@ public class Board implements Serializable
 
 	private boolean check(int x, int y, int dataOffset, byte player)
 	{
-		return readPlayer(dataOffset + (x + 3 * y)) == player;
+		return readPlayer(dataOffset + 2*(x + 3 * y)) == player;
 	}
 
 	public Board copy()
@@ -433,7 +433,7 @@ public class Board implements Serializable
 		byte tmpPlayer = macro(om);
 		setMacro(om, player);
 
-		boolean won = wonGrid(om, MACROTILE_START);
+		boolean won = wonGrid(om, MACRO_TILE_START);
 		setMacro(om, tmpPlayer);
 
 		return won;
