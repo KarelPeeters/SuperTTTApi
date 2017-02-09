@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Random;
 
 import static com.flaghacker.uttt.common.Board.ENEMY;
+import static com.flaghacker.uttt.common.Board.NEUTRAL;
 import static com.flaghacker.uttt.common.Board.PLAYER;
 
 public class BotGame
@@ -30,7 +31,7 @@ public class BotGame
 
 	public void run()
 	{
-		double[] results = new double[3];
+		int[] results = new int[3];
 
 		for (int i = 0; i < count; i++)
 		{
@@ -62,14 +63,18 @@ public class BotGame
 				prints(board);
 			}
 
-			prints("done, won: " + (swapped ? - 1 : 1) * board.wonBy());
-			results[(swapped ? - 1 : 1) * board.wonBy() + 1]++;
+			byte wonBy = board.wonBy();
+			if (wonBy != NEUTRAL && swapped)
+				wonBy = Board.other(wonBy);
+
+			prints("done, won: " + wonBy);
+			results[wonBy == PLAYER ? 0 : (wonBy == NEUTRAL ? 1 : 2)]++;
 		}
 
 		printm("Results:");
-		printm("Player 1 Win:\t" + results[2] / count);
-		printm("Tie:\t\t\t" + results[1] / count);
-		printm("Player 2 Win:\t" + results[0] / count);
+		printm("Player 1 Win:\t" + (double) results[2] / count);
+		printm("Tie:\t\t\t" + (double) results[1] / count);
+		printm("Player 2 Win:\t" + (double) results[0] / count);
 	}
 
 	private void prints(Object object)
