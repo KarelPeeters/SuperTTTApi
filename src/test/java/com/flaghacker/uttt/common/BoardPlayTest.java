@@ -120,5 +120,9 @@ public class BoardPlayTest
 			return json;
 		}
 
+		public List<Coord> getMoves()
+		{
+			return moves;
+		}
 	}
 }
