@@ -1,12 +1,15 @@
 package com.flaghacker.uttt.common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class Coord
+public class Coord implements Serializable
 {
+	private static final long serialVersionUID = 8341137466193526137L;
+
 	private final int x;
 	private final int y;
 
