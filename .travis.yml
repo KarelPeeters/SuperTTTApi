@@ -1,3 +1,12 @@
 language: java
 jdk:
 - oraclejdk7
+
+deploy:
+  provider: releases
+  api_key:
+    secure: dvzTwFGBE1CHtvN+h1qGpd2P4bxTmhXI4z9iM4Rtd48p3g/O7394ihOY5o7QD+ds2SPbL1TXENyud3QwFP+XMvzJH4GJCoJH4QTawb81v4M2R26AB8GL1sZmpLtjbaYajXv1Sx/MF2Gjl9QFxEsvNTcGNvb/jN3iB/89Rd4cvu7FfrhdbvRzjSH4eO53yQzE4og3UaWHqfoxpxr6n2sVd4oOAnE8Th1m6MVRWaaRovi0rYLmjvtZxBDu8yxaTV6Zs7yu9pKzN4waO6qzaHku+Wu9Kpu1VU+KEtkFSJD6hRN9FN11n0nvnYjYpzwMRaAyj3ZprXaMXdCExoplHC9wvQq4tYHF1v8orS7al9GeSZy5xFSY7xgoksFwTxjNSmtKM8pLQSguVy5G3gEqtnwKcKD2bWrLUDt+TB+C2VHzAXx+18lqtMKA4V8umTnQw3W0Sd1Mrc5RqgPCB2ZQPVj5t9mEwgln66fjznW6ZsBHlU+3ubjYdTPG/bsCErtdJHjFht6SPixutfNqqC90rRhV3Jcfg77gdvs77hDaqHQToYda3pfvUQnJ1h82xjM8pprlTqVQyVCsaWtKEx70US+/q0jVFbRx4Jr57Qwj7mH5hZgGM6UUHgkZXKdt47LnX1WnrpUqwGffF7JH2DQthcbIDuXIRjDffXZMVHMi0sfpZ8g=
+  file: "./build/libs/SuperTTTApi.jar"
+  skip_cleanup: true
+  on:
+    tags: true
