@@ -14,7 +14,7 @@ public abstract class AbstractBot implements Bot
 		running = true;
 	}
 
-	public boolean running()
+	protected boolean running()
 	{
 		return running;
 	}
@@ -22,9 +22,6 @@ public abstract class AbstractBot implements Bot
 	@Override
 	public void timeUp()
 	{
-		if (running)
-			throw new IllegalStateException();
-
 		running = false;
 	}
 }
