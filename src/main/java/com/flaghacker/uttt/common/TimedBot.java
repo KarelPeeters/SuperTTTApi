@@ -1,27 +1,34 @@
 package com.flaghacker.uttt.common;
 
-public abstract class AbstractBot implements Bot
+public abstract class TimedBot implements Bot
 {
 	private static final long serialVersionUID = -306352116984750635L;
 
 	private boolean running;
 
-	protected void startRunning()
+	protected abstract Coord calcMove(Board board);
+
+	@Override
+	public Coord move(Board board)
 	{
 		if (running)
 			throw new IllegalStateException();
-
 		running = true;
-	}
 
-	protected boolean running()
-	{
-		return running;
+		Coord move = calcMove(board);
+		running = false;
+
+		return move;
 	}
 
 	@Override
 	public void timeUp()
 	{
 		running = false;
+	}
+
+	protected boolean running()
+	{
+		return running;
 	}
 }
