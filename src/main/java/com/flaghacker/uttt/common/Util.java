@@ -1,6 +1,9 @@
 package com.flaghacker.uttt.common;
 
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -11,8 +14,6 @@ public class Util
 	private static int nextId = 0;
 	private static Random random = new Random();
 	private static int[] seeds = {};
-
-	private static ScheduledExecutorService exec;
 
 	public static Random loggedRandom()
 	{
@@ -32,12 +33,14 @@ public class Util
 		return new Random(seed);
 	}
 
+	private static ScheduledExecutorService timeOutService;
+
 	public static Coord moveBotWithTimeOut(final Bot bot, Board board, long time)
 	{
 		checkAndInitExecutor();
 
 		final boolean[] runTimeUp = {true};
-		exec.schedule(new Runnable()
+		timeOutService.schedule(new Runnable()
 		{
 			@Override
 			public void run()
@@ -54,12 +57,27 @@ public class Util
 		return move;
 	}
 
+	public static Future<Coord> moveBotWithTimeOutAsync(ExecutorService executor,
+														final Bot bot, final Board board, final long time)
+	{
+		checkAndInitExecutor();
+
+		return executor.submit(new Callable<Coord>()
+		{
+			@Override
+			public Coord call() throws Exception
+			{
+				return moveBotWithTimeOut(bot, board, time);
+			}
+		});
+	}
+
 	private static void checkAndInitExecutor()
 	{
-		if (exec != null)
+		if (timeOutService != null)
 			return;
 
-		exec = new ScheduledThreadPoolExecutor(1, new ThreadFactory()
+		timeOutService = new ScheduledThreadPoolExecutor(1, new ThreadFactory()
 		{
 			@Override
 			public Thread newThread(Runnable runnable)
