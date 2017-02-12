@@ -1,10 +1,14 @@
 package com.flaghacker.uttt.common;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
+
+import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -34,6 +38,13 @@ public class BoardTest
 		board.play(move, board.nextPlayer());
 
 		assertEquals(player, board.tile(move));
+	}
+
+	@Test
+	public void testSerializedEquals()
+	{
+		Board board = randomBoard(new Random(0), 10);
+		assertEquals(board, SerializationUtils.clone(board));
 	}
 
 	@DataPoints
@@ -98,5 +109,18 @@ public class BoardTest
 			board.setNextMacro(move.om(), true);
 			board.play(move, player);
 		}
+	}
+
+	private Board randomBoard(Random rand, int moves)
+	{
+		Board board = new Board();
+		for (int i = 0; i < moves; i++)
+		{
+			if (board.isDone())
+				break;
+			List<Coord> available = board.availableMoves();
+			board.play(available.get(rand.nextInt(available.size())), board.nextPlayer());
+		}
+		return board;
 	}
 }

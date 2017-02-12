@@ -139,6 +139,11 @@ public class Coord implements Serializable
 		return o();
 	}
 
+	private Object readResolve()
+	{
+		return Coord.coord(this.x, this.y);
+	}
+
 	@Override
 	public String toString()
 	{
