@@ -3,6 +3,7 @@ package com.flaghacker.uttt.games;
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
+import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Util;
 
 import java.util.Arrays;
@@ -10,9 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static com.flaghacker.uttt.common.Board.ENEMY;
-import static com.flaghacker.uttt.common.Board.NEUTRAL;
-import static com.flaghacker.uttt.common.Board.PLAYER;
+import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.uttt.common.Player.PLAYER;
 
 public class BotGame
 {
@@ -51,21 +51,21 @@ public class BotGame
 
 				Coord pMove = Util.moveBotWithTimeOut(p1, board.copy(), timePerMove);
 				prints("p1 move: " + pMove);
-				board.play(pMove, PLAYER);
+				board.play(pMove);
 
 				if (board.isDone())
 					continue;
 
 				Coord rMove = Util.moveBotWithTimeOut(p2, board.copy(), timePerMove);
 				prints("p2 move: " + rMove);
-				board.play(rMove, ENEMY);
+				board.play(rMove);
 
 				prints(board);
 			}
 
-			byte wonBy = board.wonBy();
+			Player wonBy = board.wonBy();
 			if (wonBy != NEUTRAL && swapped)
-				wonBy = Board.other(wonBy);
+				wonBy = wonBy.other();
 
 			prints("done, won: " + wonBy);
 			results[wonBy == PLAYER ? 0 : (wonBy == NEUTRAL ? 1 : 2)]++;

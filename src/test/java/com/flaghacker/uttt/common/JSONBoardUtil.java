@@ -6,6 +6,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.flaghacker.uttt.common.Player.ENEMY;
+import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.uttt.common.Player.PLAYER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -91,30 +94,30 @@ public class JSONBoardUtil
 		return coords;
 	}
 
-	private static byte jsonToBoardPlayer(int jsonPlayer)
+	private static Player jsonToBoardPlayer(int jsonPlayer)
 	{
 		switch (jsonPlayer)
 		{
 			case PLAYER_JSON:
-				return Board.PLAYER;
+				return PLAYER;
 			case ENEMY_JSON:
-				return Board.ENEMY;
+				return ENEMY;
 			case NEUTRAL_JSON:
-				return Board.NEUTRAL;
+				return NEUTRAL;
 			default:
 				throw new IllegalArgumentException(jsonPlayer + " is not a valid JSON player");
 		}
 	}
 
-	private static byte boardToJSONPlayer(int boardPlayer)
+	private static byte boardToJSONPlayer(Player boardPlayer)
 	{
 		switch (boardPlayer)
 		{
-			case Board.PLAYER:
+			case PLAYER:
 				return PLAYER_JSON;
-			case Board.ENEMY:
+			case ENEMY:
 				return ENEMY_JSON;
-			case Board.NEUTRAL:
+			case NEUTRAL:
 				return NEUTRAL_JSON;
 			default:
 				throw new IllegalArgumentException(boardPlayer + " is not a valid Board player");

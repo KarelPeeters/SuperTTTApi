@@ -3,14 +3,15 @@ package com.flaghacker.uttt.games;
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
+import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import static com.flaghacker.uttt.common.Board.ENEMY;
-import static com.flaghacker.uttt.common.Board.PLAYER;
+import static com.flaghacker.uttt.common.Player.ENEMY;
+import static com.flaghacker.uttt.common.Player.PLAYER;
 
 public class ConsoleGame
 {
@@ -70,7 +71,7 @@ public class ConsoleGame
 				{
 					System.out.println("move on " + coord);
 					history.add(curr.copy());
-					curr.play(coord, PLAYER);
+					curr.play(coord);
 
 					if (curr.isDone())
 					{
@@ -80,7 +81,7 @@ public class ConsoleGame
 
 					Coord botMove = Util.moveBotWithTimeOut(bot, curr.copy(), time);
 					System.out.println("bot moves " + botMove);
-					curr.play(botMove, ENEMY);
+					curr.play(botMove);
 
 					if (curr.isDone())
 					{
@@ -134,7 +135,7 @@ public class ConsoleGame
 		return Coord.coord(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
 	}
 
-	private static String toSymbol(byte player)
+	private static String toSymbol(Player player)
 	{
 		if (player == PLAYER)
 			return "X";

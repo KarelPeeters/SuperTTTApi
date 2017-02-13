@@ -44,7 +44,7 @@ public class MultiBoardTest
 		for (int i = 0; i < moveCount && !board.isDone(); i++)
 		{
 			List<Coord> moves = board.availableMoves();
-			board.play(moves.get(random.nextInt(moves.size())), board.nextPlayer());
+			board.play(moves.get(random.nextInt(moves.size())));
 		}
 	}
 

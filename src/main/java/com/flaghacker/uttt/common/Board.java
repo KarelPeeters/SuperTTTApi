@@ -7,13 +7,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.flaghacker.uttt.common.Player.ENEMY;
+import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.uttt.common.Player.PLAYER;
+
 public class Board implements Serializable
 {
 	private static final long serialVersionUID = -8352590958828628704L;
-
-	public static final byte NEUTRAL = 0;
-	public static final byte PLAYER = 2;
-	public static final byte ENEMY = 3;
 
 	private static final int TILE_START = 0;
 	private static final int MACRO_TILE_START = TILE_START + 2 * 9 * 9;
@@ -21,9 +21,9 @@ public class Board implements Serializable
 
 
 	private BitSet data;
-	private byte wonBy = NEUTRAL;
+	private Player wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
-	private byte nextPlayer = PLAYER;
+	private Player nextPlayer = PLAYER;
 	private Coord lastMove;
 
 	public Board(Board other)
@@ -36,35 +36,36 @@ public class Board implements Serializable
 		this.lastMove = other.lastMove;
 	}
 
-	public Board(byte[][] tiles, byte[] macroTiles, boolean[] nextMacros)
+	public Board(Player[][] tiles, Player[] macroTiles, boolean[] nextMacros)
 	{
 		this.data = new BitSet(2 * (9 * 9 + 9) + 9);
 
 		for (Coord coord : Coord.list())
-			setTile(coord, tiles[coord.x()][coord.y()]);
+		{
+			Player tile = tiles == null ? NEUTRAL : tiles[coord.x()][coord.y()];
+
+			setTile(coord, tile);
+			if (tile == NEUTRAL)
+				freeTiles.add(coord);
+		}
 
 		for (int xm = 0; xm < 3; xm++)
 		{
 			for (int ym = 0; ym < 3; ym++)
 			{
-				setMacro(xm + 3 * ym, macroTiles[xm + 3 * ym]);
+				setMacro(xm + 3 * ym, macroTiles == null ? NEUTRAL : macroTiles[xm + 3 * ym]);
 				setNextMacro(xm + 3 * ym, nextMacros == null || nextMacros[xm + 3 * ym]);
 			}
 		}
-
-
-		for (Coord coord : Coord.list())
-			if (tile(coord) == NEUTRAL)
-				freeTiles.add(coord);
 	}
 
 	public Board()
 	{
-		this(new byte[9][9], new byte[9], null);
+		this(null, null, null);
 	}
 
 	//low level data methods
-	private byte readPlayer(int i)
+	private Player readPlayer(int i)
 	{
 		boolean occupied = data.get(i);
 		boolean enemy = data.get(i + 1);
@@ -72,28 +73,28 @@ public class Board implements Serializable
 		return occupied ? (enemy ? ENEMY : PLAYER) : NEUTRAL;
 	}
 
-	private void writePlayer(int i, byte player)
+	private void writePlayer(int i, Player player)
 	{
 		data.set(i, player != NEUTRAL);
 		data.set(i + 1, player == ENEMY);
 	}
 
-	public byte tile(Coord coord)
+	public Player tile(Coord coord)
 	{
 		return readPlayer(TILE_START + 2 * (coord.os() + 9 * coord.om()));
 	}
 
-	private void setTile(Coord coord, byte player)
+	private void setTile(Coord coord, Player player)
 	{
 		writePlayer(TILE_START + 2 * (9 * coord.om() + coord.os()), player);
 	}
 
-	public byte macro(int om)
+	public Player macro(int om)
 	{
 		return readPlayer(MACRO_TILE_START + 2 * om);
 	}
 
-	private void setMacro(int om, byte player)
+	private void setMacro(int om, Player player)
 	{
 		writePlayer(MACRO_TILE_START + 2 * om, player);
 	}
@@ -109,27 +110,26 @@ public class Board implements Serializable
 	}
 
 	//utility wrappers
-	public byte tile(int x, int y)
+	public Player tile(int x, int y)
 	{
 		return tile(Coord.coord(x, y));
 	}
 
-	public byte macro(int xm, int ym)
+	public Player macro(int xm, int ym)
 	{
 		return macro(xm + 3 * ym);
 	}
 
 	//other methods
-	public boolean play(Coord coord, byte player)
+	public boolean play(Coord coord)
 	{
 		if (!availableMoves().contains(coord))
 			throw new IllegalArgumentException(coord + " is not available, choose one of: " + availableMoves());
 
-		if (!(nextPlayer == player))
-			throw new IllegalArgumentException(nextPlayer + " must play instead of " + player);
+		Player player = nextPlayer;
 
 		lastMove = coord;
-		nextPlayer = other(player);
+		nextPlayer = nextPlayer.other();
 
 		setTile(coord, player);
 
@@ -151,7 +151,7 @@ public class Board implements Serializable
 		return macroFull(om % 3, om / 3);
 	}
 
-	public byte wonBy()
+	public Player wonBy()
 	{
 		return wonBy;
 	}
@@ -175,7 +175,7 @@ public class Board implements Serializable
 	//checks whether the board was won by the tile placed at absolute (x,y)
 	private boolean isWon(Coord coord)
 	{
-		byte player = tile(coord);
+		Player player = tile(coord);
 
 		if (wonGrid(coord.os(), TILE_START + 2 * 9 * coord.om()))
 		{
@@ -197,7 +197,7 @@ public class Board implements Serializable
 
 	private boolean wonGrid(int playedIndex, int dataOffset)
 	{
-		byte player = readPlayer(dataOffset + 2 * playedIndex);
+		Player player = readPlayer(dataOffset + 2 * playedIndex);
 		int x = playedIndex % 3;
 		int y = playedIndex / 3;
 
@@ -241,12 +241,12 @@ public class Board implements Serializable
 		return Collections.unmodifiableList(result);
 	}
 
-	public byte nextPlayer()
+	public Player nextPlayer()
 	{
 		return nextPlayer;
 	}
 
-	private boolean check(int x, int y, int dataOffset, byte player)
+	private boolean check(int x, int y, int dataOffset, Player player)
 	{
 		return readPlayer(dataOffset + 2 * (x + 3 * y)) == player;
 	}
@@ -347,16 +347,6 @@ public class Board implements Serializable
 		return result;
 	}
 
-	public static byte other(byte player)
-	{
-		if (player == PLAYER)
-			return ENEMY;
-		else if (player == ENEMY)
-			return PLAYER;
-		else
-			throw new IllegalArgumentException("player should be one of PLAYER, ENEMY; was " + player);
-	}
-
 	private static String repeat(String str, int count)
 	{
 		StringBuilder builder = new StringBuilder();
@@ -397,7 +387,7 @@ public class Board implements Serializable
 		return lastMove;
 	}
 
-	public void setNextPlayer(byte nextPlayer)
+	public void setNextPlayer(Player nextPlayer)
 	{
 		this.nextPlayer = nextPlayer;
 	}
@@ -427,11 +417,11 @@ public class Board implements Serializable
 			this.setNextMacro(_om, true);
 	}
 
-	public boolean macroFinishesGame(int xm, int ym, byte player)
+	public boolean macroFinishesGame(int xm, int ym, Player player)
 	{
 		int om = xm + 3 * ym;
 
-		byte tmpPlayer = macro(om);
+		Player tmpPlayer = macro(om);
 		setMacro(om, player);
 
 		boolean won = wonGrid(om, MACRO_TILE_START);
@@ -440,7 +430,7 @@ public class Board implements Serializable
 		return won;
 	}
 
-	public boolean winnableMacro(int xm, int ym, byte player)
+	public boolean winnableMacro(int xm, int ym, Player player)
 	{
 		Board test = copy();
 		test.disableAllMacrosExcept(xm, ym);
@@ -448,7 +438,7 @@ public class Board implements Serializable
 
 		for (Coord move : test.availableMoves())
 		{
-			test.play(move, player);
+			test.play(move);
 			test.disableAllMacrosExcept(xm, ym);
 			test.setNextPlayer(player);
 		}

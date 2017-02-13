@@ -100,7 +100,7 @@ public class BoardPlayTest
 				JSONBoardUtil.checkMatch(board, expected.get(i));
 
 				if (i < moves.size())
-					board.play(moves.get(i), board.nextPlayer());
+					board.play(moves.get(i));
 			}
 		}
 

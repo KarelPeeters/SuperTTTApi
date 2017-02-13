@@ -3,21 +3,22 @@ package com.flaghacker.uttt.games;
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
+import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Util;
 
 import java.util.Scanner;
 
-import static com.flaghacker.uttt.common.Board.ENEMY;
-import static com.flaghacker.uttt.common.Board.NEUTRAL;
-import static com.flaghacker.uttt.common.Board.PLAYER;
+import static com.flaghacker.uttt.common.Player.ENEMY;
+import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.uttt.common.Player.PLAYER;
 
 public class AIGame
 {
 	private final Scanner scan = new Scanner(System.in);
 	private final Bot bot;
 
-	private byte[][] tmpTiles;
-	private byte[] tmpMacro;
+	private Player[][] tmpTiles;
+	private Player[] tmpMacro;
 	private boolean[] tmpNextMacro;
 
 	private int botId = 0;
@@ -81,6 +82,7 @@ public class AIGame
 	{
 		long delay = (long) (0.9 * timeForNextMove());
 
+		//TODO fix this
 		Board board = new Board(tmpTiles, tmpMacro, tmpNextMacro);
 		Coord move = Util.moveBotWithTimeOut(bot, board, delay);
 
@@ -89,6 +91,7 @@ public class AIGame
 
 	public Board getBoard()
 	{
+		//TODO fix this
 		return new Board(tmpTiles, tmpMacro, tmpNextMacro);
 	}
 
@@ -116,7 +119,7 @@ public class AIGame
 
 	public void parseFromString(String s)
 	{
-		this.tmpTiles = new byte[9][9];
+		this.tmpTiles = new Player[9][9];
 
 		System.err.println("Move " + moveNr);
 		s = s.replace(";", ",");
@@ -132,7 +135,7 @@ public class AIGame
 	public void parseMacroBoardFromString(String s)
 	{
 		this.tmpNextMacro = new boolean[9];
-		this.tmpMacro = new byte[9];
+		this.tmpMacro = new Player[9];
 
 		String[] r = s.split(",");
 		int counter = 0;
@@ -145,7 +148,7 @@ public class AIGame
 		}
 	}
 
-	private byte toPlayer(int i)
+	private Player toPlayer(int i)
 	{
 		if (i == 0 || i == - 1)
 			return NEUTRAL;
@@ -157,7 +160,7 @@ public class AIGame
 		throw new IllegalArgumentException("i can't be " + i);
 	}
 
-	private int fromPlayer(byte b)
+	private int fromPlayer(Player b)
 	{
 		if (b == NEUTRAL)
 			return 0;

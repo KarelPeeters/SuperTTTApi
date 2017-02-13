@@ -10,6 +10,9 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.Random;
 
+import static com.flaghacker.uttt.common.Player.ENEMY;
+import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.uttt.common.Player.PLAYER;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Theories.class)
@@ -18,14 +21,14 @@ public class BoardTest
 	@Test
 	public void testOther()
 	{
-		assertEquals(Board.PLAYER, Board.other(Board.ENEMY));
-		assertEquals(Board.ENEMY, Board.other(Board.PLAYER));
+		assertEquals(PLAYER, ENEMY.other());
+		assertEquals(ENEMY, PLAYER.other());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testOtherNeutralFails()
 	{
-		Board.other(Board.NEUTRAL);
+		NEUTRAL.other();
 	}
 
 	@Test
@@ -34,8 +37,8 @@ public class BoardTest
 		final Coord move = Coord.coord(4, 4);
 		Board board = new Board();
 
-		byte player = board.nextPlayer();
-		board.play(move, board.nextPlayer());
+		Player player = board.nextPlayer();
+		board.play(move);
 
 		assertEquals(player, board.tile(move));
 	}
@@ -48,10 +51,10 @@ public class BoardTest
 	}
 
 	@DataPoints
-	public static byte[] players = {Board.PLAYER, Board.ENEMY};
+	public static Player[] players = {PLAYER, ENEMY};
 
 	@Theory
-	public void testManhattanWin(byte player)
+	public void testManhattanWin(Player player)
 	{
 		for (int om = 0; om < 9; om++)
 		{
@@ -68,7 +71,7 @@ public class BoardTest
 	}
 
 	@Theory
-	public void testDiagonalWin(byte player)
+	public void testDiagonalWin(Player player)
 	{
 		for (int om = 0; om < 9; om++)
 		{
@@ -82,21 +85,21 @@ public class BoardTest
 	}
 
 	@Theory
-	public void testFullWin(byte player)
+	public void testFullWin(Player player)
 	{
 		assertEquals(
 				"macro top line",
 				player, playedBoard(player, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0).wonBy());
 	}
 
-	private Board playedBoard(byte player, int... moves)
+	private Board playedBoard(Player player, int... moves)
 	{
 		Board board = new Board();
 		playMoves(board, player, moves);
 		return board;
 	}
 
-	private void playMoves(Board board, byte player, int... moves)
+	private void playMoves(Board board, Player player, int... moves)
 	{
 		if (moves.length % 2 != 0)
 			throw new IllegalArgumentException();
@@ -107,7 +110,7 @@ public class BoardTest
 
 			board.setNextPlayer(player);
 			board.setNextMacro(move.om(), true);
-			board.play(move, player);
+			board.play(move);
 		}
 	}
 
@@ -119,7 +122,7 @@ public class BoardTest
 			if (board.isDone())
 				break;
 			List<Coord> available = board.availableMoves();
-			board.play(available.get(rand.nextInt(available.size())), board.nextPlayer());
+			board.play(available.get(rand.nextInt(available.size())));
 		}
 		return board;
 	}
