@@ -3,6 +3,7 @@ package com.flaghacker.uttt.bots;
 import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Bot;
 import com.flaghacker.uttt.common.Coord;
+import com.flaghacker.uttt.common.Timer;
 import com.flaghacker.uttt.common.Util;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class RandomBot implements Bot
 	private Random random = Util.loggedRandom();
 
 	@Override
-	public Coord move(Board board)
+	public Coord move(Board board, Timer timer)
 	{
 		List<Coord> moves = board.availableMoves();
 		return moves.get(random.nextInt(moves.size()));
@@ -25,11 +26,5 @@ public class RandomBot implements Bot
 	public String toString()
 	{
 		return "RandomBot";
-	}
-
-	@Override
-	public void timeUp()
-	{
-		//NOP
 	}
 }

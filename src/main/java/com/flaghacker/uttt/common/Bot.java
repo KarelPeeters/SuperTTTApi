@@ -4,7 +4,5 @@ import java.io.Serializable;
 
 public interface Bot extends Serializable
 {
-	Coord move(Board board);
-
-	void timeUp();
+	Coord move(Board board, Timer timer);
 }
