@@ -63,7 +63,7 @@ public class Util
 			{
 				if (mayInterruptIfRunning)
 				{
-					future.cancel(false);
+					future.cancel(true);
 					timer.interrupt();
 					cancelled = true;
 				}

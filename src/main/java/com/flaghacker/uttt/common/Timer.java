@@ -27,6 +27,11 @@ public class Timer
 		this.interrupted = true;
 	}
 
+	public boolean isInterrupted()
+	{
+		return interrupted;
+	}
+
 	public long timeLeft()
 	{
 		if (!started())
