@@ -6,9 +6,6 @@ import com.flaghacker.uttt.common.Coord;
 import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Util;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 import static com.flaghacker.uttt.common.Player.NEUTRAL;
@@ -16,7 +13,9 @@ import static com.flaghacker.uttt.common.Player.PLAYER;
 
 public class BotGame
 {
-	private List<Bot> bots;
+	private Bot p1;
+	private Bot p2;
+
 	private Random random = Util.loggedRandom();
 
 	private int count = 1;
@@ -26,7 +25,8 @@ public class BotGame
 
 	public BotGame(Bot p1, Bot p2)
 	{
-		bots = Collections.unmodifiableList(Arrays.asList(p1, p2));
+		this.p1 = p1;
+		this.p2 = p2;
 	}
 
 	public void run()
@@ -39,13 +39,13 @@ public class BotGame
 				printm(String.format("starting game %d; %.4f", i, (double) i / count));
 
 			boolean swapped = shuffling && random.nextBoolean();
-			Bot p1 = bots.get(swapped ? 1 : 0);
-			Bot p2 = bots.get(swapped ? 0 : 1);
+			Bot p1 = swapped ? this.p2 : this.p1;
+			Bot p2 = swapped ? this.p1 : this.p2;
 
 			Board board = new Board();
 
 			int nextRound = 0;
-			while (! board.isDone())
+			while (!board.isDone())
 			{
 				prints("Round #" + nextRound++);
 
