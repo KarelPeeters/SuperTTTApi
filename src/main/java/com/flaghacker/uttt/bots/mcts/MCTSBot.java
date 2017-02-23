@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Random;
 
 import static com.flaghacker.uttt.common.Player.NEUTRAL;
-import static java.lang.Math.sqrt;
 
 public class MCTSBot implements Bot
 {
@@ -22,18 +21,18 @@ public class MCTSBot implements Bot
 
 	//TODO make everything private again
 	public Random random = Util.loggedRandom();
+	private final Settings settings;
 
-	private boolean log;
 	public BoardInfo info;
 
 	public MCTSBot()
 	{
-		this(false);
+		this(Settings.standard());
 	}
 
-	public MCTSBot(boolean log)
+	public MCTSBot(Settings settings)
 	{
-		this.log = log;
+		this.settings = settings;
 	}
 
 	@Override
@@ -85,7 +84,7 @@ public class MCTSBot implements Bot
 
 	private void setup(Board board)
 	{
-		info = new BoardInfo(sqrt(2));
+		info = new BoardInfo(settings);
 		info.inc(board, 0, NEUTRAL, null);
 	}
 
@@ -140,7 +139,7 @@ public class MCTSBot implements Bot
 
 	private void log(Object object)
 	{
-		if (log)
+		if (settings.log())
 			System.err.println(String.valueOf(object));
 	}
 }

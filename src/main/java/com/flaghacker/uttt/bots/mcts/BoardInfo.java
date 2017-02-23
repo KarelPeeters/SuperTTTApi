@@ -4,6 +4,7 @@ import com.flaghacker.uttt.common.Board;
 import com.flaghacker.uttt.common.Coord;
 import com.flaghacker.uttt.common.Player;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,18 +16,20 @@ import java.util.Set;
 import static java.lang.Math.log;
 import static java.lang.Math.sqrt;
 
-public class BoardInfo
+public class BoardInfo implements Serializable
 {
-	private final double weight;
+	private static final long serialVersionUID = 6792457138219073695L;
+
+	private final Settings settings;
 
 	private int totalPlayed = 0;
 	private Info root;
 	private Map<Board, Info> map = new HashMap<>();
 	private Set<Info> moveSet = new HashSet<>();
 
-	public BoardInfo(double weight)
+	public BoardInfo(Settings settings)
 	{
-		this.weight = weight;
+		this.settings = settings;
 	}
 
 	public void incTotal()
@@ -65,7 +68,11 @@ public class BoardInfo
 
 	public Coord selectBestMove()
 	{
-		return Collections.max(moveSet).board.getLastMove();
+		Info bestInfo = settings.tryLose()
+				? Collections.min(moveSet)
+				: Collections.max(moveSet);
+
+		return bestInfo.board.getLastMove();
 	}
 
 	public Info getInfo(Board board)
@@ -115,7 +122,7 @@ public class BoardInfo
 
 		public double value()
 		{
-			return ((double) won / played) + weight * sqrt(log(totalPlayed) / played);
+			return ((double) won / played) + settings.branchWeight() * sqrt(log(totalPlayed) / played);
 		}
 
 		public void inc(Player wonBy)
