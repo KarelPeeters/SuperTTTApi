@@ -72,9 +72,9 @@ public class BotGame
 		}
 
 		printm("Results:");
-		printm("Player 1 Win:\t" + (double) results[2] / count);
+		printm("Player 1 Win:\t" + (double) results[0] / count);
 		printm("Tie:\t\t\t" + (double) results[1] / count);
-		printm("Player 2 Win:\t" + (double) results[0] / count);
+		printm("Player 2 Win:\t" + (double) results[2] / count);
 	}
 
 	private void prints(Object object)
