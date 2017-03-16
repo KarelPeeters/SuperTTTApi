@@ -29,7 +29,7 @@ public class BotGame
 		this.p2 = p2;
 	}
 
-	public void run()
+	public int[] run()
 	{
 		int[] results = new int[3];
 
@@ -75,6 +75,8 @@ public class BotGame
 		printm("Player 1 Win:\t" + (double) results[0] / count);
 		printm("Tie:\t\t\t" + (double) results[1] / count);
 		printm("Player 2 Win:\t" + (double) results[2] / count);
+
+		return results;
 	}
 
 	private void prints(Object object)
