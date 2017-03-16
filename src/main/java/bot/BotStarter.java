@@ -23,7 +23,7 @@ import com.flaghacker.uttt.games.AIGame;
 public class BotStarter
 {
 	public static void main(String[] args) {
-		AIGame game = new AIGame(new RandomBot());
+		AIGame game = new AIGame(new RandomBot(), System.in);
 		game.run();
 	}
 }

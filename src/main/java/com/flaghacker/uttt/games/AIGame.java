@@ -6,6 +6,7 @@ import com.flaghacker.uttt.common.Coord;
 import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Util;
 
+import java.io.InputStream;
 import java.util.Scanner;
 
 import static com.flaghacker.uttt.common.Player.ENEMY;
@@ -14,7 +15,7 @@ import static com.flaghacker.uttt.common.Player.PLAYER;
 
 public class AIGame
 {
-	private final Scanner scan = new Scanner(System.in);
+	private final Scanner scan;
 	private final Bot bot;
 
 	private Player[][] tmpTiles;
@@ -25,9 +26,10 @@ public class AIGame
 	private int timePerMove;
 	private int timeLeft;
 
-	public AIGame(Bot bot)
+	public AIGame(Bot bot, InputStream in)
 	{
 		this.bot = bot;
+		scan = new Scanner(in);
 	}
 
 	public void run()
@@ -139,7 +141,7 @@ public class AIGame
 
 		String[] r = s.split(",");
 		int counter = 0;
-		for (int om = 0; om < 3; om++)
+		for (int om = 0; om < 9; om++)
 		{
 			int val = Integer.parseInt(r[counter]);
 			tmpNextMacro[om] = val == - 1;
