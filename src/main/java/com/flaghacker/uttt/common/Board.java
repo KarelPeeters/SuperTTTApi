@@ -19,10 +19,10 @@ public class Board implements Serializable
 	private static final int MACRO_TILE_START = TILE_START + 2 * 9 * 9;
 	private static final int NEXT_MACRO_START = MACRO_TILE_START + 2 * 9;
 
-
 	private BitSet data;
 	private Player wonBy = NEUTRAL;
 	private List<Coord> freeTiles = new ArrayList<>();
+	private List<Coord> availableMoves;
 	private Player nextPlayer = PLAYER;
 	private Coord lastMove;
 
@@ -32,6 +32,7 @@ public class Board implements Serializable
 
 		this.wonBy = other.wonBy;
 		this.freeTiles = new ArrayList<>(other.freeTiles);
+		this.availableMoves = other.availableMoves;
 		this.nextPlayer = other.nextPlayer;
 		this.lastMove = other.lastMove;
 	}
@@ -130,6 +131,7 @@ public class Board implements Serializable
 
 		lastMove = coord;
 		nextPlayer = nextPlayer.other();
+		availableMoves = null;
 
 		setTile(coord, player);
 
@@ -163,13 +165,18 @@ public class Board implements Serializable
 
 	public List<Coord> availableMoves()
 	{
-		List<Coord> result = new ArrayList<>();
+		if (availableMoves == null)
+		{
+			List<Coord> result = new ArrayList<>();
+			for (Coord coord : freeTiles)
+			{
+				if (nextMacro(coord.om()))
+					result.add(coord);
+			}
 
-		for (Coord coord : freeTiles)
-			if (nextMacro(coord.om()))
-				result.add(coord);
-
-		return Collections.unmodifiableList(result);
+			availableMoves = Collections.unmodifiableList(result);
+		}
+		return availableMoves;
 	}
 
 	//checks whether the board was won by the tile placed at absolute (x,y)
