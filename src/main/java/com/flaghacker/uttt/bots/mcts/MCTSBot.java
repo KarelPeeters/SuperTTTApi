@@ -16,19 +16,10 @@ public class MCTSBot implements Bot
 {
 	private static final long serialVersionUID = 6534256310842724239L;
 
-	public static int totalPlayOuts = 0;
-	public static int totalMoves = 0;
+	private Random rand = Util.loggedRandom();
+	private Settings settings;
 
-	//TODO make everything private again
-	public Random random = Util.loggedRandom();
-	private final Settings settings;
-
-	public BoardInfo info;
-
-	public MCTSBot()
-	{
-		this(Settings.standard());
-	}
+	private BoardInfo info;
 
 	public MCTSBot(Settings settings)
 	{
@@ -38,7 +29,7 @@ public class MCTSBot implements Bot
 	@Override
 	public Coord move(Board board, Timer timer)
 	{
-		totalMoves++;
+		int iterations = 0;
 
 		List<Coord> moves = board.availableMoves();
 		if (moves.size() == 1)
@@ -53,12 +44,12 @@ public class MCTSBot implements Bot
 			while (timer.running())
 			{
 				searchIteration();
+				iterations++;
 			}
 
-			Coord move = info.selectBestMove();
+			log(iterations);
 
-			totalPlayOuts += info.getTotalPlayed();
-			totalMoves++;
+			Coord move = info.selectBestMove();
 
 			if (moves.contains(move))
 				return move;
@@ -74,7 +65,7 @@ public class MCTSBot implements Bot
 			debug(board);
 		}
 
-		return moves.get(random.nextInt(moves.size()));
+		return moves.get(rand.nextInt(moves.size()));
 	}
 
 	private void debug(Board board)
@@ -107,7 +98,7 @@ public class MCTSBot implements Bot
 			board = board.copy();
 
 			List<Coord> moves = board.availableMoves();
-			Coord move = moves.get(random.nextInt(moves.size()));
+			Coord move = moves.get(rand.nextInt(moves.size()));
 			board.play(move);
 
 			if (firstChoice == null)
@@ -134,7 +125,7 @@ public class MCTSBot implements Bot
 	@Override
 	public String toString()
 	{
-		return "MCTSBot " + (double)totalPlayOuts/totalMoves;
+		return "MCTSBot";
 	}
 
 	private void log(Object object)
