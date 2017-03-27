@@ -121,6 +121,11 @@ public class Board implements Serializable
 		return macro(xm + 3 * ym);
 	}
 
+	public void setLastMove(Coord lastMove)
+	{
+		this.lastMove = lastMove;
+	}
+
 	//other methods
 	public boolean play(Coord coord)
 	{
@@ -179,7 +184,7 @@ public class Board implements Serializable
 		return availableMoves;
 	}
 
-	//checks whether the board was won by the tile placed at absolute (x,y)
+	//checks whether the board was won by the tile placed at coord
 	private boolean isWon(Coord coord)
 	{
 		Player player = tile(coord);

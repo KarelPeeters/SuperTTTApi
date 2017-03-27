@@ -8,9 +8,10 @@ repositories {
 }
 
 dependencies {
+    compile  'org.json:json:20131018'
+
     testCompile 'commons-io:commons-io:2.4'
     testCompile 'org.apache.commons:commons-lang3:3.5'
-    testCompile 'org.json:json:20131018'
 
     testCompile 'junit:junit:4.12'
 }

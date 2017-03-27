@@ -92,14 +92,14 @@ public class BoardTest
 				player, playedBoard(player, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0).wonBy());
 	}
 
-	private Board playedBoard(Player player, int... moves)
+	public static Board playedBoard(Player player, int ... moves)
 	{
 		Board board = new Board();
 		playMoves(board, player, moves);
 		return board;
 	}
 
-	private void playMoves(Board board, Player player, int... moves)
+	public static void playMoves(Board board, Player player, int ... moves)
 	{
 		if (moves.length % 2 != 0)
 			throw new IllegalArgumentException();
@@ -114,7 +114,7 @@ public class BoardTest
 		}
 	}
 
-	private Board randomBoard(Random rand, int moves)
+	public static Board randomBoard(Random rand, int moves)
 	{
 		Board board = new Board();
 		for (int i = 0; i < moves; i++)
