@@ -17,13 +17,21 @@
 
 package bot;
 
-import com.flaghacker.uttt.bots.RandomBot;
+import com.flaghacker.uttt.bots.mcts.MCTSBot;
+import com.flaghacker.uttt.bots.mcts.Settings;
 import com.flaghacker.uttt.games.AIGame;
 
 public class BotStarter
 {
-	public static void main(String[] args) {
-		AIGame game = new AIGame(new RandomBot(), System.in);
+	public static void main(String[] args)
+	{
+		AIGame game = new AIGame(new MCTSBot(
+						Settings.builder()
+								.branchWeight(6)
+								.log(true)
+								.build()
+				), System.in
+		);
 		game.run();
 	}
 }
