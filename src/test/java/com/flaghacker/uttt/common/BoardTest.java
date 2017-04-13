@@ -50,6 +50,13 @@ public class BoardTest
 		assertEquals(board, SerializationUtils.clone(board));
 	}
 
+	@Test
+	public void testDoubleFlip()
+	{
+		Board board = randomBoard(new Random(0), 10);
+		assertEquals(board, board.flip().flip());
+	}
+
 	@DataPoints
 	public static Player[] players = {PLAYER, ENEMY};
 

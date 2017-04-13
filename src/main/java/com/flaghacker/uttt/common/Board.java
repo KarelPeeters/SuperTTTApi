@@ -268,6 +268,21 @@ public class Board implements Serializable
 		return new Board(this);
 	}
 
+	public Board flip()
+	{
+		Board board = this.copy();
+
+		for (Coord coord : Coord.list())
+			board.setTile(coord, board.tile(coord).otherWithNeutral());
+		for (int om = 0; om < 9; om++)
+			board.setMacro(om, board.macro(om).otherWithNeutral());
+
+		board.wonBy = board.wonBy.otherWithNeutral();
+		board.nextPlayer = board.nextPlayer.otherWithNeutral();
+
+		return board;
+	}
+
 	public boolean isMacroEmpty(int xm, int ym)
 	{
 		for (int xs = 0; xs <= 2; xs++)

@@ -24,6 +24,14 @@ public enum Player
 			throw new IllegalArgumentException("player should be one of [PLAYER, ENEMY]; was " + this);
 	}
 
+	public Player otherWithNeutral()
+	{
+		if (this == NEUTRAL)
+			return NEUTRAL;
+
+		return this.other();
+	}
+
 	public String toNiceString()
 	{
 		return niceString;
