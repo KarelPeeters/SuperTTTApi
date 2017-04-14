@@ -6,6 +6,13 @@ import com.flaghacker.uttt.common.Coord;
 import com.flaghacker.uttt.common.Player;
 import com.flaghacker.uttt.common.Timer;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.POSITIVE_INFINITY;
+import static java.lang.Math.max;
+
 public class MMBot implements Bot
 {
 	private final int depth;
@@ -29,7 +36,7 @@ public class MMBot implements Bot
 			Board next = board.copy();
 			next.play(move);
 
-			double negaMax = -negaMax(next, depth, -1);
+			double negaMax = -negaMax(next, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY, -1);
 
 			if (bestMove == null || negaMax > bestValue)
 			{
@@ -41,23 +48,41 @@ public class MMBot implements Bot
 		return bestMove;
 	}
 
-	private double negaMax(Board board, int depth, int player)
+	private double negaMax(Board board, int depth, double a, double b, int player)
 	{
 		if (depth == 0 || board.isDone())
 			return player * value(board);
 
-		double bestValue = Double.NEGATIVE_INFINITY;
+		List<Board> children = children(board);
 
-		for (Coord move : board.availableMoves())
+		double bestValue = NEGATIVE_INFINITY;
+
+		for (Board child : children)
 		{
-			Board next = board.copy();
-			next.play(move);
+			double value = -negaMax(child, depth - 1, -b, -a, -player);
 
-			double value = -negaMax(next, depth - 1, -player);
-			bestValue = Math.max(bestValue, value);
+			bestValue = max(bestValue, value);
+			a = max(a, value);
+			if (a >= b)
+				break;
 		}
 
 		return bestValue;
+	}
+
+	private List<Board> children(Board board)
+	{
+		List<Coord> moves = board.availableMoves();
+		List<Board> children = new ArrayList<>(moves.size());
+
+		for (Coord move : moves)
+		{
+			Board next = board.copy();
+			next.play(move);
+			children.add(next);
+		}
+
+		return children;
 	}
 
 	private double value(Board board)
