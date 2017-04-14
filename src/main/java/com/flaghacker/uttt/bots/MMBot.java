@@ -36,11 +36,11 @@ public class MMBot implements Bot
 			Board next = board.copy();
 			next.play(move);
 
-			double negaMax = -negaMax(next, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY, -1);
+			double value = -negaMax(next, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY, -1);
 
-			if (bestMove == null || negaMax > bestValue)
+			if (bestMove == null || value > bestValue)
 			{
-				bestValue = negaMax;
+				bestValue = value;
 				bestMove = move;
 			}
 		}
