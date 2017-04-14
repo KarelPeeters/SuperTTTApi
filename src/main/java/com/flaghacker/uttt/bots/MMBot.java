@@ -21,19 +21,19 @@ public class MMBot implements Bot
 		if (board.nextPlayer() == Player.ENEMY)
 			board = board.flip();
 
-		double bestScore = 0;
+		double bestValue = 0;
 		Coord bestMove = null;
 
 		for (Coord move : board.availableMoves())
 		{
-			Board testBoard = board.copy();
-			testBoard.play(move);
+			Board next = board.copy();
+			next.play(move);
 
-			double minMax = minimax(testBoard, depth, false);
+			double negaMax = negaMax(next, depth, 1);
 
-			if (bestMove == null || minMax > bestScore)
+			if (bestMove == null || negaMax > bestValue)
 			{
-				bestScore = minMax;
+				bestValue = negaMax;
 				bestMove = move;
 			}
 		}
@@ -41,24 +41,23 @@ public class MMBot implements Bot
 		return bestMove;
 	}
 
-	private double minimax(Board board, int depth, boolean maximising)
+	private double negaMax(Board board, int depth, int player)
 	{
 		if (depth == 0 || board.isDone())
-			return value(board);
+			return player * value(board);
 
-		double bestScore = maximising ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+		double bestValue = Double.NEGATIVE_INFINITY;
 
 		for (Coord move : board.availableMoves())
 		{
 			Board next = board.copy();
 			next.play(move);
 
-			bestScore = (maximising)
-					? Math.max(bestScore, minimax(next, depth - 1, false))
-					: Math.min(bestScore, minimax(next, depth - 1, true));
+			double value = -negaMax(next, depth - 1, -player);
+			bestValue = Math.max(bestValue, value);
 		}
 
-		return bestScore;
+		return bestValue;
 	}
 
 	private double value(Board board)
