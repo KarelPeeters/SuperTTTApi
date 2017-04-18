@@ -13,7 +13,17 @@ public class RandomBot implements Bot
 {
 	private static final long serialVersionUID = -4978779157732236475L;
 
-	private Random random = Util.loggedRandom();
+	private final Random random;
+
+	public RandomBot()
+	{
+		random = Util.loggedRandom();
+	}
+
+	public RandomBot(int seed)
+	{
+		random = new Random(seed);
+	}
 
 	@Override
 	public Coord move(Board board, Timer timer)
