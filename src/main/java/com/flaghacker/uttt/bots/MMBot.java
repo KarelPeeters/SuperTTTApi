@@ -28,46 +28,34 @@ public class MMBot implements Bot
 		if (board.nextPlayer() == Player.ENEMY)
 			board = board.flip();
 
-		double bestValue = 0;
-		Coord bestMove = null;
-
-		for (Coord move : board.availableMoves())
-		{
-			Board next = board.copy();
-			next.play(move);
-
-			double value = -negaMax(next, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY, -1);
-
-			if (bestMove == null || value > bestValue)
-			{
-				bestValue = value;
-				bestMove = move;
-			}
-		}
-
-		return bestMove;
+		return negaMax(board, depth+1, NEGATIVE_INFINITY, POSITIVE_INFINITY, 1).move;
 	}
 
-	private double negaMax(Board board, int depth, double a, double b, int player)
+	private ValuedMove negaMax(Board board, int depth, double a, double b, int player)
 	{
 		if (depth == 0 || board.isDone())
-			return player * value(board);
+			return new ValuedMove(board.getLastMove(), player * value(board));
 
 		List<Board> children = children(board);
 
 		double bestValue = NEGATIVE_INFINITY;
+		Coord bestMove = null;
 
 		for (Board child : children)
 		{
-			double value = -negaMax(child, depth - 1, -b, -a, -player);
+			double value = -negaMax(child, depth - 1, -b, -a, -player).value;
 
-			bestValue = max(bestValue, value);
+			if (value > bestValue || bestMove == null)
+			{
+				bestValue = value;
+				bestMove = child.getLastMove();
+			}
 			a = max(a, value);
 			if (a >= b)
 				break;
 		}
 
-		return bestValue;
+		return new ValuedMove(bestMove, bestValue);
 	}
 
 	private List<Board> children(Board board)
@@ -77,12 +65,24 @@ public class MMBot implements Bot
 
 		for (Coord move : moves)
 		{
-			Board next = board.copy();
-			next.play(move);
-			children.add(next);
+			Board child = board.copy();
+			child.play(move);
+			children.add(child);
 		}
 
 		return children;
+	}
+
+	private static class ValuedMove
+	{
+		public final Coord move;
+		public final double value;
+
+		public ValuedMove(Coord move, double value)
+		{
+			this.move = move;
+			this.value = value;
+		}
 	}
 
 	private double value(Board board)
