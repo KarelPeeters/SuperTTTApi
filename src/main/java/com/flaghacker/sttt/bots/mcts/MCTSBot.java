@@ -1,11 +1,6 @@
 package com.flaghacker.sttt.bots.mcts;
 
-import com.flaghacker.sttt.common.Board;
-import com.flaghacker.sttt.common.Bot;
-import com.flaghacker.sttt.common.Coord;
-import com.flaghacker.sttt.common.Player;
-import com.flaghacker.sttt.common.Timer;
-import com.flaghacker.sttt.common.Util;
+import com.flaghacker.sttt.common.*;
 
 import java.util.List;
 import java.util.Random;

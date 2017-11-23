@@ -1,10 +1,6 @@
 package com.flaghacker.sttt.bots;
 
-import com.flaghacker.sttt.common.Board;
-import com.flaghacker.sttt.common.Bot;
-import com.flaghacker.sttt.common.Coord;
-import com.flaghacker.sttt.common.Player;
-import com.flaghacker.sttt.common.Timer;
+import com.flaghacker.sttt.common.*;
 
 import java.util.ArrayList;
 import java.util.List;
