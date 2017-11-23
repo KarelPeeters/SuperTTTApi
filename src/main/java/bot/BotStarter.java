@@ -17,9 +17,9 @@
 
 package bot;
 
-import com.flaghacker.uttt.bots.mcts.MCTSBot;
-import com.flaghacker.uttt.bots.mcts.Settings;
-import com.flaghacker.uttt.games.AIGame;
+import com.flaghacker.sttt.bots.mcts.MCTSBot;
+import com.flaghacker.sttt.bots.mcts.Settings;
+import com.flaghacker.sttt.games.AIGame;
 
 public class BotStarter
 {

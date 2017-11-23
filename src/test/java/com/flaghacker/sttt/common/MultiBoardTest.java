@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import org.json.JSONObject;
 import org.junit.Test;

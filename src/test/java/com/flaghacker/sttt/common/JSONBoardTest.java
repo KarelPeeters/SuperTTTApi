@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import org.junit.Test;
 

@@ -1,16 +1,16 @@
-package com.flaghacker.uttt.bots.mcts;
+package com.flaghacker.sttt.bots.mcts;
 
-import com.flaghacker.uttt.common.Board;
-import com.flaghacker.uttt.common.Bot;
-import com.flaghacker.uttt.common.Coord;
-import com.flaghacker.uttt.common.Player;
-import com.flaghacker.uttt.common.Timer;
-import com.flaghacker.uttt.common.Util;
+import com.flaghacker.sttt.common.Board;
+import com.flaghacker.sttt.common.Bot;
+import com.flaghacker.sttt.common.Coord;
+import com.flaghacker.sttt.common.Player;
+import com.flaghacker.sttt.common.Timer;
+import com.flaghacker.sttt.common.Util;
 
 import java.util.List;
 import java.util.Random;
 
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
 
 public class MCTSBot implements Bot
 {

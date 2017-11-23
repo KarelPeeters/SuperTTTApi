@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.flaghacker.uttt.common.Player.ENEMY;
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
-import static com.flaghacker.uttt.common.Player.PLAYER;
+import static com.flaghacker.sttt.common.Player.ENEMY;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.PLAYER;
 
 public class Board implements Serializable
 {

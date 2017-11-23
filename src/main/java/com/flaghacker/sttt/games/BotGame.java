@@ -1,15 +1,15 @@
-package com.flaghacker.uttt.games;
+package com.flaghacker.sttt.games;
 
-import com.flaghacker.uttt.common.Board;
-import com.flaghacker.uttt.common.Bot;
-import com.flaghacker.uttt.common.Coord;
-import com.flaghacker.uttt.common.Player;
-import com.flaghacker.uttt.common.Util;
+import com.flaghacker.sttt.common.Board;
+import com.flaghacker.sttt.common.Bot;
+import com.flaghacker.sttt.common.Coord;
+import com.flaghacker.sttt.common.Player;
+import com.flaghacker.sttt.common.Util;
 
 import java.util.Random;
 
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
-import static com.flaghacker.uttt.common.Player.PLAYER;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.PLAYER;
 
 public class BotGame
 {

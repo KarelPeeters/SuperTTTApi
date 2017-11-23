@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -6,9 +6,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.flaghacker.uttt.common.Player.ENEMY;
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
-import static com.flaghacker.uttt.common.Player.PLAYER;
+import static com.flaghacker.sttt.common.Player.ENEMY;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.PLAYER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

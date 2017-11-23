@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
@@ -10,9 +10,9 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.Random;
 
-import static com.flaghacker.uttt.common.Player.ENEMY;
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
-import static com.flaghacker.uttt.common.Player.PLAYER;
+import static com.flaghacker.sttt.common.Player.ENEMY;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.PLAYER;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Theories.class)

@@ -1,10 +1,10 @@
-package com.flaghacker.uttt.bots;
+package com.flaghacker.sttt.bots;
 
-import com.flaghacker.uttt.common.Board;
-import com.flaghacker.uttt.common.Bot;
-import com.flaghacker.uttt.common.Coord;
-import com.flaghacker.uttt.common.Timer;
-import com.flaghacker.uttt.common.Util;
+import com.flaghacker.sttt.common.Board;
+import com.flaghacker.sttt.common.Bot;
+import com.flaghacker.sttt.common.Coord;
+import com.flaghacker.sttt.common.Timer;
+import com.flaghacker.sttt.common.Util;
 
 import java.util.List;
 import java.util.Random;

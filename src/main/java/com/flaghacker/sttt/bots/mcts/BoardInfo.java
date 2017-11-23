@@ -1,8 +1,8 @@
-package com.flaghacker.uttt.bots.mcts;
+package com.flaghacker.sttt.bots.mcts;
 
-import com.flaghacker.uttt.common.Board;
-import com.flaghacker.uttt.common.Coord;
-import com.flaghacker.uttt.common.Player;
+import com.flaghacker.sttt.common.Board;
+import com.flaghacker.sttt.common.Coord;
+import com.flaghacker.sttt.common.Player;
 
 import java.io.Serializable;
 import java.util.ArrayList;

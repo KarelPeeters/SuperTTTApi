@@ -1,4 +1,4 @@
-package com.flaghacker.uttt.bots.mcts;
+package com.flaghacker.sttt.bots.mcts;
 
 import java.io.Serializable;
 

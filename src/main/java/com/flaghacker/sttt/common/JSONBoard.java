@@ -1,9 +1,9 @@
-package com.flaghacker.uttt.common;
+package com.flaghacker.sttt.common;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import static com.flaghacker.uttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.Player.NEUTRAL;
 
 public class JSONBoard
 {
