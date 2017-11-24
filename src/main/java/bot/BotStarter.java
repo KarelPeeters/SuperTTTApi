@@ -17,21 +17,20 @@
 
 package bot;
 
-import com.flaghacker.sttt.bots.mcts.MCTSBot;
-import com.flaghacker.sttt.bots.mcts.Settings;
-import com.flaghacker.sttt.games.AIGame;
+import com.flaghacker.sttt.common.KotlinBoard;
 
 public class BotStarter
 {
 	public static void main(String[] args)
 	{
-		AIGame game = new AIGame(new MCTSBot(
+		KotlinBoard b = new KotlinBoard();
+		/*AIGame game = new AIGame(new MCTSBot(
 						Settings.builder()
 								.branchWeight(6)
 								.log(true)
 								.build()
 				), System.in
 		);
-		game.run();
+		game.run();¨*/
 	}
 }
