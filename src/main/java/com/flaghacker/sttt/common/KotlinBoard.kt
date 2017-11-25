@@ -22,26 +22,44 @@ class KotlinBoard : Serializable {
     private var wonBy = KotlinPlayer.NEUTRAL
     private var nextPlayer = KotlinPlayer.PLAYER
 
-    private var lastMove: Int? = null
+    private var macroMask = 0b111111111
+    private var lastMove: Byte? = null
+
+    fun nextPlayer() = nextPlayer
+    fun isDone() = wonBy != KotlinPlayer.NEUTRAL
+    fun wonBy() = wonBy
+    fun getLastMove() = lastMove
+
+    fun flip(): KotlinBoard {
+        val board = copy()
+
+        val newRows = Array(6) { 0 }
+        for (i in 0..2)
+            newRows[i] = board.rows[i + 3]
+        for (i in 3..5)
+            newRows[i] = board.rows[i + 3]
+        board.rows = newRows
+
+        board.wonBy = board.wonBy.otherWithNeutral()
+        board.nextPlayer = board.nextPlayer.otherWithNeutral()
+
+        return board
+    }
+
+    fun copy(): KotlinBoard {
+        val copy = KotlinBoard()
+        copy.rows = rows.copyOf()
+        copy.wonBy = wonBy
+        copy.nextPlayer = nextPlayer
+        copy.macroMask = macroMask
+        copy.lastMove = lastMove
+        return copy
+    }
 
     init {
-        play(0)
-        play(1)
-        play(10)
-        play(2)
-        play(20)
-        play(21)
-        play(30)
-        play(22)
-        play(40)
-        play(23)
-        play(50)
-        play(24)
-        play(60)
-        play(25)
-        play(70)
-        play(26)
-        play(80)
+        //println("start")
+        //play(0)
+        //play(1)
 /*        play(27)
         play(53)
         play(30)
@@ -53,19 +71,18 @@ class KotlinBoard : Serializable {
         //println(Integer.toBinaryString(getMacro(3,KotlinPlayer.PLAYER)))
     }
 
-    fun play(index: Int): Boolean {
+    fun play(index: Byte): Boolean {
         val row = index / 27 //Row 0,1,2
+        val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro
+        val moveShift = index % 9                //Shift required for index within matrix
+        val shift = moveShift + macroShift
 
-        val macroShift = (index / 3) % 3 * 9             //Shift to go to the right micro (9om)
-        val moveShift = index % 3 + (index / 9) % 3 * 3  //Shift required for index within matrix (xs + 3ys)
-        val shift = moveShift + macroShift               //xs + 3ys + 9om
-
-        println("PLAY($nextPlayer) | index:$index row:$row shift:$shift") //TODO
+        //println("PLAY($nextPlayer) | index:$index row:$row shift:$shift") //TODO
 
         //If the move is not available throw exception
-        if (nthBitIs1((rows[row] or rows[row + 3]).inv(),shift))
+        if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27)*3 + (macroShift / 9)))
             throw RuntimeException("Position $index not available")
-        else if (wonBy!=KotlinPlayer.NEUTRAL)
+        else if (wonBy != KotlinPlayer.NEUTRAL)
             throw RuntimeException("The game is over")
 
         //Write the move to the board
@@ -75,23 +92,67 @@ class KotlinBoard : Serializable {
         //bPrint(rows[pRow]) //TODO
 
         val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
+        var winGrid = 0
         if (macroWin) {
             rows[pRow] += (1 shl (27 + (index / 3) % 3)) //27 + macro number
 
-            val wingrid = (rows[0 + 3 * (nextPlayer.value-1)] shr 27)
-                    .or((rows[1 + 3 * (nextPlayer.value-1)] shr 27) shl 3)
-                    .or((rows[2 + 3 * (nextPlayer.value-1)] shr 27) shl 6)
+            //Create the winGrid of the player
+            winGrid = (rows[0 + 3 * (nextPlayer.value - 1)] shr 27)
+                    .or((rows[1 + 3 * (nextPlayer.value - 1)] shr 27) shl 3)
+                    .or((rows[2 + 3 * (nextPlayer.value - 1)] shr 27) shl 6)
 
-            println("wingrid: ${Integer.toBinaryString(wingrid)}")
-            if (wonGrid(wingrid, index/9))
-                wonBy=nextPlayer
+            //println("winGrid: ${Integer.toBinaryString(winGrid)}")
+            if (wonGrid(winGrid, index / 9))
+                wonBy = nextPlayer
+
+            //Add the winGrid of the enemy
+            winGrid or (rows[0 + 3 * (nextPlayer.other().value - 1)] shr 27)
+                    .or((rows[1 + 3 * (nextPlayer.other().value - 1)] shr 27) shl 3)
+                    .or((rows[2 + 3 * (nextPlayer.other().value - 1)] shr 27) shl 6)
+        } else {
+            winGrid = ((rows[0] and rows[3]) shr 27)
+                    .or(((rows[1] and rows[4]) shr 27) shl 3)
+                    .or(((rows[2] and rows[5]) shr 27) shl 6)
         }
 
-        //Update last move and set next player
-        lastMove = shift
+        //Prepare the board for the next player
+        val freeMove = !winGrid.inv().getBit(moveShift)
+        //val freeMove = (rows[moveShift / 3] and rows[3 + moveShift / 3]).getBit(27 + moveShift % 3)
+        macroMask =
+                if (freeMove) (0b111111111 and winGrid.inv())
+                else (1 shl moveShift)
+        lastMove = index
         nextPlayer = nextPlayer.other()
 
         return macroWin
+    }
+
+    fun availableMoves(): List<Byte> {
+        val output = ArrayList<Byte>()
+
+        for (macro in 0..8) {
+            if (macroMask.getBit(macro)) {
+                val row = rows[macro / 3] or rows[macro / 3 + 3]
+                (0..8).map { it + macro * 9 }.filter { !row.getBit(it%27) }.mapTo(output) { it.toByte() }
+            }
+        }
+
+        if (output.isEmpty())
+            print("debug time")
+
+        return output
+    }
+
+    fun macro(om: Int): KotlinPlayer = when {
+        rows[om / 3].getBit(27 + om % 3) -> KotlinPlayer.PLAYER
+        rows[3 + om / 3].getBit(27 + om % 3) -> KotlinPlayer.ENEMY
+        else -> KotlinPlayer.NEUTRAL
+    }
+
+    fun tile(o: Int): KotlinPlayer = when {
+        rows[o / 27].getBit(o % 27) -> KotlinPlayer.PLAYER
+        rows[3 + o / 27].getBit(o % 27) -> KotlinPlayer.ENEMY
+        else -> KotlinPlayer.NEUTRAL
     }
 
     private fun bPrint(int: Int): String {
@@ -110,28 +171,29 @@ class KotlinBoard : Serializable {
     }
 
     private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
-    private fun nthBitIs1(input: Int, n: Int): Boolean = ((input shr n) and 1) == 1
+    private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
+    private fun Int.print() = Integer.toBinaryString(this)
 
     private fun wonGrid(grid: Int, index: Int): Boolean {
         println("board: ${Integer.toBinaryString(grid)} index:$index")
         when (index) {
-            4 ->                                                                //Center
-                return nthBitIs1(grid, 1) && nthBitIs1(grid, 7)                 //line |
-                        || nthBitIs1(grid, 3) && nthBitIs1(grid, 5)             //line -
-                        || nthBitIs1(grid, 0) && nthBitIs1(grid, 8)             //line \
-                        || nthBitIs1(grid, 6) && nthBitIs1(grid, 2)             //line /
-            3, 5 ->                                                             //Horizontal sides
-                return nthBitIs1(grid, index - 3) && nthBitIs1(grid, index + 3) //line |
-                        || nthBitIs1(grid, 4) && nthBitIs1(grid, 8 - index)     //line -
-            1, 7 ->                                                             //Vertical sides
-                return nthBitIs1(grid, index - 1) && nthBitIs1(grid, index + 1) //line |
-                        || nthBitIs1(grid, 4) && nthBitIs1(grid, 8 - index)     //line -
+            4 ->                                                        //Center
+                return grid.getBit(1) && grid.getBit(7)                 //line |
+                        || grid.getBit(3) && grid.getBit(5)             //line -
+                        || grid.getBit(0) && grid.getBit(8)             //line \
+                        || grid.getBit(6) && grid.getBit(2)             //line /
+            3, 5 ->                                                     //Horizontal sides
+                return grid.getBit(index - 3) && grid.getBit(index + 3) //line |
+                        || grid.getBit(4) && grid.getBit(8 - index)     //line -
+            1, 7 ->                                                     //Vertical sides
+                return grid.getBit(index - 1) && grid.getBit(index + 1) //line |
+                        || grid.getBit(4) && grid.getBit(8 - index)     //line -
             else -> {   //corners
                 val x = index % 3
                 val y = index / 3
-                return nthBitIs1(grid, 4) && nthBitIs1(grid, 8 - index)                                    //line \ or /
-                        || nthBitIs1(grid, 3 * y + (x + 1) % 2) && nthBitIs1(grid, 3 * y + (x + 2) % 4)    //line -
-                        || nthBitIs1(grid, x + ((y + 1) % 2) * 3) && nthBitIs1(grid, x + ((y + 2) % 4) * 3)//line |
+                return grid.getBit(4) && grid.getBit(8 - index)                                    //line \ or /
+                        || grid.getBit(3 * y + (x + 1) % 2) && grid.getBit(3 * y + (x + 2) % 4)    //line -
+                        || grid.getBit(x + ((y + 1) % 2) * 3) && grid.getBit(x + ((y + 2) % 4) * 3)//line |
             }
         }
     }
@@ -139,13 +201,8 @@ class KotlinBoard : Serializable {
     override fun toString(): String {
         var output = ""
         for (i in 0..80) {
-            val row = i / 27 //Row 0,1,2
-
-            val macro = (i % 9) / 3
-            val xpos = (i % 9) % 3
-            val ypos = (i / 9) % 3
-
-            val shift = xpos + ypos * 3 + macro * 9
+            val row = i / 27
+            val shift = i % 9 + (i / 9) % 3 * 9
 
             output +=
                     if (i == 0 || i == 80) ""

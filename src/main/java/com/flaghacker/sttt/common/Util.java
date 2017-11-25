@@ -39,6 +39,13 @@ public class Util
 		return bot.move(board, timer);
 	}
 
+	public static Byte moveKotlinBotWithTimeOut(KotlinBot bot, KotlinBoard board, long time)
+	{
+		Timer timer = new Timer(time);
+		timer.start();
+		return bot.move(board, timer);
+	}
+
 	public static Future<Coord> moveBotWithTimeOutAsync(
 			ExecutorService executor, final Bot bot, final Board board, long time)
 	{

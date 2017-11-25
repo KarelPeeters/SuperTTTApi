@@ -17,13 +17,18 @@
 
 package bot;
 
-import com.flaghacker.sttt.common.KotlinBoard;
+import com.flaghacker.sttt.bots.KotlinMMBot;
+import com.flaghacker.sttt.bots.KotlinRandomBot;
+import com.flaghacker.sttt.games.KotlinBotGame;
 
 public class BotStarter
 {
 	public static void main(String[] args)
 	{
-		KotlinBoard b = new KotlinBoard();
+		//KotlinBoard b = new KotlinBoard();
+		KotlinBotGame game = new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot());
+		game.run();
+
 		/*AIGame game = new AIGame(new MCTSBot(
 						Settings.builder()
 								.branchWeight(6)
