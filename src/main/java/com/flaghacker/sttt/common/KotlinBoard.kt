@@ -56,28 +56,11 @@ class KotlinBoard : Serializable {
         return copy
     }
 
-    init {
-        //println("start")
-        //play(0)
-        //play(1)
-/*        play(27)
-        play(53)
-        play(30)
-        play(31)
-        play(40)
-        play(39)
-        play(50)*/
-        //println(toString())
-        //println(Integer.toBinaryString(getMacro(3,KotlinPlayer.PLAYER)))
-    }
-
     fun play(index: Byte): Boolean {
         val row = index / 27 //Row 0,1,2
         val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro
         val moveShift = index % 9                //Shift required for index within matrix
         val shift = moveShift + macroShift
-
-        //println("PLAY($nextPlayer) | index:$index row:$row shift:$shift") //TODO
 
         //If the move is not available throw exception
         if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
@@ -88,8 +71,6 @@ class KotlinBoard : Serializable {
         //Write the move to the board
         val pRow = (nextPlayer.value - 1) * 3 + row
         rows[pRow] += (1 shl shift)
-
-        //bPrint(rows[pRow]) //TODO
 
         val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
         var winGrid = 0
@@ -152,21 +133,6 @@ class KotlinBoard : Serializable {
         rows[o / 27].getBit(o % 27) -> KotlinPlayer.PLAYER
         rows[3 + o / 27].getBit(o % 27) -> KotlinPlayer.ENEMY
         else -> KotlinPlayer.NEUTRAL
-    }
-
-    private fun bPrint(int: Int): String {
-        var out = ""
-        for (i in 1..(27 - Integer.toBinaryString(int).length)) {
-            out += "0"
-        }
-        out += Integer.toBinaryString(int)
-        var inv = ""
-        for (i in out.length - 1 downTo 0) {
-            inv += out[i]
-        }
-        println(inv)
-        println(toString())
-        return inv
     }
 
     private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
