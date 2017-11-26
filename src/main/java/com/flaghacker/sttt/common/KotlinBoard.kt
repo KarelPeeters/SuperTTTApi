@@ -80,7 +80,7 @@ class KotlinBoard : Serializable {
         //println("PLAY($nextPlayer) | index:$index row:$row shift:$shift") //TODO
 
         //If the move is not available throw exception
-        if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27)*3 + (macroShift / 9)))
+        if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
             throw RuntimeException("Position $index not available")
         else if (wonBy != KotlinPlayer.NEUTRAL)
             throw RuntimeException("The game is over")
@@ -94,7 +94,7 @@ class KotlinBoard : Serializable {
         val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
         var winGrid = 0
         if (macroWin) {
-            rows[pRow] += (1 shl (27 + (index / 3) % 3)) //27 + macro number
+            rows[pRow] += (1 shl (27 + macroShift / 9)) //27 + macro number
 
             //Create the winGrid of the player
             winGrid = (rows[0 + 3 * (nextPlayer.value - 1)] shr 27)
@@ -116,7 +116,7 @@ class KotlinBoard : Serializable {
         }
 
         //Prepare the board for the next player
-        val freeMove = !winGrid.inv().getBit(moveShift)
+        val freeMove = !winGrid.inv().getBit(moveShift) || macroFull(moveShift)
         //val freeMove = (rows[moveShift / 3] and rows[3 + moveShift / 3]).getBit(27 + moveShift % 3)
         macroMask =
                 if (freeMove) (0b111111111 and winGrid.inv())
@@ -127,18 +127,17 @@ class KotlinBoard : Serializable {
         return macroWin
     }
 
+    private fun macroFull(om: Int): Boolean = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3)*9).isMaskSet(0b111111111)
+
     fun availableMoves(): List<Byte> {
         val output = ArrayList<Byte>()
 
         for (macro in 0..8) {
             if (macroMask.getBit(macro)) {
                 val row = rows[macro / 3] or rows[macro / 3 + 3]
-                (0..8).map { it + macro * 9 }.filter { !row.getBit(it%27) }.mapTo(output) { it.toByte() }
+                (0..8).map { it + macro * 9 }.filter { !row.getBit(it % 27) }.mapTo(output) { it.toByte() }
             }
         }
-
-        if (output.isEmpty())
-            print("debug time")
 
         return output
     }
@@ -173,9 +172,9 @@ class KotlinBoard : Serializable {
     private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
     private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
     private fun Int.print() = Integer.toBinaryString(this)
+    private fun Int.isMaskSet(mask: Int) = this and mask == mask
 
     private fun wonGrid(grid: Int, index: Int): Boolean {
-        println("board: ${Integer.toBinaryString(grid)} index:$index")
         when (index) {
             4 ->                                                        //Center
                 return grid.getBit(1) && grid.getBit(7)                 //line |
@@ -201,8 +200,15 @@ class KotlinBoard : Serializable {
     override fun toString(): String {
         var output = ""
         for (i in 0..80) {
-            val row = i / 27
-            val shift = i % 9 + (i / 9) % 3 * 9
+            val row = i / 27 //Row 0,1,2
+
+            val xs = i % 3
+            val ys = (i / 9) % 3
+            val tileShift = xs + 3 * ys
+            val macroShift = (i%9)/3 * 9
+
+
+            val shift = tileShift + macroShift
 
             output +=
                     if (i == 0 || i == 80) ""

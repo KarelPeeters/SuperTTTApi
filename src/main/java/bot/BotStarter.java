@@ -19,6 +19,9 @@ package bot;
 
 import com.flaghacker.sttt.bots.KotlinMMBot;
 import com.flaghacker.sttt.bots.KotlinRandomBot;
+import com.flaghacker.sttt.bots.MMBot;
+import com.flaghacker.sttt.bots.RandomBot;
+import com.flaghacker.sttt.games.BotGame;
 import com.flaghacker.sttt.games.KotlinBotGame;
 
 public class BotStarter
@@ -26,8 +29,16 @@ public class BotStarter
 	public static void main(String[] args)
 	{
 		//KotlinBoard b = new KotlinBoard();
-		KotlinBotGame game = new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot());
-		game.run();
+		long b1 = System.currentTimeMillis();
+		new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot()).setCount(100).run();
+		long e1 = System.currentTimeMillis();
+
+		long b2 = System.currentTimeMillis();
+		new BotGame(new MMBot(5),new RandomBot()).setCount(100).run();
+		long e2 = System.currentTimeMillis();
+
+		System.out.println("kotlin:" + ((e1-b1)/100) + "ms java:" + ((e2-b2)/100) + "ms delta:" + (((e1-b1)/100)-((e2-b2)/100)));
+
 
 		/*AIGame game = new AIGame(new MCTSBot(
 						Settings.builder()

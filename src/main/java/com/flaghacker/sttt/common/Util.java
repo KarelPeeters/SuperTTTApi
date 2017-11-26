@@ -12,7 +12,7 @@ public class Util
 {
 	private static int nextId = 0;
 	private static Random random = new Random();
-	private static int[] seeds = {};
+	private static int[] seeds = {401797280,0};
 
 	public static Random loggedRandom()
 	{
