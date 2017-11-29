@@ -28,7 +28,7 @@ public class BotStarter
 {
 	public static void main(String[] args)
 	{
-		//KotlinBoard b = new KotlinBoard();
+		//com.flaghacker.sttt.common.KotlinBoard b = new com.flaghacker.sttt.common.KotlinBoard();
 		long b1 = System.currentTimeMillis();
 		new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot()).setCount(100).run();
 		long e1 = System.currentTimeMillis();

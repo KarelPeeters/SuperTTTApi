@@ -2,7 +2,7 @@ package com.flaghacker.sttt.common
 
 fun fromNiceString(string: String): KotlinPlayer {
     KotlinPlayer.values().filter { it.toNiceString() == string }.forEach { return it }
-    throw IllegalArgumentException(string + " is not a valid KotlinPlayer")
+    throw IllegalArgumentException(string + " is not a valid com.flaghacker.sttt.common.KotlinPlayer")
 }
 
 enum class KotlinPlayer(val niceString: String, val value: Int) {
