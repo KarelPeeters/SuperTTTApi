@@ -26,7 +26,7 @@ class KotlinBoard : Serializable {
     private var lastMove: Byte? = null
 
     fun nextPlayer() = nextPlayer
-    fun isDone() = wonBy != KotlinPlayer.NEUTRAL
+    fun isDone() = wonBy != KotlinPlayer.NEUTRAL || availableMoves().isEmpty()
     fun wonBy() = wonBy
     fun getLastMove() = lastMove
 
@@ -37,7 +37,7 @@ class KotlinBoard : Serializable {
         for (i in 0..2)
             newRows[i] = board.rows[i + 3]
         for (i in 3..5)
-            newRows[i] = board.rows[i + 3]
+            newRows[i] = board.rows[i - 3]
         board.rows = newRows
 
         board.wonBy = board.wonBy.otherWithNeutral()
@@ -73,7 +73,7 @@ class KotlinBoard : Serializable {
         rows[pRow] += (1 shl shift)
 
         val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
-        var winGrid = 0
+        var winGrid: Int
         if (macroWin) {
             rows[pRow] += (1 shl (27 + macroShift / 9)) //27 + macro number
 
@@ -87,18 +87,17 @@ class KotlinBoard : Serializable {
                 wonBy = nextPlayer
 
             //Add the winGrid of the enemy
-            winGrid or (rows[0 + 3 * (nextPlayer.other().value - 1)] shr 27)
+            winGrid = winGrid or (rows[0 + 3 * (nextPlayer.other().value - 1)] shr 27)
                     .or((rows[1 + 3 * (nextPlayer.other().value - 1)] shr 27) shl 3)
                     .or((rows[2 + 3 * (nextPlayer.other().value - 1)] shr 27) shl 6)
         } else {
-            winGrid = ((rows[0] and rows[3]) shr 27)
-                    .or(((rows[1] and rows[4]) shr 27) shl 3)
-                    .or(((rows[2] and rows[5]) shr 27) shl 6)
+            winGrid = ((rows[0] or rows[3]) shr 27)
+                    .or(((rows[1] or rows[4]) shr 27) shl 3)
+                    .or(((rows[2] or rows[5]) shr 27) shl 6)
         }
 
         //Prepare the board for the next player
-        val freeMove = !winGrid.inv().getBit(moveShift) || macroFull(moveShift)
-        //val freeMove = (rows[moveShift / 3] and rows[3 + moveShift / 3]).getBit(27 + moveShift % 3)
+        val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
         macroMask =
                 if (freeMove) (0b111111111 and winGrid.inv())
                 else (1 shl moveShift)
@@ -108,7 +107,7 @@ class KotlinBoard : Serializable {
         return macroWin
     }
 
-    private fun macroFull(om: Int): Boolean = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3)*9).isMaskSet(0b111111111)
+    private fun macroFull(om: Int): Boolean = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
 
     fun availableMoves(): List<Byte> {
         val output = ArrayList<Byte>()
@@ -137,7 +136,7 @@ class KotlinBoard : Serializable {
 
     private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
     private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
-    private fun Int.print() = Integer.toBinaryString(this)
+    private fun Int.print() = Integer.toBinaryString(this).reversed()
     private fun Int.isMaskSet(mask: Int) = this and mask == mask
 
     private fun wonGrid(grid: Int, index: Int): Boolean {
@@ -163,18 +162,20 @@ class KotlinBoard : Serializable {
         }
     }
 
+    private val ANSI_RESET = "\u001B[0m"
+    private val ANSI_GREEN = "\u001B[32m"
+    private val ANSI_RED = "\u001B[31m"
+    private val ANSI_BLUE = "\u001B[34m"
+
     override fun toString(): String {
         var output = ""
         for (i in 0..80) {
-            val row = i / 27 //Row 0,1,2
 
-            val xs = i % 3
-            val ys = (i / 9) % 3
-            val tileShift = xs + 3 * ys
-            val macroShift = (i%9)/3 * 9
-
+            val tileShift = i % 3 + 3 * ((i / 9) % 3)
+            val macroShift = (i % 9) / 3 * 9
 
             val shift = tileShift + macroShift
+            val lastMove = lastMove == (i - i%27 + shift).toByte()
 
             output +=
                     if (i == 0 || i == 80) ""
@@ -184,11 +185,11 @@ class KotlinBoard : Serializable {
                     else ""
 
             output += when {
-                getVal(row, shift) == 1 -> "X"
-                getVal(row + 3, shift) == 1 -> "O"
+                lastMove -> ANSI_GREEN + nextPlayer.other().niceString + ANSI_RESET
+                getVal(i / 27, shift) == 1 -> ANSI_BLUE + "X" + ANSI_RESET
+                getVal(i / 27 + 3, shift) == 1 -> ANSI_RED + "O" + ANSI_RESET
                 else -> " "
             }
-
         }
         return output
     }

@@ -22,7 +22,7 @@ public class BoardInfo implements Serializable
 
 	private int totalPlayed = 0;
 	private Info root;
-	private Map<Board, Info> map = new HashMap<>();
+	private Map<KotlinBoard, Info> map = new HashMap<>();
 	private Set<Info> moveSet = new HashSet<>();
 
 	public BoardInfo(Settings settings)
@@ -35,7 +35,7 @@ public class BoardInfo implements Serializable
 		totalPlayed++;
 	}
 
-	public Info inc(Board board, int depth, Player wonBy, Info previous)
+	public Info inc(KotlinBoard board, int depth, KotlinPlayer wonBy, Info previous)
 	{
 		if (!map.containsKey(board))
 			map.put(board, new Info(board, depth, previous));
@@ -64,7 +64,7 @@ public class BoardInfo implements Serializable
 		return curr;
 	}
 
-	public Coord selectBestMove()
+	public Byte selectBestMove()
 	{
 		Info bestInfo = settings.tryLose()
 				? Collections.min(moveSet)
@@ -73,13 +73,13 @@ public class BoardInfo implements Serializable
 		return bestInfo.board.getLastMove();
 	}
 
-	public Info getInfo(Board board)
+	public Info getInfo(KotlinBoard board)
 	{
 		return map.containsKey(board) ? map.get(board) : null;
 
 	}
 
-	public void incAllPrevious(Info info, Player wonBy)
+	public void incAllPrevious(Info info, KotlinPlayer wonBy)
 	{
 		while (info.previous != null)
 		{
@@ -99,14 +99,14 @@ public class BoardInfo implements Serializable
 
 	public class Info implements Comparable<Info>
 	{
-		public Board board;
+		public KotlinBoard board;
 		public Info previous;
 		public int won = 0;
 		public int played = 0;
 		public int depth;
 		public List<Info> children = new ArrayList<>(0);
 
-		public Info(Board board, int depth, Info previous)
+		public Info(KotlinBoard board, int depth, Info previous)
 		{
 			this.board = board;
 			this.depth = depth;
@@ -123,7 +123,7 @@ public class BoardInfo implements Serializable
 			return ((double) won / played) + settings.branchWeight() * sqrt(log(totalPlayed) / played);
 		}
 
-		public void inc(Player wonBy)
+		public void inc(KotlinPlayer wonBy)
 		{
 			played++;
 			if (board.nextPlayer().other() == wonBy)

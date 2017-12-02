@@ -1,13 +1,12 @@
 package com.flaghacker.sttt.bots.mcts;
 
 import com.flaghacker.sttt.common.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Random;
 
-import static com.flaghacker.sttt.common.Player.NEUTRAL;
-
-public class MCTSBot implements Bot
+public class MCTSBot implements KotlinBot
 {
 	private static final long serialVersionUID = 6534256310842724239L;
 
@@ -22,11 +21,11 @@ public class MCTSBot implements Bot
 	}
 
 	@Override
-	public Coord move(Board board, Timer timer)
+	public Byte move(@NotNull KotlinBoard board, @NotNull Timer timer)
 	{
 		int iterations = 0;
 
-		List<Coord> moves = board.availableMoves();
+		List<Byte> moves = board.availableMoves();
 		if (moves.size() == 1)
 			return moves.get(0);
 
@@ -44,7 +43,7 @@ public class MCTSBot implements Bot
 
 			log(iterations);
 
-			Coord move = info.selectBestMove();
+			Byte move = info.selectBestMove();
 
 			if (moves.contains(move))
 				return move;
@@ -63,15 +62,15 @@ public class MCTSBot implements Bot
 		return moves.get(rand.nextInt(moves.size()));
 	}
 
-	private void debug(Board board)
+	private void debug(KotlinBoard board)
 	{
 		System.err.println("debug");
 	}
 
-	private void setup(Board board)
+	private void setup(KotlinBoard board)
 	{
 		info = new BoardInfo(settings);
-		info.inc(board, 0, NEUTRAL, null);
+		info.inc(board, 0, KotlinPlayer.NEUTRAL, null);
 	}
 
 	private void searchIteration()
@@ -82,18 +81,18 @@ public class MCTSBot implements Bot
 		simulateAndUpdate(next.board, next.depth);
 	}
 
-	private void simulateAndUpdate(Board board, int depth)
+	private void simulateAndUpdate(KotlinBoard board, int depth)
 	{
-		Player wonBy;
-		Board start = board;
-		Board firstChoice = null;
+		KotlinPlayer wonBy;
+		KotlinBoard start = board;
+		KotlinBoard firstChoice = null;
 
 		while (true)
 		{
 			board = board.copy();
 
-			List<Coord> moves = board.availableMoves();
-			Coord move = moves.get(rand.nextInt(moves.size()));
+			List<Byte> moves = board.availableMoves();
+			Byte move = moves.get(rand.nextInt(moves.size()));
 			board.play(move);
 
 			if (firstChoice == null)
@@ -109,7 +108,7 @@ public class MCTSBot implements Bot
 		update(start, firstChoice, wonBy, depth+1);
 	}
 
-	private void update(Board prev, Board board, Player wonBy, int depth)
+	private void update(KotlinBoard prev, KotlinBoard board, KotlinPlayer wonBy, int depth)
 	{
 		info.incTotal();
 

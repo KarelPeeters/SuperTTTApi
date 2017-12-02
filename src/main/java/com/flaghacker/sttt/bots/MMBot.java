@@ -1,6 +1,7 @@
 package com.flaghacker.sttt.bots;
 
 import com.flaghacker.sttt.common.*;
+import com.flaghacker.sttt.games.BotGame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,26 +10,22 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.lang.Math.max;
 
-public class MMBot implements Bot
-{
+public class MMBot implements Bot {
 	private final int depth;
 
-	public MMBot(int depth)
-	{
+	public MMBot(int depth) {
 		this.depth = depth;
 	}
 
 	@Override
-	public Coord move(Board board, Timer timer)
-	{
+	public Coord move(Board board, Timer timer) {
 		if (board.nextPlayer() == Player.ENEMY)
 			board = board.flip();
 
-		return negaMax(board, depth+1, NEGATIVE_INFINITY, POSITIVE_INFINITY, 1).move;
+		return negaMax(board, depth + 1, NEGATIVE_INFINITY, POSITIVE_INFINITY, 1).move;
 	}
 
-	private ValuedMove negaMax(Board board, int depth, double a, double b, int player)
-	{
+	private ValuedMove negaMax(Board board, int depth, double a, double b, int player) {
 		if (depth == 0 || board.isDone())
 			return new ValuedMove(board.getLastMove(), player * value(board));
 
@@ -37,12 +34,10 @@ public class MMBot implements Bot
 		double bestValue = NEGATIVE_INFINITY;
 		Coord bestMove = null;
 
-		for (Board child : children)
-		{
+		for (Board child : children) {
 			double value = -negaMax(child, depth - 1, -b, -a, -player).value;
 
-			if (value > bestValue || bestMove == null)
-			{
+			if (value > bestValue || bestMove == null) {
 				bestValue = value;
 				bestMove = child.getLastMove();
 			}
@@ -54,13 +49,11 @@ public class MMBot implements Bot
 		return new ValuedMove(bestMove, bestValue);
 	}
 
-	private List<Board> children(Board board)
-	{
+	private List<Board> children(Board board) {
 		List<Coord> moves = board.availableMoves();
 		List<Board> children = new ArrayList<>(moves.size());
 
-		for (Coord move : moves)
-		{
+		for (Coord move : moves) {
 			Board child = board.copy();
 			child.play(move);
 			children.add(child);
@@ -69,20 +62,17 @@ public class MMBot implements Bot
 		return children;
 	}
 
-	private static class ValuedMove
-	{
+	private static class ValuedMove {
 		public final Coord move;
 		public final double value;
 
-		public ValuedMove(Coord move, double value)
-		{
+		public ValuedMove(Coord move, double value) {
 			this.move = move;
 			this.value = value;
 		}
 	}
 
-	private double value(Board board)
-	{
+	private double value(Board board) {
 		if (board.isDone())
 			return Double.POSITIVE_INFINITY * playerSign(board.wonBy());
 
@@ -104,10 +94,8 @@ public class MMBot implements Bot
 	private static final double CORNER_FACTOR = 3;
 	private static final double EDGE_FACTOR = 1;
 
-	private int playerSign(Player player)
-	{
-		switch (player)
-		{
+	private int playerSign(Player player) {
+		switch (player) {
 			case NEUTRAL:
 				return 0;
 			case PLAYER:
@@ -119,8 +107,7 @@ public class MMBot implements Bot
 		throw new IllegalStateException();
 	}
 
-	private double tileFactor(int o)
-	{
+	private double tileFactor(int o) {
 		int x = o % 3;
 		int y = o / 3;
 
@@ -132,8 +119,7 @@ public class MMBot implements Bot
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "MMBot";
 	}
 }

@@ -32,6 +32,6 @@ public class KotlinRandomBot implements KotlinBot
 	@Override
 	public String toString()
 	{
-		return "MMBotKotlin";
+		return "RandomBot";
 	}
 }

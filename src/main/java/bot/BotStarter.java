@@ -19,25 +19,31 @@ package bot;
 
 import com.flaghacker.sttt.bots.KotlinMMBot;
 import com.flaghacker.sttt.bots.KotlinRandomBot;
-import com.flaghacker.sttt.bots.MMBot;
-import com.flaghacker.sttt.bots.RandomBot;
-import com.flaghacker.sttt.games.BotGame;
-import com.flaghacker.sttt.games.KotlinBotGame;
+import com.flaghacker.sttt.bots.mcts.MCTSBot;
+import com.flaghacker.sttt.bots.mcts.Settings;
+import com.flaghacker.sttt.common.KotlinBotGame;
 
 public class BotStarter
 {
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_RED = "\u001B[31m";
+
 	public static void main(String[] args)
 	{
 		//com.flaghacker.sttt.common.KotlinBoard b = new com.flaghacker.sttt.common.KotlinBoard();
-		long b1 = System.currentTimeMillis();
-		new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot()).setCount(100).run();
-		long e1 = System.currentTimeMillis();
+		//long b1 = System.currentTimeMillis();
+		//new KotlinBotGame(new KotlinMMBot(5),new KotlinRandomBot()).setCount(100).run();
+		//long e1 = System.currentTimeMillis();
 
-		long b2 = System.currentTimeMillis();
-		new BotGame(new MMBot(5),new RandomBot()).setCount(100).run();
-		long e2 = System.currentTimeMillis();
+		//new BotGame(new MCTSBot(Settings.standard()),new MMBot(5)).setCount(100).setShuffling(true).setTimePerMove(56).run();
+		new KotlinBotGame(new MCTSBot(Settings.standard()),new KotlinRandomBot())
+				.setCount(10)
+				.setShuffling(true)
+				.setTimePerMove(56)
+				.setLogLevel(KotlinBotGame.LogLevel.BASIC)
+				.run();
 
-		System.out.println("kotlin:" + ((e1-b1)/100) + "ms java:" + ((e2-b2)/100) + "ms delta:" + (((e1-b1)/100)-((e2-b2)/100)));
+		//System.out.println("kotlin:" + ((e1-b1)/100) + "ms java:" + ((e2-b2)/100) + "ms delta:" + (((e1-b1)/100)-((e2-b2)/100)));
 
 
 		/*AIGame game = new AIGame(new MCTSBot(
