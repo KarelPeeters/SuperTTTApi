@@ -2,7 +2,7 @@ package com.flaghacker.sttt.bots;
 
 import com.flaghacker.sttt.common.KotlinBoard;
 import com.flaghacker.sttt.common.KotlinBot;
-import com.flaghacker.sttt.common.KotlinPlayer;
+import com.flaghacker.sttt.common.Player;
 import com.flaghacker.sttt.common.Timer;
 
 import java.util.ArrayList;
@@ -12,7 +12,6 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.lang.Math.max;
 
-@SuppressWarnings("Duplicates")
 public class KotlinMMBot implements KotlinBot
 {
 	private final int depth;
@@ -25,7 +24,7 @@ public class KotlinMMBot implements KotlinBot
 	@Override
 	public Byte move(KotlinBoard board, Timer timer)
 	{
-		if (board.nextPlayer() == KotlinPlayer.ENEMY)
+		if (board.nextPlayer() == Player.ENEMY)
 			board = board.flip();
 
 		return negaMax(board, depth+1, NEGATIVE_INFINITY, POSITIVE_INFINITY, 1).move;
@@ -92,7 +91,7 @@ public class KotlinMMBot implements KotlinBot
 
 		double value = 0;
 
-		for (int i = 0; i < 80; i++)
+		for (int i = 0; i < 81; i++)
 			value += TILE_VALUE * tileFactor(i%9) * tileFactor(i/9) * playerSign(board.tile(i));
 
 		for (int om = 0; om < 9; om++)
@@ -108,7 +107,7 @@ public class KotlinMMBot implements KotlinBot
 	private static final double CORNER_FACTOR = 3;
 	private static final double EDGE_FACTOR = 1;
 
-	private int playerSign(KotlinPlayer player)
+	private int playerSign(Player player)
 	{
 		switch (player)
 		{

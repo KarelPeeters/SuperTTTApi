@@ -10,7 +10,7 @@ public class MCTSBot implements KotlinBot
 {
 	private static final long serialVersionUID = 6534256310842724239L;
 
-	private Random rand = Util.loggedRandom();
+	private Random rand = new Random();
 	private Settings settings;
 
 	private BoardInfo info;
@@ -23,8 +23,6 @@ public class MCTSBot implements KotlinBot
 	@Override
 	public Byte move(@NotNull KotlinBoard board, @NotNull Timer timer)
 	{
-		int iterations = 0;
-
 		List<Byte> moves = board.availableMoves();
 		if (moves.size() == 1)
 			return moves.get(0);
@@ -38,10 +36,7 @@ public class MCTSBot implements KotlinBot
 			while (timer.running())
 			{
 				searchIteration();
-				iterations++;
 			}
-
-			log(iterations);
 
 			Byte move = info.selectBestMove();
 
@@ -70,7 +65,7 @@ public class MCTSBot implements KotlinBot
 	private void setup(KotlinBoard board)
 	{
 		info = new BoardInfo(settings);
-		info.inc(board, 0, KotlinPlayer.NEUTRAL, null);
+		info.inc(board, 0, Player.NEUTRAL, null);
 	}
 
 	private void searchIteration()
@@ -83,7 +78,7 @@ public class MCTSBot implements KotlinBot
 
 	private void simulateAndUpdate(KotlinBoard board, int depth)
 	{
-		KotlinPlayer wonBy;
+		Player wonBy;
 		KotlinBoard start = board;
 		KotlinBoard firstChoice = null;
 
@@ -108,7 +103,7 @@ public class MCTSBot implements KotlinBot
 		update(start, firstChoice, wonBy, depth+1);
 	}
 
-	private void update(KotlinBoard prev, KotlinBoard board, KotlinPlayer wonBy, int depth)
+	private void update(KotlinBoard prev, KotlinBoard board, Player wonBy, int depth)
 	{
 		info.incTotal();
 

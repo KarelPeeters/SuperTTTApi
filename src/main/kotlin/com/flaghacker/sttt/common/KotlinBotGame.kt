@@ -60,7 +60,7 @@ class KotlinBotGame(private val p1: KotlinBot, private val p2: KotlinBot) {
             val wonBy = if (!swapped) board.wonBy() else board.wonBy().otherWithNeutral()
 
             printDetail("done, won by: ${board.wonBy()} swapped: $swapped")
-            results[if (wonBy == KotlinPlayer.PLAYER) 0 else if (wonBy == KotlinPlayer.ENEMY) 2 else 1]++
+            results[if (wonBy == Player.PLAYER) 0 else if (wonBy == Player.ENEMY) 2 else 1]++
         }
 
         printImportant("Results:")

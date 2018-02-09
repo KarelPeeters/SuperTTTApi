@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import static com.flaghacker.sttt.common.Player.NEUTRAL;
+import static com.flaghacker.sttt.common.PlayerKt.fromNiceString;
 
 public class JSONBoard
 {
@@ -17,14 +18,14 @@ public class JSONBoard
 		if (nextMacros.length() != 9)
 			throw new IllegalArgumentException(nextMacros + " length must be 9");
 
-		Player nextPlayer = Player.fromNiceString(json.getString("nextPlayer"));
+		Player nextPlayer = fromNiceString(json.getString("nextPlayer"));
 		Coord lastMove = coordFromJSON(json.getJSONArray("lastMove"));
 
 		Board board = new Board();
 
 		for (int o = 0; o < 81; o++)
 		{
-			Player tile = Player.fromNiceString(String.valueOf(tiles.charAt(o)));
+			Player tile = fromNiceString(String.valueOf(tiles.charAt(o)));
 
 			if (tile == NEUTRAL)
 				continue;

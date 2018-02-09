@@ -1,6 +1,7 @@
 package com.flaghacker.sttt.common
 
 import java.io.Serializable
+import java.util.*
 
 class KotlinBoard : Serializable {
     /*
@@ -19,14 +20,14 @@ class KotlinBoard : Serializable {
      */
     private var rows: Array<Int> = Array(6, { 0 })
 
-    private var wonBy = KotlinPlayer.NEUTRAL
-    private var nextPlayer = KotlinPlayer.PLAYER
+    private var wonBy = Player.NEUTRAL
+    private var nextPlayer = Player.PLAYER
 
     private var macroMask = 0b111111111
     private var lastMove: Byte? = null
 
     fun nextPlayer() = nextPlayer
-    fun isDone() = wonBy != KotlinPlayer.NEUTRAL || availableMoves().isEmpty()
+    fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
     fun wonBy() = wonBy
     fun getLastMove() = lastMove
 
@@ -34,10 +35,8 @@ class KotlinBoard : Serializable {
         val board = copy()
 
         val newRows = Array(6) { 0 }
-        for (i in 0..2)
-            newRows[i] = board.rows[i + 3]
-        for (i in 3..5)
-            newRows[i] = board.rows[i - 3]
+        for (i in 0..2) newRows[i] = board.rows[i + 3]
+        for (i in 3..5) newRows[i] = board.rows[i - 3]
         board.rows = newRows
 
         board.wonBy = board.wonBy.otherWithNeutral()
@@ -65,7 +64,7 @@ class KotlinBoard : Serializable {
         //If the move is not available throw exception
         if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
             throw RuntimeException("Position $index not available")
-        else if (wonBy != KotlinPlayer.NEUTRAL)
+        else if (wonBy != Player.NEUTRAL)
             throw RuntimeException("The game is over")
 
         //Write the move to the board
@@ -82,7 +81,6 @@ class KotlinBoard : Serializable {
                     .or((rows[1 + 3 * (nextPlayer.value - 1)] shr 27) shl 3)
                     .or((rows[2 + 3 * (nextPlayer.value - 1)] shr 27) shl 6)
 
-            //println("winGrid: ${Integer.toBinaryString(winGrid)}")
             if (wonGrid(winGrid, index / 9))
                 wonBy = nextPlayer
 
@@ -122,21 +120,20 @@ class KotlinBoard : Serializable {
         return output
     }
 
-    fun macro(om: Int): KotlinPlayer = when {
-        rows[om / 3].getBit(27 + om % 3) -> KotlinPlayer.PLAYER
-        rows[3 + om / 3].getBit(27 + om % 3) -> KotlinPlayer.ENEMY
-        else -> KotlinPlayer.NEUTRAL
+    fun macro(om: Int): Player = when {
+        rows[om / 3].getBit(27 + om % 3) -> Player.PLAYER
+        rows[3 + om / 3].getBit(27 + om % 3) -> Player.ENEMY
+        else -> Player.NEUTRAL
     }
 
-    fun tile(o: Int): KotlinPlayer = when {
-        rows[o / 27].getBit(o % 27) -> KotlinPlayer.PLAYER
-        rows[3 + o / 27].getBit(o % 27) -> KotlinPlayer.ENEMY
-        else -> KotlinPlayer.NEUTRAL
+    fun tile(o: Int): Player = when {
+        rows[o / 27].getBit(o % 27) -> Player.PLAYER
+        rows[3 + o / 27].getBit(o % 27) -> Player.ENEMY
+        else -> Player.NEUTRAL
     }
 
     private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
     private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
-    private fun Int.print() = Integer.toBinaryString(this).reversed()
     private fun Int.isMaskSet(mask: Int) = this and mask == mask
 
     private fun wonGrid(grid: Int, index: Int): Boolean {
@@ -162,11 +159,6 @@ class KotlinBoard : Serializable {
         }
     }
 
-    private val ANSI_RESET = "\u001B[0m"
-    private val ANSI_GREEN = "\u001B[32m"
-    private val ANSI_RED = "\u001B[31m"
-    private val ANSI_BLUE = "\u001B[34m"
-
     override fun toString(): String {
         var output = ""
         for (i in 0..80) {
@@ -185,12 +177,30 @@ class KotlinBoard : Serializable {
                     else ""
 
             output += when {
-                lastMove -> ANSI_GREEN + nextPlayer.other().niceString + ANSI_RESET
-                getVal(i / 27, shift) == 1 -> ANSI_BLUE + "X" + ANSI_RESET
-                getVal(i / 27 + 3, shift) == 1 -> ANSI_RED + "O" + ANSI_RESET
+                lastMove -> nextPlayer.other().niceString
+                getVal(i / 27, shift) == 1 -> "X"
+                getVal(i / 27 + 3, shift) == 1 -> "O"
                 else -> " "
             }
         }
         return output
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+
+        other as KotlinBoard
+
+        if (!Arrays.equals(rows, other.rows)) return false
+        if (lastMove != other.lastMove) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = Arrays.hashCode(rows)
+        result = 31 * result + (lastMove ?: 0)
+        return result
     }
 }

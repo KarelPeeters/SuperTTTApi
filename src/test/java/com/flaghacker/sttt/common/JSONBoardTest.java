@@ -2,6 +2,8 @@ package com.flaghacker.sttt.common;
 
 import org.junit.Test;
 
+import java.util.Random;
+
 import static org.junit.Assert.assertEquals;
 
 public class JSONBoardTest
@@ -18,7 +20,7 @@ public class JSONBoardTest
 	@Test
 	public void testRandom()
 	{
-		Board board = BoardTest.randomBoard(Util.loggedRandom(), 10);
+		Board board = BoardTest.randomBoard(new Random(), 10);
 		Board result = JSONBoard.fromJSON(JSONBoard.toJSON(board));
 
 		assertEquals(board, result);

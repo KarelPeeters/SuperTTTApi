@@ -13,7 +13,7 @@ public class RandomBot implements Bot
 
 	public RandomBot()
 	{
-		random = Util.loggedRandom();
+		random = new Random();
 	}
 
 	public RandomBot(int seed)

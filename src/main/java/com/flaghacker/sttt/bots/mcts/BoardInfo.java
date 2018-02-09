@@ -35,7 +35,7 @@ public class BoardInfo implements Serializable
 		totalPlayed++;
 	}
 
-	public Info inc(KotlinBoard board, int depth, KotlinPlayer wonBy, Info previous)
+	public Info inc(KotlinBoard board, int depth, Player wonBy, Info previous)
 	{
 		if (!map.containsKey(board))
 			map.put(board, new Info(board, depth, previous));
@@ -79,7 +79,7 @@ public class BoardInfo implements Serializable
 
 	}
 
-	public void incAllPrevious(Info info, KotlinPlayer wonBy)
+	public void incAllPrevious(Info info, Player wonBy)
 	{
 		while (info.previous != null)
 		{
@@ -123,7 +123,7 @@ public class BoardInfo implements Serializable
 			return ((double) won / played) + settings.branchWeight() * sqrt(log(totalPlayed) / played);
 		}
 
-		public void inc(KotlinPlayer wonBy)
+		public void inc(Player wonBy)
 		{
 			played++;
 			if (board.nextPlayer().other() == wonBy)

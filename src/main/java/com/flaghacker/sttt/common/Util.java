@@ -1,6 +1,5 @@
 package com.flaghacker.sttt.common;
 
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -10,28 +9,6 @@ import java.util.concurrent.TimeoutException;
 
 public class Util
 {
-	private static int nextId = 0;
-	private static Random random = new Random();
-	private static int[] seeds = {401797280,0};
-
-	public static Random loggedRandom()
-	{
-		int seed;
-		if (nextId >= seeds.length)
-		{
-			seed = random.nextInt();
-			System.err.println(String.format("random #%d seed: %d", nextId, seed));
-		}
-		else
-		{
-			seed = seeds[nextId];
-			System.err.println(String.format("picked %d seed: %d", nextId, seed));
-		}
-
-		nextId++;
-		return new Random(seed);
-	}
-
 	public static Coord moveBotWithTimeOut(Bot bot, Board board, long time)
 	{
 		Timer timer = new Timer(time);

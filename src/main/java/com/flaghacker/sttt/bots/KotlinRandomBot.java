@@ -3,7 +3,6 @@ package com.flaghacker.sttt.bots;
 import com.flaghacker.sttt.common.KotlinBoard;
 import com.flaghacker.sttt.common.KotlinBot;
 import com.flaghacker.sttt.common.Timer;
-import com.flaghacker.sttt.common.Util;
 
 import java.util.List;
 import java.util.Random;
@@ -14,7 +13,7 @@ public class KotlinRandomBot implements KotlinBot
 
 	public KotlinRandomBot()
 	{
-		random = Util.loggedRandom();
+		random = new Random();
 	}
 
 	public KotlinRandomBot(int seed)
