@@ -13,7 +13,7 @@ dependencies {
     testCompile 'org.apache.commons:commons-lang3:3.5'
 
     testCompile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 
 task aizip (type:Zip) {
@@ -24,7 +24,7 @@ task aizip (type:Zip) {
     destinationDir file('ignored')
 }
 buildscript {
-    ext.kotlin_version = '1.1.60'
+    ext.kotlin_version = '1.2.21'
     repositories {
         mavenCentral()
         maven {url "https://plugins.gradle.org/m2/"}

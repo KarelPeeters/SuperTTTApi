@@ -1,9 +1,6 @@
-package bot;
-
 import com.flaghacker.sttt.bots.RandomBot;
 import com.flaghacker.sttt.bots.mcts.MCTSBot;
 import com.flaghacker.sttt.bots.mcts.Settings;
-import com.flaghacker.sttt.common.Board;
 import com.flaghacker.sttt.games.BotGame;
 
 public class Main
