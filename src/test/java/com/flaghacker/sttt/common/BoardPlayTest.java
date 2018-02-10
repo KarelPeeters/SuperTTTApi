@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.common;
 
 import org.apache.commons.io.IOUtils;
@@ -125,4 +126,4 @@ public class BoardPlayTest
 			return moves;
 		}
 	}
-}
+}*/

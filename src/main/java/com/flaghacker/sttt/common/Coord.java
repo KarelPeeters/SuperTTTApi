@@ -72,6 +72,23 @@ public class Coord implements Serializable
 		return coord(o % 9, o / 9);
 	}
 
+	public static Coord coordFromCoolIndex(Byte i)
+	{
+		assert 0 <= i && i < 9 * 9;
+
+		int os = i%9;
+		int om = i/9;
+
+		int x = os%3 + (om%3)*3;
+		int y = os/3 + (om/3)*3;
+
+		return coord(x,y);
+	}
+
+	public Byte toCoolIndex(){
+		return (byte) ((x / 3 + 3 * y / 3) *9 + x % 3 + 3 * y % 3);
+	}
+
 	public static List<Coord> list()
 	{
 		return coordList;
@@ -87,44 +104,14 @@ public class Coord implements Serializable
 		return x;
 	}
 
-	public int xm()
-	{
-		return x / 3;
-	}
-
-	public int xs()
-	{
-		return x % 3;
-	}
-
 	public int y()
 	{
 		return y;
 	}
 
-	public int ym()
-	{
-		return y / 3;
-	}
-
-	public int ys()
-	{
-		return y % 3;
-	}
-
 	public int o()
 	{
 		return x + 9 * y;
-	}
-
-	public int om()
-	{
-		return xm() + 3 * ym();
-	}
-
-	public int os()
-	{
-		return xs() + 3 * ys();
 	}
 
 	@Override

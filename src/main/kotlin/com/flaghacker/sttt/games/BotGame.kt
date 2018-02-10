@@ -1,10 +1,14 @@
-package com.flaghacker.sttt.common
+package com.flaghacker.sttt.games
 
+import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Player
+import com.flaghacker.sttt.common.moveBotWithTimeOut
 import java.util.*
 
-class KotlinBotGame(private val p1: KotlinBot, private val p2: KotlinBot) {
+class BotGame(private val p1: Bot, private val p2: Bot) {
     private var count = 1
-    private var logLevel = KotlinBotGame.LogLevel.ALL
+    private var logLevel = LogLevel.ALL
     private var timePerMove = 500
     private var shuffling: Boolean = false
     private var random = Random()
@@ -35,13 +39,13 @@ class KotlinBotGame(private val p1: KotlinBot, private val p2: KotlinBot) {
             val p1 = if (swapped) this.p2 else this.p1
             val p2 = if (swapped) this.p1 else this.p2
 
-            val board = KotlinBoard()
+            val board = Board()
 
             var nextRound = 0
             while (!board.isDone()) {
                 printDetail("Round #" + nextRound++)
 
-                val pMove = Util.moveKotlinBotWithTimeOut(p1, board.copy(), timePerMove.toLong())
+                val pMove = moveBotWithTimeOut(p1, board.copy(), timePerMove.toLong())
                 printDetail("p1 move: " + pMove!!)
                 board.play(pMove)
 
@@ -50,7 +54,7 @@ class KotlinBotGame(private val p1: KotlinBot, private val p2: KotlinBot) {
                 if (board.isDone())
                     continue
 
-                val rMove = Util.moveKotlinBotWithTimeOut(p2, board.copy(), timePerMove.toLong())
+                val rMove = moveBotWithTimeOut(p2, board.copy(), timePerMove.toLong())
                 printDetail("p2 move: " + rMove!!)
                 board.play(rMove)
 

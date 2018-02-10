@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Random;
 
-public class MCTSBot implements KotlinBot
+public class MCTSBot implements Bot
 {
 	private static final long serialVersionUID = 6534256310842724239L;
 
@@ -21,7 +21,7 @@ public class MCTSBot implements KotlinBot
 	}
 
 	@Override
-	public Byte move(@NotNull KotlinBoard board, @NotNull Timer timer)
+	public Byte move(@NotNull Board board, @NotNull Timer timer)
 	{
 		List<Byte> moves = board.availableMoves();
 		if (moves.size() == 1)
@@ -57,12 +57,12 @@ public class MCTSBot implements KotlinBot
 		return moves.get(rand.nextInt(moves.size()));
 	}
 
-	private void debug(KotlinBoard board)
+	private void debug(Board board)
 	{
 		System.err.println("debug");
 	}
 
-	private void setup(KotlinBoard board)
+	private void setup(Board board)
 	{
 		info = new BoardInfo(settings);
 		info.inc(board, 0, Player.NEUTRAL, null);
@@ -76,11 +76,11 @@ public class MCTSBot implements KotlinBot
 		simulateAndUpdate(next.board, next.depth);
 	}
 
-	private void simulateAndUpdate(KotlinBoard board, int depth)
+	private void simulateAndUpdate(Board board, int depth)
 	{
 		Player wonBy;
-		KotlinBoard start = board;
-		KotlinBoard firstChoice = null;
+		Board start = board;
+		Board firstChoice = null;
 
 		while (true)
 		{
@@ -103,7 +103,7 @@ public class MCTSBot implements KotlinBot
 		update(start, firstChoice, wonBy, depth+1);
 	}
 
-	private void update(KotlinBoard prev, KotlinBoard board, Player wonBy, int depth)
+	private void update(Board prev, Board board, Player wonBy, int depth)
 	{
 		info.incTotal();
 

@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.common;
 
 import org.json.JSONArray;
@@ -88,3 +89,4 @@ public class JSONBoard
 		return Coord.coord(json.getInt(0), json.getInt(1));
 	}
 }
+*/

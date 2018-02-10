@@ -3,7 +3,7 @@ package com.flaghacker.sttt.common
 import java.io.Serializable
 import java.util.*
 
-class KotlinBoard : Serializable {
+class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
     /*
     Each element represents a row of macros (3x9 tiles)
     The first 3 Ints hold the macros for Player
@@ -18,12 +18,14 @@ class KotlinBoard : Serializable {
     B: winner of second macro
     C: winner of third macro
      */
-    private var rows: Array<Int> = Array(6, { 0 })
+    //private var rows: Array<Int> = Array(6, { 0 })
+    //private var macroMask = 0b111111111
+
+    constructor() : this(Array(6, { 0 }),0b111111111)
 
     private var wonBy = Player.NEUTRAL
     private var nextPlayer = Player.PLAYER
 
-    private var macroMask = 0b111111111
     private var lastMove: Byte? = null
 
     fun nextPlayer() = nextPlayer
@@ -31,7 +33,7 @@ class KotlinBoard : Serializable {
     fun wonBy() = wonBy
     fun getLastMove() = lastMove
 
-    fun flip(): KotlinBoard {
+    fun flip(): Board {
         val board = copy()
 
         val newRows = Array(6) { 0 }
@@ -45,8 +47,8 @@ class KotlinBoard : Serializable {
         return board
     }
 
-    fun copy(): KotlinBoard {
-        val copy = KotlinBoard()
+    fun copy(): Board {
+        val copy = Board()
         copy.rows = rows.copyOf()
         copy.wonBy = wonBy
         copy.nextPlayer = nextPlayer
@@ -190,7 +192,7 @@ class KotlinBoard : Serializable {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
 
-        other as KotlinBoard
+        other as Board
 
         if (!Arrays.equals(rows, other.rows)) return false
         if (lastMove != other.lastMove) return false

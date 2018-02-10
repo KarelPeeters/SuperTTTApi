@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.common;
 
 import org.json.JSONObject;
@@ -68,3 +69,4 @@ public class MultiBoardTest
 		assertEquals(board.hashCode(), copy.hashCode());
 	}
 }
+*/

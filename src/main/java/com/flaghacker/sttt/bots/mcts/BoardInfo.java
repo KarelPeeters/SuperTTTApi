@@ -22,7 +22,7 @@ public class BoardInfo implements Serializable
 
 	private int totalPlayed = 0;
 	private Info root;
-	private Map<KotlinBoard, Info> map = new HashMap<>();
+	private Map<Board, Info> map = new HashMap<>();
 	private Set<Info> moveSet = new HashSet<>();
 
 	public BoardInfo(Settings settings)
@@ -35,7 +35,7 @@ public class BoardInfo implements Serializable
 		totalPlayed++;
 	}
 
-	public Info inc(KotlinBoard board, int depth, Player wonBy, Info previous)
+	public Info inc(Board board, int depth, Player wonBy, Info previous)
 	{
 		if (!map.containsKey(board))
 			map.put(board, new Info(board, depth, previous));
@@ -73,7 +73,7 @@ public class BoardInfo implements Serializable
 		return bestInfo.board.getLastMove();
 	}
 
-	public Info getInfo(KotlinBoard board)
+	public Info getInfo(Board board)
 	{
 		return map.containsKey(board) ? map.get(board) : null;
 
@@ -99,14 +99,14 @@ public class BoardInfo implements Serializable
 
 	public class Info implements Comparable<Info>
 	{
-		public KotlinBoard board;
+		public Board board;
 		public Info previous;
 		public int won = 0;
 		public int played = 0;
 		public int depth;
 		public List<Info> children = new ArrayList<>(0);
 
-		public Info(KotlinBoard board, int depth, Info previous)
+		public Info(Board board, int depth, Info previous)
 		{
 			this.board = board;
 			this.depth = depth;

@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.games;
 
 import com.flaghacker.sttt.common.*;
@@ -9,7 +10,7 @@ import java.util.Scanner;
 import static com.flaghacker.sttt.common.Player.ENEMY;
 import static com.flaghacker.sttt.common.Player.PLAYER;
 
-public class ConsoleGame
+public class OldConsoleGame
 {
 	private final Bot bot;
 	private final Scanner scanner;
@@ -18,7 +19,7 @@ public class ConsoleGame
 	private List<Board> history = new ArrayList<>();
 	private Board curr = new Board();
 
-	public ConsoleGame(Bot bot)
+	public OldConsoleGame(Bot bot)
 	{
 		this.bot = bot;
 		this.scanner = new Scanner(System.in);
@@ -59,7 +60,7 @@ public class ConsoleGame
 				boolean small = input.contains(";");
 				String[] arr = input.replace(";", ",").split(",");
 
-				Coord coord = coordFromInput(arr, small);
+				Byte coord = coordFromInput(arr, small);
 				if (coord == null)
 					continue;
 
@@ -75,7 +76,7 @@ public class ConsoleGame
 						return;
 					}
 
-					Coord botMove = Util.moveBotWithTimeOut(bot, curr.copy(), time);
+					Byte botMove = Util.moveBotWithTimeOut(bot, curr.copy(), time);
 					System.out.println("bot moves " + botMove);
 					curr.play(botMove);
 
@@ -100,14 +101,14 @@ public class ConsoleGame
 		}
 	}
 
-	private Coord coordFromInput(String[] arr, boolean small)
+	private Byte coordFromInput(String[] arr, boolean small)
 	{
 		if (small)
 		{
 			int xm = -1;
 			int ym = -1;
 
-			for (Coord c : curr.availableMoves())
+			for (Byte c : curr.availableMoves())
 			{
 				if (xm == -1)
 				{
@@ -125,10 +126,10 @@ public class ConsoleGame
 				}
 			}
 
-			return Coord.coord(xm, ym, Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
+			return Byte.coord(xm, ym, Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
 		}
 
-		return Coord.coord(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
+		return Byte.coord(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
 	}
 
 	private static String toSymbol(Player player)
@@ -141,3 +142,4 @@ public class ConsoleGame
 			return "?";
 	}
 }
+*/

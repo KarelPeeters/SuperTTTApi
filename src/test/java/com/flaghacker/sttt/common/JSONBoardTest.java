@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.common;
 
 import org.junit.Test;
@@ -25,4 +26,4 @@ public class JSONBoardTest
 
 		assertEquals(board, result);
 	}
-}
+}*/

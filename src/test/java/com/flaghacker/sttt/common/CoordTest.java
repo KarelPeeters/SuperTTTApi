@@ -1,3 +1,4 @@
+/*
 package com.flaghacker.sttt.common;
 
 import org.apache.commons.lang3.SerializationUtils;
@@ -21,3 +22,4 @@ public class CoordTest
 		}
 	}
 }
+*/

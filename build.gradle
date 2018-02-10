@@ -18,10 +18,9 @@ dependencies {
 
 task aizip (type:Zip) {
     group 'build'
-    description 'Zips the code for uploading to AIGames'
+    description 'Zips the code for uploading to rwiiddles.io'
 
-    from 'src/main/java'
-    exclude 'Main.java'
+    from 'src/main/kotlin'
     destinationDir file('ignored')
 }
 buildscript {
