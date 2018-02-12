@@ -20,7 +20,7 @@ public class JSONBoard
 			throw new IllegalArgumentException(nextMacros + " length must be 9");
 
 		Player nextPlayer = fromNiceString(json.getString("nextPlayer"));
-		Coord lastMove = coordFromJSON(json.getJSONArray("lastMove"));
+		//Byte lastMove = coordFromJSON(json.getJSONArray("lastMove"));
 
 		Board board = new Board();
 
@@ -61,7 +61,7 @@ public class JSONBoard
 		json.put("nextMacros", nextMacros);
 
 		json.put("nextPlayer", board.nextPlayer().toNiceString());
-		json.put("lastMove", coordToJSON(board.getLastMove()));
+		json.put("lastMove", coordToJSON(board.lastMove()));
 
 		return json;
 	}
@@ -89,4 +89,5 @@ public class JSONBoard
 		return Coord.coord(json.getInt(0), json.getInt(1));
 	}
 }
+
 */

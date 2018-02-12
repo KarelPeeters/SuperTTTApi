@@ -44,7 +44,7 @@ public class MultiBoardTest
 	{
 		for (int i = 0; i < moveCount && !board.isDone(); i++)
 		{
-			List<Coord> moves = board.availableMoves();
+			List<Byte> moves = board.availableMoves();
 			board.play(moves.get(random.nextInt(moves.size())));
 		}
 	}
@@ -69,4 +69,5 @@ public class MultiBoardTest
 		assertEquals(board.hashCode(), copy.hashCode());
 	}
 }
+
 */

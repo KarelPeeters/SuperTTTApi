@@ -17,7 +17,7 @@
  *     file that was distributed with this source code.
  */
 
-package bot
+package com.flaghacker.sttt.games
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
@@ -25,7 +25,7 @@ import com.flaghacker.sttt.common.Timer
 import java.util.*
 
 /**
- * bot.BotParser
+ * com.flaghacker.sttt.games.RiddlesIOGame
  *
  * Main class that will keep reading output from the engine.
  * Will either update the bot state or get actions.
@@ -33,7 +33,7 @@ import java.util.*
  * @author Jim van Eeden - jim@riddles.io
  */
 
-class BotParser(private val bot: Bot) {
+class RiddlesIOGame(private val bot: Bot) {
 
     private val scan: Scanner = Scanner(System.`in`)
 

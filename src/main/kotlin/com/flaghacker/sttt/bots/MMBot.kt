@@ -17,7 +17,7 @@ class MMBot(private val depth: Int) : Bot {
 
     private fun negaMax(board: Board, depth: Int, a: Double, b: Double, player: Int): ValuedMove {
         if (depth == 0 || board.isDone())
-            return ValuedMove(board.getLastMove(), player * value(board))
+            return ValuedMove(board.lastMove(), player * value(board))
 
         val children = children(board)
 
@@ -30,7 +30,7 @@ class MMBot(private val depth: Int) : Bot {
 
             if (value > bestValue || bestMove == null) {
                 bestValue = value
-                bestMove = child.getLastMove()
+                bestMove = child.lastMove()
             }
             newA = max(newA, value)
             if (newA >= b)

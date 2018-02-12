@@ -35,7 +35,7 @@ public class BoardTest
 	@Test
 	public void testPlayRemembered()
 	{
-		final Coord move = Coord.coord(4, 4);
+		final Byte move = Coord.coord(4, 4);
 		Board board = new Board();
 
 		Player player = board.nextPlayer();
@@ -129,7 +129,7 @@ public class BoardTest
 		{
 			if (board.isDone())
 				break;
-			List<Coord> available = board.availableMoves();
+			List<Byte> available = board.availableMoves();
 			board.play(available.get(rand.nextInt(available.size())));
 		}
 		return board;

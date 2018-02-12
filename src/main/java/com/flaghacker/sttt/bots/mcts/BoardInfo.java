@@ -70,12 +70,12 @@ public class BoardInfo implements Serializable
 				? Collections.min(moveSet)
 				: Collections.max(moveSet);
 
-		return bestInfo.board.getLastMove();
+		return bestInfo.board.lastMove();
 	}
 
 	public Info getInfo(Board board)
 	{
-		return map.containsKey(board) ? map.get(board) : null;
+		return map.getOrDefault(board, null);
 
 	}
 

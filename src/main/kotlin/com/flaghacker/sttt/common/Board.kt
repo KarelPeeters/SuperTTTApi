@@ -1,37 +1,69 @@
 package com.flaghacker.sttt.common
 
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.Serializable
 import java.util.*
 
-class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
-    /*
-    Each element represents a row of macros (3x9 tiles)
-    The first 3 Ints hold the macros for Player
-    The next 3 Ints hold the macros for Enemy
+typealias Coord = Byte
 
-    In each Int the bit representation is as follows:
-    aaaaaaaaabbbbbbbbbcccccccccABC with:
-    a: elements of the first macro
-    b: elements of the second macro
-    c: elements of the third macro
-    A: winner of first macro
-    B: winner of second macro
-    C: winner of third macro
-     */
-    //private var rows: Array<Int> = Array(6, { 0 })
-    //private var macroMask = 0b111111111
+fun toJSON(board: Board): JSONObject {
+    val json = JSONObject()
+    val jsonRows = JSONArray()
+    for (row in board.getRows()) jsonRows.put(row)
 
-    constructor() : this(Array(6, { 0 }),0b111111111)
+    json.put("rows", jsonRows)
+    json.put("macroMask", board.getMacroMask())
+    json.put("nextPlayer", board.nextPlayer().niceString)
+    json.put("lastMove", board.lastMove()?.toInt())
+    json.put("wonBy", board.wonBy().niceString)
 
-    private var wonBy = Player.NEUTRAL
-    private var nextPlayer = Player.PLAYER
+    return json
+}
 
-    private var lastMove: Byte? = null
+fun fromJSON(json: JSONObject): Board {
+    val jsonRows = json.getJSONArray("rows")
+    val macroMask = json.getInt("macroMask")
+    val nextPlayer = fromNiceString(json.getString("nextPlayer"))
+    val lastMove = json.getInt("lastMove").toByte()
+    val wonBy = fromNiceString(json.getString("wonBy"))
 
+    if (jsonRows.length() != 6 || macroMask < 0 || macroMask > 0b111111111 || lastMove > 80)
+        throw IllegalArgumentException("json parsing failed (arguments: [$jsonRows,$macroMask,$lastMove])")
+
+    return Board(Array(6) { jsonRows.get(it) as Int }, macroMask, nextPlayer, lastMove, wonBy)
+}
+
+class Board(
+        /*
+        Each element represents a row of macros (3 rows of 9 tiles)
+        The first 3 Ints hold the macros for Player
+        The next 3 Ints hold the macros for Enemy
+
+        In each Int the bit representation is as follows:
+        aaaaaaaaabbbbbbbbbcccccccccABC with:
+        a/b/c: bit enabled if the player is the owner of the tile
+        A/B/C: bit enabled if the player won the macro
+        */
+        private var rows: Array<Int>,
+        private var macroMask: Int,
+        private var nextPlayer: Player,
+        private var lastMove: Coord?,
+        private var wonBy: Player
+) : Serializable {
+    constructor() : this(Array(6) { 0 }, 0b111111111, Player.PLAYER, null, Player.NEUTRAL)
+    constructor(rows: Array<Int>, macroMask: Int) : this(rows, macroMask, Player.PLAYER, null, Player.NEUTRAL)
+
+    fun getRows() = rows.copyOf()
+    fun getMacroMask() = macroMask
     fun nextPlayer() = nextPlayer
-    fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
+    fun lastMove() = lastMove
     fun wonBy() = wonBy
-    fun getLastMove() = lastMove
+
+    fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
+    private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
+    private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
+    private fun Int.isMaskSet(mask: Int) = this and mask == mask
 
     fun flip(): Board {
         val board = copy()
@@ -40,7 +72,6 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
         for (i in 0..2) newRows[i] = board.rows[i + 3]
         for (i in 3..5) newRows[i] = board.rows[i - 3]
         board.rows = newRows
-
         board.wonBy = board.wonBy.otherWithNeutral()
         board.nextPlayer = board.nextPlayer.otherWithNeutral()
 
@@ -57,7 +88,8 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
         return copy
     }
 
-    fun play(index: Byte): Boolean {
+    fun play(x: Int, y: Int) = play((((x / 3) + (y / 3)*3)*9 + ((x % 3) + (y % 3) * 3)).toByte())
+    fun play(index: Coord): Boolean {
         val row = index / 27 //Row 0,1,2
         val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro
         val moveShift = index % 9                //Shift required for index within matrix
@@ -109,8 +141,8 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
 
     private fun macroFull(om: Int): Boolean = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
 
-    fun availableMoves(): List<Byte> {
-        val output = ArrayList<Byte>()
+    fun availableMoves(): List<Coord> {
+        val output = ArrayList<Coord>()
 
         for (macro in 0..8) {
             if (macroMask.getBit(macro)) {
@@ -133,10 +165,6 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
         rows[3 + o / 27].getBit(o % 27) -> Player.ENEMY
         else -> Player.NEUTRAL
     }
-
-    private fun getVal(mRow: Int, mNum: Int): Int = (rows[mRow] shr mNum) and 1
-    private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
-    private fun Int.isMaskSet(mask: Int) = this and mask == mask
 
     private fun wonGrid(grid: Int, index: Int): Boolean {
         when (index) {
@@ -164,12 +192,9 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
     override fun toString(): String {
         var output = ""
         for (i in 0..80) {
-
             val tileShift = i % 3 + 3 * ((i / 9) % 3)
             val macroShift = (i % 9) / 3 * 9
-
             val shift = tileShift + macroShift
-            val lastMove = lastMove == (i - i%27 + shift).toByte()
 
             output +=
                     if (i == 0 || i == 80) ""
@@ -179,7 +204,6 @@ class Board(var rows: Array<Int>, var macroMask:Int) : Serializable {
                     else ""
 
             output += when {
-                lastMove -> nextPlayer.other().niceString
                 getVal(i / 27, shift) == 1 -> "X"
                 getVal(i / 27 + 3, shift) == 1 -> "O"
                 else -> " "
