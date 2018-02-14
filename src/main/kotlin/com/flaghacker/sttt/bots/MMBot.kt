@@ -13,11 +13,11 @@ class MMBot(private val depth: Int) : Bot {
         return negaMax(board, depth + 1, NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer())).move
     }
 
-    private class ValuedMove(val move: Byte?, val value: Double)
+    private class ValuedMove(val move: Byte, val value: Double)
 
     private fun negaMax(board: Board, depth: Int, a: Double, b: Double, player: Int): ValuedMove {
         if (depth == 0 || board.isDone())
-            return ValuedMove(board.lastMove(), player * value(board))
+            return ValuedMove(board.lastMove()!!, player * value(board))
 
         val children = children(board)
 
@@ -37,7 +37,7 @@ class MMBot(private val depth: Int) : Bot {
                 break
         }
 
-        return ValuedMove(bestMove, bestValue)
+        return ValuedMove(bestMove!!, bestValue)
     }
 
     private fun children(board: Board): List<Board> {

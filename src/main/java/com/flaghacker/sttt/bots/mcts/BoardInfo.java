@@ -1,6 +1,7 @@
 package com.flaghacker.sttt.bots.mcts;
 
 import com.flaghacker.sttt.common.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -113,7 +114,7 @@ public class BoardInfo implements Serializable
 		}
 
 		@Override
-		public int compareTo(Info other)
+		public int compareTo(@NotNull Info other)
 		{
 			return Double.compare(this.value(), other.value());
 		}

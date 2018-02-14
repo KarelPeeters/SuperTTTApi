@@ -18,9 +18,10 @@ dependencies {
 
 task aizip (type:Zip) {
     group 'build'
-    description 'Zips the code for uploading to rwiiddles.io'
-
+    description 'Zips the code for uploading to riddles.io'
     from 'src/main/kotlin'
+    exclude 'Main.kt'
+    exclude 'com/flaghacker/sttt/common/JSONBoard.kt'
     destinationDir file('ignored')
 }
 
@@ -47,7 +48,7 @@ compileTestKotlin {
 }
 
 jmh {
-    humanOutputFile = null
-    warmupIterations = 1
-    iterations = 1
+    warmupIterations = 5
+    iterations = 5
+    fork = 2
 }

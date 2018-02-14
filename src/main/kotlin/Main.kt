@@ -1,13 +1,11 @@
-import com.flaghacker.sttt.bots.RandomBot
-import com.flaghacker.sttt.bots.mcts.MCTSBot
-import com.flaghacker.sttt.bots.mcts.Settings
+import com.flaghacker.sttt.bots.MMBot
 import com.flaghacker.sttt.games.BotGame
 
 fun main(args: Array<String>) {
-    BotGame(MCTSBot(Settings.standard()), RandomBot())
-            .setCount(1)
+    BotGame(MMBot(4), MMBot(4))
+            .setCount(100)
             .setShuffling(true)
             .setTimePerMove(56)
-            .setLogLevel(BotGame.LogLevel.NONE)
+            .setLogLevel(BotGame.LogLevel.BASIC)
             .run()
 }

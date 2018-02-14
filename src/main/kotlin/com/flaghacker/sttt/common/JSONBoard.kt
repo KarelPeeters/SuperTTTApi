@@ -15,7 +15,7 @@ fun Board.toJSON(): JSONObject {
 }
 
 class JSONBoard{
-    companion object Board {
+    companion object Companion {
         fun fromJSON(json: JSONObject): com.flaghacker.sttt.common.Board {
             val board = Array(9, { Array(9, { Player.NEUTRAL }) })
             for (i in 0 until 81)

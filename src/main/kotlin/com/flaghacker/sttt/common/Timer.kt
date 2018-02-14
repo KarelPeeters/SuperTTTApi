@@ -2,7 +2,7 @@ package com.flaghacker.sttt.common
 
 class Timer(private val time: Long) {
 
-    private var start: Long = -1
+    private var start = -1L
     var isInterrupted: Boolean = false
 
     fun started() = start != -1L
