@@ -61,7 +61,7 @@ class RiddlesIOGame(private val bot: Bot) {
                     parseGameData(parts[2], parts[3])
                 }
                 "action" -> if (parts[1] == "move") { /* move requested */
-                    timeBank = Integer.parseInt(parts[2])
+/*                    timeBank = Integer.parseInt(parts[2])
                     val move = bot.move(Board(rows,macroMask), Timer(80))!!.toInt()
 
                     val os = move%9
@@ -70,7 +70,7 @@ class RiddlesIOGame(private val bot: Bot) {
                     val x = (om%3)*3 + os%3
                     val y = (om/3)*3 + os/3
 
-                    println("place_move $x $y")
+                    println("place_move $x $y")*/
                 }
                 else -> println("unknown command")
             }

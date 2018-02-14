@@ -64,12 +64,10 @@ class MMBot(private val depth: Int) : Bot {
         }
     }
 
-    private fun playerSign(player: Player): Int {
-        return when (player) {
-            Player.NEUTRAL -> 0
-            Player.PLAYER -> 1
-            Player.ENEMY -> -1
-        }
+    private fun playerSign(player: Player) = when (player) {
+        Player.NEUTRAL -> 0
+        Player.PLAYER -> 1
+        Player.ENEMY -> -1
     }
 
     private fun tileFactor(o: Int): Double {
@@ -81,9 +79,7 @@ class MMBot(private val depth: Int) : Bot {
         return if (x == 1 || y == 1) EDGE_FACTOR else CORNER_FACTOR
     }
 
-    override fun toString(): String {
-        return "MMBotJava"
-    }
+    override fun toString() = "MMBotJava"
 
     companion object {
 

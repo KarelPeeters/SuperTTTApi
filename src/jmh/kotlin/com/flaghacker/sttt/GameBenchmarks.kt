@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 fun main(args:Array<String>) {
 
     Runner(OptionsBuilder()
-            .include(".*" + GameBenchmarks::class.simpleName + ".*")
+            .include(".*Benchmarks.*")
             .warmupIterations(5)
             .measurementIterations(5)
             .forks(1)

@@ -5,10 +5,10 @@ fun fromNiceString(string: String): Player {
     throw IllegalArgumentException(string + " is not a valid com.flaghacker.sttt.common.KotlinPlayer")
 }
 
-enum class Player(val niceString: String, val value: Int) {
-    NEUTRAL(" ",0),
-    PLAYER("X",1),
-    ENEMY("O",2);
+enum class Player(val niceString: String) {
+    PLAYER("X"),
+    ENEMY("O"),
+    NEUTRAL(" ");
 
     fun other(): Player = when {
         this == PLAYER -> ENEMY
