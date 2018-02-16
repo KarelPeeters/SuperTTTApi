@@ -1,8 +1,6 @@
-/*
 package com.flaghacker.sttt.common;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +8,6 @@ import java.util.List;
 import static com.flaghacker.sttt.common.Player.ENEMY;
 import static com.flaghacker.sttt.common.Player.NEUTRAL;
 import static com.flaghacker.sttt.common.Player.PLAYER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class JSONBoardUtil
 {
@@ -19,7 +15,7 @@ public class JSONBoardUtil
 	private static final byte ENEMY_JSON = -1;
 	private static final byte NEUTRAL_JSON = 0;
 
-	public static JSONObject boardToJSON(Board board)
+/*	public static JSONObject boardToJSON(Board board)
 	{
 		JSONObject json = new JSONObject();
 
@@ -54,15 +50,15 @@ public class JSONBoardUtil
 		json.put("macros", macros);
 
 		return json;
-	}
+	}*/
 
-	public static void checkMatch(Board board, JSONObject exp)
+/*	public static void checkMatch(Board board, JSONObject exp)
 	{
 		//single values
 		assertEquals(jsonToBoardPlayer(exp.getInt("nextPlayer")), board.nextPlayer());
 		assertEquals(jsonToBoardPlayer(exp.getInt("wonBy")), board.wonBy());
 		assertEquals(exp.getBoolean("done"), board.isDone());
-		assertEquals(exp.get("singleMacro"), board.singleMacro());
+		assertEquals(exp.get("macroMask"), board.macroMask());
 
 		if (exp.isNull("lastMove"))
 			assertNull(board.getLastMove());
@@ -85,13 +81,13 @@ public class JSONBoardUtil
 		JSONArray macros = exp.getJSONArray("macros");
 		for (int om = 0; om < 9; om++)
 			assertEquals(jsonToBoardPlayer(macros.getInt(om)), board.macro(om));
-	}
+	}*/
 
-	private static List<Coord> arrToCoordList(JSONArray arr)
+	private static List<Byte> arrToCoordList(JSONArray arr)
 	{
-		List<Coord> coords = new ArrayList<>();
+		List<Byte> coords = new ArrayList<>();
 		for (int i = 0; i < arr.length(); i++)
-			coords.add(Coord.coord(arr.getInt(i)));
+			coords.add((byte) arr.getInt(i));
 		return coords;
 	}
 
@@ -125,4 +121,3 @@ public class JSONBoardUtil
 		}
 	}
 }
-*/

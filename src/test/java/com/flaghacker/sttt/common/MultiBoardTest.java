@@ -1,7 +1,5 @@
-/*
 package com.flaghacker.sttt.common;
 
-import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -11,7 +9,6 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -33,23 +30,14 @@ public class MultiBoardTest
 		for (int i = 0; i < 10; i++)
 		{
 			Board board = new Board();
-			play(board, i);
+			BoardTest.randomBoard(random,i);
 			list.add(board);
 		}
 
 		return list;
 	}
 
-	private static void play(Board board, int moveCount)
-	{
-		for (int i = 0; i < moveCount && !board.isDone(); i++)
-		{
-			List<Byte> moves = board.availableMoves();
-			board.play(moves.get(random.nextInt(moves.size())));
-		}
-	}
-
-	@Test
+/*	@Test
 	public void testCopySeparate()
 	{
 		JSONObject origJSON = JSONBoardUtil.boardToJSON(board);
@@ -58,7 +46,7 @@ public class MultiBoardTest
 		play(copy, 15);
 		assertNotEquals(board, copy);
 		JSONBoardUtil.checkMatch(board, origJSON);
-	}
+	}*/
 
 	@Test
 	public void testCopyEqualsHashcode()
@@ -69,5 +57,3 @@ public class MultiBoardTest
 		assertEquals(board.hashCode(), copy.hashCode());
 	}
 }
-
-*/
