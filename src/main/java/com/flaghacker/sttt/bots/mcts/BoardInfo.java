@@ -38,7 +38,7 @@ public class BoardInfo implements Serializable
 
 	public Info inc(Board board, int depth, Player wonBy, Info previous)
 	{
-		if (!map.containsKey(board))
+		if (! map.containsKey(board))
 			map.put(board, new Info(board, depth, previous));
 
 		Info info = map.get(board);

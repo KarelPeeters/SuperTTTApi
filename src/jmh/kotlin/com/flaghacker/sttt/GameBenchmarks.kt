@@ -9,13 +9,13 @@ import org.openjdk.jmh.annotations.Mode
 import org.openjdk.jmh.annotations.OutputTimeUnit
 import java.util.concurrent.TimeUnit
 
-open class GameBenchmarks{
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    fun averageGame(){
-        val game = BotGame(MMBot(5), RandomBot(401797280))
-        game.setLogLevel(BotGame.LogLevel.NONE).setRandomSeed(20).setShuffling(false).run()
-    }
+open class GameBenchmarks {
+	@Benchmark
+	@BenchmarkMode(Mode.AverageTime)
+	@OutputTimeUnit(TimeUnit.MICROSECONDS)
+	fun averageGame() {
+		val game = BotGame(MMBot(5), RandomBot(401797280))
+		game.setLogLevel(BotGame.LogLevel.NONE).setRandomSeed(20).setShuffling(false).run()
+	}
 }
 

@@ -100,7 +100,7 @@ public class MCTSBot implements Bot
 			}
 		}
 
-		update(start, firstChoice, wonBy, depth+1);
+		update(start, firstChoice, wonBy, depth + 1);
 	}
 
 	private void update(Board prev, Board board, Player wonBy, int depth)

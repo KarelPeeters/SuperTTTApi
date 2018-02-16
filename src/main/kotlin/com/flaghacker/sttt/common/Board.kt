@@ -42,12 +42,13 @@ class Board : Serializable {
 		lastMove = board.lastMove
 	}
 
-	constructor(board: Array<Array<Player>>, macroMask: Int) {
+	constructor(board: Array<Array<Player>>, macroMask: Int, lastMove: Coord?) {
 		if (board.size != 9 && board.all { it.size != 9 })
 			throw IllegalArgumentException("Input board is the wrong size (input: $board)")
 		else if (macroMask < 0 || macroMask > 0b111111111)
 			throw IllegalArgumentException("Incorrect input macro mask (input: $macroMask)")
 
+		val xCount1 = board.sumBy { it.filterNot { it == Player.NEUTRAL }.sumBy { if (it == Player.PLAYER) 1 else -1 } }
 		var xCount = 0
 		for (i in 0 until 81) {
 			val macroShift = (i / 9) % 3 * 9
@@ -64,6 +65,10 @@ class Board : Serializable {
 			}
 		}
 
+		println(xCount1 == xCount)
+		println("$xCount  $xCount1")
+
+		this.lastMove = lastMove
 		this.macroMask = macroMask
 		nextPlayer = when (xCount) {
 			-1, 0 -> Player.PLAYER
@@ -104,50 +109,45 @@ class Board : Serializable {
 		return output
 	}
 
-	fun macro(om: Int): Player = when {
-		rows[om / 3].getBit(27 + om % 3) -> Player.PLAYER
-		rows[3 + om / 3].getBit(27 + om % 3) -> Player.ENEMY
+	fun macro(index: Byte): Player = when {
+		rows[index / 3].getBit(27 + index % 3) -> Player.PLAYER
+		rows[3 + index / 3].getBit(27 + index % 3) -> Player.ENEMY
 		else -> Player.NEUTRAL
 	}
 
-	fun tile(o: Int): Player = when {
-		rows[o / 27].getBit(o % 27) -> Player.PLAYER
-		rows[3 + o / 27].getBit(o % 27) -> Player.ENEMY
+	fun tile(index: Coord): Player = when {
+		rows[index / 27].getBit(index % 27) -> Player.PLAYER
+		rows[3 + index / 27].getBit(index % 27) -> Player.ENEMY
 		else -> Player.NEUTRAL
 	}
 
 	fun play(index: Coord): Boolean {
-		val row = index / 27 //Row 0,1,2
+		val row = index / 27                     //Row (0,1,2)
 		val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro (9om)
 		val moveShift = index % 9                //Shift required for index within matrix (os)
-		val shift = moveShift + macroShift
+		val shift = moveShift + macroShift       //Total move offset in the row entry
+		val pRow = nextPlayer.ordinal * 3 + row  //Index of the row entry in the rows array
 
 		//If the move is not available throw exception
 		if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
 			throw RuntimeException("Position $index not available")
 		else if (wonBy != Player.NEUTRAL)
-			throw RuntimeException("The game is over")
+			throw RuntimeException("Can't play; game already over")
 
-		//Write the move to the board
-		val pRow = nextPlayer.ordinal * 3 + row
+		//Write move to board & check for macro win
 		rows[pRow] += (1 shl shift)
-
 		val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
-		//var winGrid: Int
-		if (macroWin) {
-			rows[pRow] += (1 shl (27 + macroShift / 9)) //27 + macro number
 
-			//Create & check the winGrid of the player
-			if (wonGrid(winGrid(nextPlayer), index / 9))
-				wonBy = nextPlayer
+		//Check if the current player won
+		if (macroWin) {
+			rows[pRow] += (1 shl (27 + macroShift / 9))
+			if (wonGrid(winGrid(nextPlayer), index / 9)) wonBy = nextPlayer
 		}
 
 		//Prepare the board for the next player
 		val winGrid = winGrid(Player.PLAYER) or winGrid(Player.ENEMY)
 		val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
-		macroMask =
-				if (freeMove) (0b111111111 and winGrid.inv())
-				else (1 shl moveShift)
+		macroMask = if (freeMove) (0b111111111 and winGrid.inv()) else (1 shl moveShift)
 		lastMove = index
 		nextPlayer = nextPlayer.other()
 
