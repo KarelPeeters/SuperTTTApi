@@ -4,214 +4,205 @@ import java.io.Serializable
 import java.util.*
 
 typealias Coord = Byte
+
 fun toCoord(x: Int, y: Int) = (((x / 3) + (y / 3) * 3) * 9 + ((x % 3) + (y % 3) * 3)).toByte()
 fun Int.toPair() = toByte().toPair()
 fun Coord.toPair(): Pair<Int, Int> {
-    val om = this / 9
-    val os = this % 9
-    return Pair((om % 3) * 3 + (os % 3), (om / 3) * 3 + (os / 3))
+	val om = this / 9
+	val os = this % 9
+	return Pair((om % 3) * 3 + (os % 3), (om / 3) * 3 + (os / 3))
 }
 
 class Board : Serializable {
-    /*
-    Each element represents a row of macros (3 rows of 9 tiles)
-    The first 3 Ints hold the macros for Player
-    The next 3 Ints hold the macros for Enemy
+	/*
+	Each element represents a row of macros (3 rows of 9 tiles)
+	The first 3 Ints hold the macros for Player
+	The next 3 Ints hold the macros for Enemy
 
-    In each Int the bit representation is as follows:
-    aaaaaaaaabbbbbbbbbcccccccccABC with:
-    a/b/c: bit enabled if the player is the owner of the tile
-    A/B/C: bit enabled if the player won the macro
-    */
-    private var rows: Array<Int> = Array(6) { 0 }
-    private var macroMask = 0b111111111
-    private var nextPlayer: Player = Player.PLAYER
-    private var lastMove: Coord? = null
-    private var wonBy = Player.NEUTRAL
+	In each Int the bit representation is as follows:
+	aaaaaaaaabbbbbbbbbcccccccccABC with:
+	a/b/c: bit enabled if the player is the owner of the tile
+	A/B/C: bit enabled if the player won the macro
+	*/
+	private var rows: Array<Int> = Array(6) { 0 }
+	private var macroMask = 0b111111111
+	private var nextPlayer: Player = Player.PLAYER
+	private var lastMove: Coord? = null
+	private var wonBy = Player.NEUTRAL
 
-    constructor()
+	constructor()
 
-    fun copy() = Board(this)
-    constructor(board: Board) {
-        rows = board.rows.copyOf()
-        wonBy = board.wonBy
-        nextPlayer = board.nextPlayer
-        macroMask = board.macroMask
-        lastMove = board.lastMove
-    }
+	fun copy() = Board(this)
 
-    constructor(board: Array<Array<Player>>, macroMask: Int) {
-        if (board.size != 9 && board.all { it.size != 9 })
-            throw IllegalArgumentException("Input board is the wrong size (input: $board)")
-        else if (macroMask < 0 || macroMask > 0b111111111)
-            throw IllegalArgumentException("Incorrect input macro mask (input: $macroMask)")
+	constructor(board: Board) {
+		rows = board.rows.copyOf()
+		wonBy = board.wonBy
+		nextPlayer = board.nextPlayer
+		macroMask = board.macroMask
+		lastMove = board.lastMove
+	}
 
-        var xCount = 0
-        for (i in 0 until 81) {
-            val macroShift = (i / 9) % 3 * 9
-            val coords = i.toPair()
-            val owner = board[coords.first][coords.second]
+	constructor(board: Array<Array<Player>>, macroMask: Int) {
+		if (board.size != 9 && board.all { it.size != 9 })
+			throw IllegalArgumentException("Input board is the wrong size (input: $board)")
+		else if (macroMask < 0 || macroMask > 0b111111111)
+			throw IllegalArgumentException("Incorrect input macro mask (input: $macroMask)")
 
-            if (owner != Player.NEUTRAL) {
-                xCount += if (owner == Player.PLAYER) 1 else -1
-                rows[i / 27 + owner.ordinal * 3] += 1 shl i % 27
-                if (wonGrid((rows[i / 27 + owner.ordinal * 3] shr macroShift) and 0b111111111, i % 9)) {
-                    rows[i / 27 + owner.ordinal * 3] += (1 shl (27 + macroShift / 9)) //27 + macro number
-                    if (wonGrid(winGrid(owner), i / 9)) wonBy = nextPlayer
-                }
-            }
-        }
+		var xCount = 0
+		for (i in 0 until 81) {
+			val macroShift = (i / 9) % 3 * 9
+			val coords = i.toPair()
+			val owner = board[coords.first][coords.second]
 
-        this.macroMask = macroMask
-        nextPlayer = when (xCount) {
-            -1, 0 -> Player.PLAYER
-            1 -> Player.ENEMY
-            else -> throw IllegalArgumentException("Input board is invalid (input: $board)")
-        }
-    }
+			if (owner != Player.NEUTRAL) {
+				xCount += if (owner == Player.PLAYER) 1 else -1
+				rows[i / 27 + owner.ordinal * 3] += 1 shl i % 27
+				if (wonGrid((rows[i / 27 + owner.ordinal * 3] shr macroShift) and 0b111111111, i % 9)) {
+					rows[i / 27 + owner.ordinal * 3] += (1 shl (27 + macroShift / 9)) //27 + macro number
+					if (wonGrid(winGrid(owner), i / 9)) wonBy = nextPlayer
+				}
+			}
+		}
 
-    fun macroMask() = macroMask
-    fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
-    fun nextPlayer() = nextPlayer
-    fun lastMove() = lastMove
-    fun wonBy() = wonBy
+		this.macroMask = macroMask
+		nextPlayer = when (xCount) {
+			-1, 0 -> Player.PLAYER
+			1 -> Player.ENEMY
+			else -> throw IllegalArgumentException("Input board is invalid (input: $board)")
+		}
+	}
 
-    fun flip(): Board {
-        val board = copy()
+	fun macroMask() = macroMask
+	fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
+	fun nextPlayer() = nextPlayer
+	fun lastMove() = lastMove
+	fun wonBy() = wonBy
 
-        val newRows = Array(6) { 0 }
-        for (i in 0..2) newRows[i] = board.rows[i + 3]
-        for (i in 3..5) newRows[i] = board.rows[i - 3]
-        board.rows = newRows
-        board.wonBy = board.wonBy.otherWithNeutral()
-        board.nextPlayer = board.nextPlayer.otherWithNeutral()
+	fun flip(): Board {
+		val board = copy()
 
-        return board
-    }
+		val newRows = Array(6) { 0 }
+		for (i in 0..2) newRows[i] = board.rows[i + 3]
+		for (i in 3..5) newRows[i] = board.rows[i - 3]
+		board.rows = newRows
+		board.wonBy = board.wonBy.otherWithNeutral()
+		board.nextPlayer = board.nextPlayer.otherWithNeutral()
 
-    fun availableMoves(): List<Coord> {
-        val output = ArrayList<Coord>()
+		return board
+	}
 
-        for (macro in 0 until 9) {
-            if (macroMask.getBit(macro)) {
-                val row = rows[macro / 3] or rows[macro / 3 + 3]
-                (0 until 9).map { it + macro * 9 }.filter { !row.getBit(it % 27) }.mapTo(output) { it.toByte() }
-            }
-        }
+	fun availableMoves(): List<Coord> {
+		val output = ArrayList<Coord>()
 
-        return output
-    }
+		for (macro in 0 until 9) {
+			if (macroMask.getBit(macro)) {
+				val row = rows[macro / 3] or rows[macro / 3 + 3]
+				(0 until 9).map { it + macro * 9 }.filter { !row.getBit(it % 27) }.mapTo(output) { it.toByte() }
+			}
+		}
 
-    fun play(index: Coord): Boolean {
-        val row = index / 27 //Row 0,1,2
-        val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro
-        val moveShift = index % 9                //Shift required for index within matrix
-        val shift = moveShift + macroShift
+		return output
+	}
 
-        //If the move is not available throw exception
-        if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
-            throw RuntimeException("Position $index not available")
-        else if (wonBy != Player.NEUTRAL)
-            throw RuntimeException("The game is over")
+	fun macro(om: Int): Player = when {
+		rows[om / 3].getBit(27 + om % 3) -> Player.PLAYER
+		rows[3 + om / 3].getBit(27 + om % 3) -> Player.ENEMY
+		else -> Player.NEUTRAL
+	}
 
-        //Write the move to the board
-        val pRow = nextPlayer.ordinal * 3 + row
-        rows[pRow] += (1 shl shift)
+	fun tile(o: Int): Player = when {
+		rows[o / 27].getBit(o % 27) -> Player.PLAYER
+		rows[3 + o / 27].getBit(o % 27) -> Player.ENEMY
+		else -> Player.NEUTRAL
+	}
 
-        val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
-        //var winGrid: Int
-        if (macroWin) {
-            rows[pRow] += (1 shl (27 + macroShift / 9)) //27 + macro number
+	fun play(index: Coord): Boolean {
+		val row = index / 27 //Row 0,1,2
+		val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro (9om)
+		val moveShift = index % 9                //Shift required for index within matrix (os)
+		val shift = moveShift + macroShift
 
-            //Create & check the winGrid of the player
-            if (wonGrid(winGrid(nextPlayer), index / 9))
-                wonBy = nextPlayer
-        }
+		//If the move is not available throw exception
+		if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
+			throw RuntimeException("Position $index not available")
+		else if (wonBy != Player.NEUTRAL)
+			throw RuntimeException("The game is over")
 
-        //Prepare the board for the next player
-        val winGrid = winGrid(Player.PLAYER) or winGrid(Player.ENEMY)
-        val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
-        macroMask =
-                if (freeMove) (0b111111111 and winGrid.inv())
-                else (1 shl moveShift)
-        lastMove = index
-        nextPlayer = nextPlayer.other()
+		//Write the move to the board
+		val pRow = nextPlayer.ordinal * 3 + row
+		rows[pRow] += (1 shl shift)
 
-        return macroWin
-    }
+		val macroWin = wonGrid((rows[pRow] shr macroShift) and 0b111111111, moveShift)
+		//var winGrid: Int
+		if (macroWin) {
+			rows[pRow] += (1 shl (27 + macroShift / 9)) //27 + macro number
 
-    private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
-    private fun Int.isMaskSet(mask: Int) = this and mask == mask
-    private fun macroFull(om: Int): Boolean = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
+			//Create & check the winGrid of the player
+			if (wonGrid(winGrid(nextPlayer), index / 9))
+				wonBy = nextPlayer
+		}
 
-    private fun winGrid(player:Player) = (rows[0 + 3 * player.ordinal] shr 27)
-            .or((rows[1 + 3 * player.ordinal] shr 27) shl 3)
-            .or((rows[2 + 3 * player.ordinal] shr 27) shl 6)
+		//Prepare the board for the next player
+		val winGrid = winGrid(Player.PLAYER) or winGrid(Player.ENEMY)
+		val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
+		macroMask =
+				if (freeMove) (0b111111111 and winGrid.inv())
+				else (1 shl moveShift)
+		lastMove = index
+		nextPlayer = nextPlayer.other()
 
-    fun macro(om: Int): Player = when {
-        rows[om / 3].getBit(27 + om % 3) -> Player.PLAYER
-        rows[3 + om / 3].getBit(27 + om % 3) -> Player.ENEMY
-        else -> Player.NEUTRAL
-    }
+		return macroWin
+	}
 
-    fun tile(o: Int): Player = when {
-        rows[o / 27].getBit(o % 27) -> Player.PLAYER
-        rows[3 + o / 27].getBit(o % 27) -> Player.ENEMY
-        else -> Player.NEUTRAL
-    }
+	private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
+	private fun Int.isMaskSet(mask: Int) = this and mask == mask
+	private fun macroFull(om: Int) = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
+	private fun winGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
+			.or((rows[1 + 3 * player.ordinal] shr 27) shl 3)
+			.or((rows[2 + 3 * player.ordinal] shr 27) shl 6)
 
-    private fun wonGrid(grid: Int, index: Int): Boolean {
-        when (index) {
-            4 ->                                                        //Center
-                return grid.getBit(1) && grid.getBit(7)                 //line |
-                        || grid.getBit(3) && grid.getBit(5)             //line -
-                        || grid.getBit(0) && grid.getBit(8)             //line \
-                        || grid.getBit(6) && grid.getBit(2)             //line /
-            3, 5 ->                                                     //Horizontal sides
-                return grid.getBit(index - 3) && grid.getBit(index + 3) //line |
-                        || grid.getBit(4) && grid.getBit(8 - index)     //line -
-            1, 7 ->                                                     //Vertical sides
-                return grid.getBit(index - 1) && grid.getBit(index + 1) //line |
-                        || grid.getBit(4) && grid.getBit(8 - index)     //line -
-            else -> {   //corners
-                val x = index % 3
-                val y = index / 3
-                return grid.getBit(4) && grid.getBit(8 - index)                                    //line \ or /
-                        || grid.getBit(3 * y + (x + 1) % 2) && grid.getBit(3 * y + (x + 2) % 4)    //line -
-                        || grid.getBit(x + ((y + 1) % 2) * 3) && grid.getBit(x + ((y + 2) % 4) * 3)//line |
-            }
-        }
-    }
+	private fun wonGrid(grid: Int, index: Int) = when (index) {
+		4 -> grid.getBit(1) && grid.getBit(7)        //Center: line |
+				|| grid.getBit(3) && grid.getBit(5)  //Center: line -
+				|| grid.getBit(0) && grid.getBit(8)  //Center: line \
+				|| grid.getBit(6) && grid.getBit(2)  //Center: line /
+		3, 5 -> grid.getBit(index - 3) && grid.getBit(index + 3) //Horizontal side: line |
+				|| grid.getBit(4) && grid.getBit(8 - index)      //Horizontal side: line -
+		1, 7 -> grid.getBit(index - 1) && grid.getBit(index + 1) //Vertical side: line |
+				|| grid.getBit(4) && grid.getBit(8 - index)      //Vertical side: line -
+		else -> { //Corners
+			val x = index % 3
+			val y = index / 3
+			grid.getBit(4) && grid.getBit(8 - index)                                            //line \ or /
+					|| grid.getBit(3 * y + (x + 1) % 2) && grid.getBit(3 * y + (x + 2) % 4)     //line -
+					|| grid.getBit(x + ((y + 1) % 2) * 3) && grid.getBit(x + ((y + 2) % 4) * 3) //line |
+		}
+	}
 
-    override fun toString() = (0 until 81).map { it to toCoord(it % 9, it / 9) }.joinToString("") {
-        when {
-            (it.first == 0 || it.first == 80) -> ""
-            (it.first % 27 == 0) -> "\n---+---+---\n"
-            (it.first % 9 == 0) -> "\n"
-            (it.first % 3 == 0 || it.first % 6 == 0) -> "|"
-            else -> ""
-        } + when {
-            rows[it.second / 27].getBit(it.second % 27) -> "X"
-            rows[(it.second / 27) + 3].getBit(it.second % 27) -> "O"
-            else -> " "
-        }
-    }
+	override fun toString() = (0 until 81).map { it to toCoord(it % 9, it / 9) }.joinToString("") {
+		when {
+			(it.first == 0 || it.first == 80) -> ""
+			(it.first % 27 == 0) -> "\n---+---+---\n"
+			(it.first % 9 == 0) -> "\n"
+			(it.first % 3 == 0 || it.first % 6 == 0) -> "|"
+			else -> ""
+		} + when {
+			rows[it.second / 27].getBit(it.second % 27) -> "X"
+			rows[(it.second / 27) + 3].getBit(it.second % 27) -> "O"
+			else -> " "
+		}
+	}
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+	override fun hashCode() = 31 * Arrays.hashCode(rows) + macroMask
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
 
-        other as Board
+		other as Board
 
-        if (!Arrays.equals(rows, other.rows)) return false
-        if (macroMask != other.macroMask) return false
+		if (!Arrays.equals(rows, other.rows)) return false
+		if (macroMask != other.macroMask) return false
 
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = Arrays.hashCode(rows)
-        result = 31 * result + macroMask
-        return result
-    }
+		return true
+	}
 }
