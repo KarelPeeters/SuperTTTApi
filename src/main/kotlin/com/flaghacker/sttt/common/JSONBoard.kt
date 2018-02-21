@@ -10,6 +10,7 @@ fun Board.toJSON(): JSONObject {
 
 	json.put("board", jsonBoard)
 	json.put("macroMask", macroMask())
+	json.put("lastMove", lastMove()?.toInt())
 
 	return json
 }
@@ -21,8 +22,9 @@ class JSONBoard {
 			for (i in 0 until 81)
 				board[i.toPair().first][i.toPair().second] = fromNiceString(json.getJSONArray("board").getString(i))
 			val macroMask = json.getInt("macroMask")
+			val lastMove = if (json.length() == 3) json.getInt("lastMove") else null
 
-			return Board(board, macroMask, null)
+			return Board(board, macroMask, lastMove?.toByte())
 		}
 	}
 }
