@@ -48,7 +48,7 @@ compileTestKotlin {
 }
 
 jmh {
-    warmupIterations = 30
-    iterations = 30
-    fork = 5
+    warmupIterations = 10
+    iterations = 5
+    fork = 2
 }

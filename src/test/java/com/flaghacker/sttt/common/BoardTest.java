@@ -117,7 +117,6 @@ public class BoardTest {
 	public static Board randomBoard(Random rand, int moves) {
 		return playRandom(new Board(), rand, moves);
 	}
-
 	public static Board playRandom(Board startBoard, Random rand, int moveCount) {
 		for (int i = 0; i < moveCount && !startBoard.isDone(); i++) {
 			List<Byte> available = startBoard.availableMoves();
