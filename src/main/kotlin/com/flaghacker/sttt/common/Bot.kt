@@ -1,5 +1,7 @@
 package com.flaghacker.sttt.common
 
-interface Bot {
+import java.io.Serializable
+
+interface Bot : Serializable {
 	fun move(board: Board, timer: Timer): Byte?
 }
