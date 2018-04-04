@@ -10,7 +10,7 @@ import java.lang.Math.max
 
 class MMBot(private val depth: Int) : Bot {
 	override fun move(board: Board, timer: Timer): Byte? {
-		return negaMax(board, value(board), depth + 1,
+		return negaMax(board, value(board), depth,
 				NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer())).move
 	}
 

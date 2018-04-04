@@ -1,8 +1,8 @@
 package com.flaghacker.sttt.common
 
 fun fromNiceString(string: String): Player {
-	Player.values().filter { it.toNiceString() == string }.forEach { return it }
-	throw IllegalArgumentException(string + " is not a valid com.flaghacker.sttt.common.KotlinPlayer")
+	Player.values().filter { it.niceString == string }.forEach { return it }
+	throw IllegalArgumentException("$string is not a valid Player")
 }
 
 enum class Player(val niceString: String) {
@@ -17,5 +17,4 @@ enum class Player(val niceString: String) {
 	}
 
 	fun otherWithNeutral(): Player = if (this == NEUTRAL) NEUTRAL else this.other()
-	fun toNiceString(): String = niceString
 }

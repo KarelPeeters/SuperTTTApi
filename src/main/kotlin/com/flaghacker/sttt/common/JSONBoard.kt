@@ -6,7 +6,7 @@ import org.json.JSONObject
 fun Board.toJSON(): JSONObject {
 	val json = JSONObject()
 	val jsonBoard = JSONArray()
-	for (i in 0 until 81) jsonBoard.put(tile(i.toByte()).toNiceString())
+	for (i in 0 until 81) jsonBoard.put(tile(i.toByte()).niceString)
 
 	json.put("board", jsonBoard)
 	json.put("macroMask", macroMask())

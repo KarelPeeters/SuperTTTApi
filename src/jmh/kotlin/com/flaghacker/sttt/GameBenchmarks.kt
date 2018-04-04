@@ -14,7 +14,7 @@ open class GameBenchmarks {
 	@BenchmarkMode(Mode.AverageTime)
 	@OutputTimeUnit(TimeUnit.MICROSECONDS)
 	fun averageGame() {
-		val game = BotGame(MMBot(5), RandomBot(401797280))
+		val game = BotGame(MMBot(6), RandomBot(401797280))
 		game.setLogLevel(BotGame.LogLevel.NONE).setRandomSeed(20).setShuffling(false).run()
 	}
 }
