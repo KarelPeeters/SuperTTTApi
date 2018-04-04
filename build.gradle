@@ -7,13 +7,12 @@ repositories {
 }
 
 dependencies {
-    compile  'org.json:json:20131018'
+    implementation  'org.json:json:20131018'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    testCompile 'commons-io:commons-io:2.4'
-    testCompile 'org.apache.commons:commons-lang3:3.5'
-
-    testCompile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testImplementation 'commons-io:commons-io:2.4'
+    testImplementation 'org.apache.commons:commons-lang3:3.5'
+    testImplementation 'junit:junit:4.12'
 }
 
 task aizip (type:Zip) {
@@ -26,7 +25,7 @@ task aizip (type:Zip) {
 }
 
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.31'
     repositories {
         mavenCentral()
         maven {url "https://plugins.gradle.org/m2/"}
