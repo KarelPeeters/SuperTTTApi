@@ -9,7 +9,7 @@ import java.util.*
 private fun randomSimulationWinner(treeNode: CarlosBot.TreeNode): Player {
 	var c = treeNode
 	while (!c.board.isDone()) {
-		c = c.children[rand.nextInt(c.children.size)]
+		c = c.children()[rand.nextInt(c.children().size)]
 	}
 	return if (c.board.wonBy() != Player.NEUTRAL) c.board.wonBy() else Player.values()[rand.nextInt(2)]
 }
@@ -28,10 +28,10 @@ class CarlosBot : Bot {
 			tree.searchIteration()
 		}
 
-		var mostPlayed = tree.children.first()
+		var mostPlayed = tree.children().first()
 		var maxPlayCount = .0
 
-		for (c in tree.children) {
+		for (c in tree.children()) {
 			if (c.totalVisits > maxPlayCount) {
 				mostPlayed = c
 				maxPlayCount = c.totalVisits
@@ -42,27 +42,31 @@ class CarlosBot : Bot {
 	}
 
 	class TreeNode(val board: Board, var score: Double, var totalVisits: Double) {
-		val children by lazy { board.availableMoves().map { TreeNode(board.copy().apply { play(it) }, .0, .0) } }
+		private var str: List<TreeNode>? = null
+		fun children(): List<TreeNode> {
+			if (str == null) str = board.availableMoves().map { TreeNode(board.copy().apply { play(it) },.0,.0) }
+			return str!!
+		}
 
 		fun searchIteration() {
 			//Selection
 			var cur: TreeNode = this
 			val visited = mutableListOf(cur)
-			while (cur.children.none { it.totalVisits == .0} && cur.children.isNotEmpty()) { //Not a leave
+			while (true) { //Not a leave
+				if (cur.children().any { it.totalVisits == .0}) {
+					val unexploredChildren = cur.children().filter { it.totalVisits==.0 }
+					cur = unexploredChildren[rand.nextInt(unexploredChildren.size)]
+					visited.add(cur)
+					break
+				}
+				else if(cur.board.isDone())break
+
 				cur = cur.selectBestChild()
 				visited.add(cur)
 			}
 
-			//Expansion
-			lateinit var newNode: TreeNode
-			if (cur.children.isNotEmpty()) {
-				val unexploredChildren = cur.children.filter { it.totalVisits==.0 }
-				newNode = unexploredChildren[rand.nextInt(unexploredChildren.size)]
-				visited.add(newNode)
-			} else newNode = cur
-
 			//Simulation
-			var won = randomSimulationWinner(newNode) == player
+			var won = randomSimulationWinner(cur) == player
 
 			//Update
 			for (node in visited) {
@@ -73,10 +77,10 @@ class CarlosBot : Bot {
 		}
 
 		private fun selectBestChild(): TreeNode {
-			var selected = children.first()
+			var selected = children().first()
 			var bestValue = Double.MIN_VALUE
 
-			for (c in children.subList(0, children.size)) {
+			for (c in children().subList(0, children().size)) {
 				val uctValue = c.score / (c.totalVisits) + Math.sqrt(2 * Math.log(totalVisits) / (c.totalVisits))
 
 				if (uctValue > bestValue) {
