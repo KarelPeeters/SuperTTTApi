@@ -24,7 +24,7 @@ class Board : Serializable {
 	a/b/c: bit enabled if the player is the owner of the tile
 	A/B/C: bit enabled if the player won the macro
 	*/
-	private var rows: Array<Int> = Array(6) { 0 }
+	private var rows: IntArray = IntArray(6) { 0 }
 	private var macroMask = 0b111111111
 	private var nextPlayer: Player = Player.PLAYER
 	private var lastMove: Coord? = null
@@ -65,9 +65,6 @@ class Board : Serializable {
 			}
 		}
 
-		println(xCount1 == xCount)
-		println("$xCount  $xCount1")
-
 		this.lastMove = lastMove
 		this.macroMask = macroMask
 		nextPlayer = when (xCount) {
@@ -86,7 +83,7 @@ class Board : Serializable {
 	fun flip(): Board {
 		val board = copy()
 
-		val newRows = Array(6) { 0 }
+		val newRows = IntArray(6) { 0 }
 		for (i in 0..2) newRows[i] = board.rows[i + 3]
 		for (i in 3..5) newRows[i] = board.rows[i - 3]
 		board.rows = newRows
