@@ -29,7 +29,7 @@ public class BoardTest {
 
 	@Test
 	public void testPlayRemembered() {
-		final Byte move = 40;//TODO coord(4, 4);
+		final Byte move = BoardKt.toCoord(4, 4);
 		Board board = new Board();
 
 		Player player = board.nextPlayer();

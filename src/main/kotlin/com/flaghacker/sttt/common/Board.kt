@@ -14,21 +14,27 @@ fun Coord.toPair(): Pair<Int, Int> {
 }
 
 class Board : Serializable {
-	/*
+	/**
 	Each element represents a row of macros (3 rows of 9 tiles)
 	The first 3 Ints hold the macros for Player
 	The next 3 Ints hold the macros for Enemy
 
 	In each Int the bit representation is as follows:
-	aaaaaaaaabbbbbbbbbcccccccccABC with:
+	aaaaaaaaabbbbbbbbbcccccccccABC with: (least shifted -> most shifted)
 	a/b/c: bit enabled if the player is the owner of the tile
 	A/B/C: bit enabled if the player won the macro
 	*/
-	private var rows: IntArray = IntArray(6) { 0 }
+	private var rows = IntArray(6) { 0 }
 	private var macroMask = 0b111111111
-	private var nextPlayer: Player = Player.PLAYER
+	private var nextPlayer = Player.PLAYER
 	private var lastMove: Coord? = null
 	private var wonBy = Player.NEUTRAL
+
+	fun macroMask() = macroMask
+	fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
+	fun nextPlayer() = nextPlayer
+	fun lastMove() = lastMove
+	fun wonBy() = wonBy
 
 	constructor()
 
@@ -48,7 +54,6 @@ class Board : Serializable {
 		else if (macroMask < 0 || macroMask > 0b111111111)
 			throw IllegalArgumentException("Incorrect input macro mask (input: $macroMask)")
 
-		val xCount1 = board.sumBy { it.filterNot { it == Player.NEUTRAL }.sumBy { if (it == Player.PLAYER) 1 else -1 } }
 		var xCount = 0
 		for (i in 0 until 81) {
 			val macroShift = (i / 9) % 3 * 9
@@ -74,12 +79,6 @@ class Board : Serializable {
 		}
 	}
 
-	fun macroMask() = macroMask
-	fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
-	fun nextPlayer() = nextPlayer
-	fun lastMove() = lastMove
-	fun wonBy() = wonBy
-
 	fun flip(): Board {
 		val board = copy()
 
@@ -93,16 +92,30 @@ class Board : Serializable {
 		return board
 	}
 
+	//todo byte array
 	fun availableMoves(): List<Coord> {
-		val output = ArrayList<Coord>()
-
-		for (macro in 0 until 9) {
-			if (macroMask.getBit(macro)) {
-				val row = rows[macro / 3] or rows[macro / 3 + 3]
-				(0 until 9).map { it + macro * 9 }.filter { !row.getBit(it % 27) }.mapTo(output) { it.toByte() }
+		val output = mutableListOf<Coord>()
+		for (om in 0 until 9) {
+			if (macroMask.getBit(om)) {
+				val row = rows[om / 3] or rows[om / 3 + 3]
+				for (index in om*9 until 9+om*9){
+					if (!row.getBit(index % 27)) output.add(index.toByte())
+				}
 			}
 		}
+		return output
+	}
 
+	fun <T> availableMoves(map: (Coord) -> T): List<T> {
+		val output = mutableListOf<T>()
+		for (om in 0 until 9) {
+			if (macroMask.getBit(om)) {
+				val row = rows[om / 3] or rows[om / 3 + 3]
+				for (index in om*9 until 9+om*9){
+						if (!row.getBit(index % 27)) output.add(index.toByte().let(map))
+				}
+			}
+		}
 		return output
 	}
 
@@ -151,10 +164,10 @@ class Board : Serializable {
 		return macroWin
 	}
 
-	private fun Int.getBit(index: Int) = ((this shr index) and 1) == 1
-	private fun Int.isMaskSet(mask: Int) = this and mask == mask
-	private fun macroFull(om: Int) = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
-	private fun winGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
+	private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
+	private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
+	private inline fun macroFull(om: Int) = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
+	private inline fun winGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
 			.or((rows[1 + 3 * player.ordinal] shr 27) shl 3)
 			.or((rows[2 + 3 * player.ordinal] shr 27) shl 6)
 

@@ -10,28 +10,36 @@ class CarlosBot : Bot {
 	private val rand = Random()
 	override fun toString() = "Senior Carlos"
 
-	class TreeNode(val coord: Byte) {
-		var children: List<TreeNode>? = null
-		var visits = .0
-		var wins = .0
+	private class Node(@JvmField val coord: Byte) {
+		@JvmField var children: List<Node>? = null
+		@JvmField var visits = 0
+		@JvmField var wins = 0
+
+		fun print(prefix: String = "", isTail: Boolean = true, depth: Int) {
+			if (depth == 0 || children == null) return
+			println(prefix + (if (isTail) "└── " else "├── ") + "$coord:$wins/$visits")
+			for (i in 0 until children!!.size - 1) children!![i].print(prefix + if (isTail) "    " else "│   ", false, depth - 1)
+			if (children!!.isNotEmpty()) children!![children!!.size - 1].print(prefix + if (isTail) "    " else "│   ", true, depth - 1)
+		}
 	}
 
 	override fun move(board: Board, timer: Timer): Byte? {
-		val head = TreeNode(-1)
+		val head = Node(-1)
 		repeat(2000) {
 			var cNode = head
 			val cBoard = board.copy()
-			val visited = mutableListOf(cNode)
-			while (true) {
-				//Check for exit condition
-				if (cBoard.isDone()) break
-				else if (cNode.children == null) {
-					cNode.children = cBoard.availableMoves().map { TreeNode(it) }
+			val visited = LinkedList<Node>()
+			visited.add(cNode)
+
+			while (!cBoard.isDone()) {
+				//Init children
+				if (cNode.children == null) {
+					cNode.children = cBoard.availableMoves { Node(it) }
 				}
 
 				//Exploration
-				if (cNode.children!!.any { it.visits == .0 }) {
-					val unexploredChildren = cNode.children!!.filter { it.visits == .0 }
+				if (cNode.children!!.any { it.visits == 0 }) {
+					val unexploredChildren = cNode.children!!.filter { it.visits == 0 }
 					cNode = unexploredChildren[rand.nextInt(unexploredChildren.size)]
 					visited.add(cNode)
 					cBoard.play(cNode.coord)
@@ -40,9 +48,10 @@ class CarlosBot : Bot {
 
 				//Selection
 				var selected = cNode.children?.first()!!
-				var bestValue = Double.MIN_VALUE
+				var bestValue = Double.NEGATIVE_INFINITY
 				for (child in cNode.children!!) {
-					val uctValue = child.wins / (child.visits) + Math.sqrt(2 * Math.log(cNode.visits) / (child.visits))
+					val uctValue = (child.wins.toDouble() / child.visits.toDouble()) +
+							Math.sqrt(2.0 * Math.log(cNode.visits.toDouble()) / (child.visits.toDouble()))
 					if (uctValue > bestValue) {
 						selected = child
 						bestValue = uctValue
@@ -68,15 +77,6 @@ class CarlosBot : Bot {
 			}
 		}
 
-		//Return most played move
-		var mostPlayed: Byte = head.children?.first()?.coord ?: board.availableMoves().first()
-		var maxPlayCount = .0
-		for (c in head.children ?: mutableListOf()) {
-			if (c.visits > maxPlayCount) {
-				mostPlayed = c.coord
-				maxPlayCount = c.visits
-			}
-		}
-		return mostPlayed
+		return head.children!!.maxBy { it.visits }?.coord
 	}
 }
