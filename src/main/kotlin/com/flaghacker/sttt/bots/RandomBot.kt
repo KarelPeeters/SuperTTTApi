@@ -17,7 +17,7 @@ class RandomBot : Bot {
     }
 
     override fun move(board: Board, timer: Timer): Byte? {
-        val moves = board.availableMoves()
+        val moves = board.availableMoves
         return moves[random.nextInt(moves.size)]
     }
 

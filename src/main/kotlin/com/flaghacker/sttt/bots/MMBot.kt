@@ -23,7 +23,7 @@ class MMBot(private val depth: Int) : Bot {
 		var bestMove: Byte? = null
 		var newA = a
 
-		for (move in board.availableMoves()) {
+		for (move in board.availableMoves) {
 			val child = board.copy()
 
 			//Calculate the new score

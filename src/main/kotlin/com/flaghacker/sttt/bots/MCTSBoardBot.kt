@@ -6,18 +6,18 @@ import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.Timer
 import java.util.*
 
-class MCTSBot : Bot {
+class MCTSBoardBot : Bot {
 	private val rand = Random()
 	override fun toString() = "MCTSBot"
 
-	private class Node(@JvmField val coord: Byte) {
-		@JvmField var children: Array<Node>? = null
+	private class Node(@JvmField val board: Board) {
+		@JvmField var children: List<Node>? = null
 		@JvmField var visits = 0
 		@JvmField var wins = 0
 
 		fun print(prefix: String = "", isTail: Boolean = true, depth: Int) {
 			if (depth == 0 || children == null) return
-			println(prefix + (if (isTail) "└── " else "├── ") + "$coord:$wins/$visits")
+			println(prefix + (if (isTail) "└── " else "├── ") + "${board.lastMove?:"H"}:$wins/$visits")
 			for (i in 0 until children!!.size - 1) children!![i].print(prefix + if (isTail) "    " else "│   ", false, depth - 1)
 			if (children!!.isNotEmpty()) children!![children!!.size - 1].print(prefix + if (isTail) "    " else "│   ", true, depth - 1)
 		}
@@ -28,21 +28,21 @@ class MCTSBot : Bot {
 		lateinit var exploreHead: Node*/
 		val visited = LinkedList<Node>()
 
-		val head = Node(-1)
+		val head = Node(board)
 		repeat(2000) {
 /*			if (!exploring){
 
 			}*/
-			var cNode = head
-			val cBoard = board.copy()
+
 			visited.clear()
+
+			var cNode = head
 			visited.add(cNode)
 
-			while (!cBoard.isDone) {
+			while (!cNode.board.isDone) {
 				//Init children
 				if (cNode.children == null) {
-					val moves = cBoard.availableMoves
-					cNode.children = Array(moves.size,{ i -> Node(moves[i])})
+					cNode.children = cNode.board.availableMoves { Node(cNode.board.copy().apply {play(it)}) }
 				}
 
 				//Exploration
@@ -50,12 +50,11 @@ class MCTSBot : Bot {
 					val unexploredChildren = cNode.children!!.filter { it.visits == 0 }
 					cNode = unexploredChildren[rand.nextInt(unexploredChildren.size)]
 					visited.add(cNode)
-					cBoard.play(cNode.coord)
 					break
 				}
 
 				//Selection
-				var selected = cNode.children?.first()!!
+				var selected = cNode.children!!.first()
 				var bestValue = Double.NEGATIVE_INFINITY
 				for (child in cNode.children!!) {
 					val uctValue = (child.wins.toDouble() / child.visits.toDouble()) +
@@ -66,18 +65,18 @@ class MCTSBot : Bot {
 					}
 				}
 				cNode = selected
-				cBoard.play(cNode.coord)
 				visited.add(cNode)
 			}
 
 			//Simulation
-			while (!cBoard.isDone) {
-				val children = cBoard.availableMoves
-				cBoard.play(children[rand.nextInt(children.size)])
+			val simBoard = cNode.board.copy()
+			while (!simBoard.isDone) {
+				val children = simBoard.availableMoves
+				simBoard.play(children[rand.nextInt(children.size)])
 			}
 
 			//Update
-			var won = if (cBoard.wonBy != Player.NEUTRAL) cBoard.wonBy == board.nextPlayer else rand.nextBoolean()
+			var won = if (simBoard.wonBy != Player.NEUTRAL) simBoard.wonBy == board.nextPlayer else rand.nextBoolean()
 			for (node in visited) {
 				won = !won
 				node.visits++
@@ -85,6 +84,6 @@ class MCTSBot : Bot {
 			}
 		}
 
-		return head.children!!.maxBy { it.visits }?.coord
+		return head.children!!.maxBy { it.visits }?.board?.lastMove!!
 	}
 }

@@ -25,16 +25,20 @@ class Board : Serializable {
 	A/B/C: bit enabled if the player won the macro
 	 */
 	private var rows = IntArray(6) { 0 }
-	var macroMask = 0b111111111; private set
+	private var _availableMoves: ByteArray? = null
+	val availableMoves get() = availableMoves()
+	val isDone get() = availableMoves.isEmpty()
+
 	var nextPlayer = Player.PLAYER; private set
+	var macroMask = 0b111111111; private set
 	var lastMove: Coord? = null; private set
 	var wonBy = Player.NEUTRAL; private set
-	val isDone get() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
 
 	constructor()
 
 	/** Returns a copy of the current board. */
 	fun copy() = Board(this)
+
 	constructor(board: Board) {
 		rows = board.rows.copyOf()
 		wonBy = board.wonBy
@@ -107,20 +111,35 @@ class Board : Serializable {
 		}
 	}
 
-	//todo byte array
-	fun availableMoves(): List<Coord> {
-		val output = mutableListOf<Coord>()
-		for (om in 0 until 9) {
-			if (macroMask.getBit(om)) {
-				val row = rows[om / 3] or rows[om / 3 + 3]
-				for (index in om * 9 until 9 + om * 9) {
-					if (!row.getBit(index % 27)) output.add(index.toByte())
+	/**
+	 * Returns the available [Coord]'s. The coords are cached so the available moves
+	 * will only be calculated on the first call.
+	 * @return a [ByteArray] containing the available [Coord]'s.
+	 */
+	private fun availableMoves(): ByteArray {
+		if(wonBy != Player.NEUTRAL) return ByteArray(0)
+		else if (_availableMoves == null) {
+			var size = 0
+			val out = ByteArray(81)
+			for (om in 0 until 9) {
+				if (macroMask.getBit(om)) {
+					val row = rows[om / 3] or rows[om / 3 + 3]
+					for (index in om * 9 until 9 + om * 9) {
+						if (!row.getBit(index % 27)) out[size++] = index.toByte()
+					}
 				}
 			}
+			_availableMoves = Arrays.copyOf(out, size)
 		}
-		return output
+		return _availableMoves!!
 	}
 
+	/**
+	 * Get the available moves mapped to another type.
+	 * Available moves are not cached when using this method.
+	 * @param map the map applied to the available
+	 * @return a list containing the [Coord]'s mapped with the input map
+	 */
 	fun <T> availableMoves(map: (Coord) -> T): List<T> {
 		val output = mutableListOf<T>()
 		for (om in 0 until 9) {
@@ -149,8 +168,7 @@ class Board : Serializable {
 		//If the move is not available throw exception
 		if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
 			throw RuntimeException("Position $index not available")
-		else if (wonBy != Player.NEUTRAL)
-			throw RuntimeException("Can't play; game already over")
+		else if (wonBy != Player.NEUTRAL) throw RuntimeException("Can't play; game already over")
 
 		//Write move to board & check for macro win
 		rows[pRow] += (1 shl shift)
@@ -165,6 +183,7 @@ class Board : Serializable {
 		//Prepare the board for the next player
 		val winGrid = winGrid(Player.PLAYER) or winGrid(Player.ENEMY)
 		val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
+		_availableMoves = null
 		macroMask = if (freeMove) (0b111111111 and winGrid.inv()) else (1 shl moveShift)
 		lastMove = index
 		nextPlayer = nextPlayer.other()
