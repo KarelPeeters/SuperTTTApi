@@ -1,4 +1,4 @@
-package newcarlo
+package com.flaghacker.sttt.bots
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
@@ -6,9 +6,9 @@ import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.Timer
 import java.util.*
 
-class CarlosBot : Bot {
+class MCTSBot : Bot {
 	private val rand = Random()
-	override fun toString() = "Senior Carlos"
+	override fun toString() = "MCTSBot"
 
 	private class Node(@JvmField val coord: Byte) {
 		@JvmField var children: List<Node>? = null
@@ -25,13 +25,13 @@ class CarlosBot : Bot {
 
 	override fun move(board: Board, timer: Timer): Byte? {
 		val head = Node(-1)
-		repeat(2000) {
+		while (timer.running()) {
 			var cNode = head
 			val cBoard = board.copy()
 			val visited = LinkedList<Node>()
 			visited.add(cNode)
 
-			while (!cBoard.isDone()) {
+			while (!cBoard.isDone) {
 				//Init children
 				if (cNode.children == null) {
 					cNode.children = cBoard.availableMoves { Node(it) }
@@ -63,13 +63,13 @@ class CarlosBot : Bot {
 			}
 
 			//Simulation
-			while (!cBoard.isDone()) {
+			while (!cBoard.isDone) {
 				val children = cBoard.availableMoves()
 				cBoard.play(children[rand.nextInt(children.size)])
 			}
 
 			//Update
-			var won = if (cBoard.wonBy() != Player.NEUTRAL) cBoard.wonBy() == board.nextPlayer() else rand.nextBoolean()
+			var won = if (cBoard.wonBy != Player.NEUTRAL) cBoard.wonBy == board.nextPlayer else rand.nextBoolean()
 			for (node in visited) {
 				won = !won
 				node.visits++

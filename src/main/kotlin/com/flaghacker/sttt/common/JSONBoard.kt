@@ -15,16 +15,11 @@ class JSONBoard {
 
 			return Board(board, macroMask, lastMove?.toByte())
 		}
-		fun toJSON(board: Board): JSONObject {
-			val json = JSONObject()
-			val jsonBoard = JSONArray()
-			for (i in 0 until 81) jsonBoard.put(board.tile(i.toByte()).niceString)
 
-			json.put("board", jsonBoard)
-			json.put("macroMask", board.macroMask())
-			json.put("lastMove", board.lastMove()?.toInt())
-
-			return json
+		fun toJSON(board: Board) = JSONObject().apply {
+			put("board", JSONArray().apply { for (i in 0 until 81) put(board.tile(i.toByte()).niceString) })
+			put("macroMask", board.macroMask)
+			put("lastMove", board.lastMove?.toInt())
 		}
 	}
 }

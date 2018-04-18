@@ -11,13 +11,13 @@ import java.lang.Math.max
 class MMBot(private val depth: Int) : Bot {
 	override fun move(board: Board, timer: Timer): Byte? {
 		return negaMax(board, value(board), depth,
-				NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer())).move
+				NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer)).move
 	}
 
 	private class ValuedMove(val move: Byte, val value: Double)
 
 	private fun negaMax(board: Board, cValue: Double, depth: Int, a: Double, b: Double, player: Int): ValuedMove {
-		if (depth == 0 || board.isDone()) return ValuedMove(board.lastMove()!!, player * cValue)
+		if (depth == 0 || board.isDone) return ValuedMove(board.lastMove!!, player * cValue)
 
 		var bestValue = NEGATIVE_INFINITY
 		var bestMove: Byte? = null
@@ -29,7 +29,7 @@ class MMBot(private val depth: Int) : Bot {
 			//Calculate the new score
 			var childValue = cValue + TILE_VALUE * factor(move % 9) * factor(move / 9) * player
 			if (child.play(move)) {
-				if (child.isDone()) childValue = POSITIVE_INFINITY * player
+				if (child.isDone) childValue = POSITIVE_INFINITY * player
 				else childValue += MACRO_VALUE * factor(move / 9) * player
 			}
 
@@ -37,7 +37,7 @@ class MMBot(private val depth: Int) : Bot {
 			val value = -negaMax(child, childValue, depth - 1, -b, -newA, -player).value
 			if (value > bestValue || bestMove == null) {
 				bestValue = value
-				bestMove = child.lastMove()
+				bestMove = child.lastMove
 			}
 			newA = max(newA, value)
 			if (newA >= b) break
@@ -46,7 +46,7 @@ class MMBot(private val depth: Int) : Bot {
 		return ValuedMove(bestMove!!, bestValue)
 	}
 
-	private fun value(board: Board) = if (board.isDone()) POSITIVE_INFINITY * playerSign(board.wonBy())
+	private fun value(board: Board) = if (board.isDone) POSITIVE_INFINITY * playerSign(board.wonBy)
 	else {
 		(0 until 81).sumByDouble {
 			TILE_VALUE * factor(it % 9) * factor(it / 9) * playerSign(board.tile(it.toByte())).toDouble()

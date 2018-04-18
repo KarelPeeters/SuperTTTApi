@@ -23,23 +23,18 @@ class Board : Serializable {
 	aaaaaaaaabbbbbbbbbcccccccccABC with: (least shifted -> most shifted)
 	a/b/c: bit enabled if the player is the owner of the tile
 	A/B/C: bit enabled if the player won the macro
-	*/
+	 */
 	private var rows = IntArray(6) { 0 }
-	private var macroMask = 0b111111111
-	private var nextPlayer = Player.PLAYER
-	private var lastMove: Coord? = null
-	private var wonBy = Player.NEUTRAL
-
-	fun macroMask() = macroMask
-	fun isDone() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
-	fun nextPlayer() = nextPlayer
-	fun lastMove() = lastMove
-	fun wonBy() = wonBy
+	var macroMask = 0b111111111; private set
+	var nextPlayer = Player.PLAYER; private set
+	var lastMove: Coord? = null; private set
+	var wonBy = Player.NEUTRAL; private set
+	val isDone get() = wonBy != Player.NEUTRAL || availableMoves().isEmpty()
 
 	constructor()
 
+	/** Returns a copy of the current board. */
 	fun copy() = Board(this)
-
 	constructor(board: Board) {
 		rows = board.rows.copyOf()
 		wonBy = board.wonBy
@@ -48,18 +43,18 @@ class Board : Serializable {
 		lastMove = board.lastMove
 	}
 
+	/**
+	 * Constructs a Board using a 2 dimensional Array of players, a macroMask a lastMove
+	 * @param board 2 dimensional array containing who owns each tile. The format is board[x][y]
+	 * */
 	constructor(board: Array<Array<Player>>, macroMask: Int, lastMove: Coord?) {
-		if (board.size != 9 && board.all { it.size != 9 })
-			throw IllegalArgumentException("Input board is the wrong size (input: $board)")
-		else if (macroMask < 0 || macroMask > 0b111111111)
-			throw IllegalArgumentException("Incorrect input macro mask (input: $macroMask)")
+		if (board.size != 9 && board.all { it.size != 9 } || macroMask < 0 || macroMask > 0b111111111)
+			throw IllegalArgumentException("Invalid arguments (lastMove: $lastMove, macroMask: $macroMask, board: $board)")
 
 		var xCount = 0
 		for (i in 0 until 81) {
 			val macroShift = (i / 9) % 3 * 9
-			val coords = i.toPair()
-			val owner = board[coords.first][coords.second]
-
+			val owner = board[i.toPair().first][i.toPair().second]
 			if (owner != Player.NEUTRAL) {
 				xCount += if (owner == Player.PLAYER) 1 else -1
 				rows[i / 27 + owner.ordinal * 3] += 1 shl i % 27
@@ -79,17 +74,37 @@ class Board : Serializable {
 		}
 	}
 
-	fun flip(): Board {
-		val board = copy()
+	/**
+	 * Returns which Player owns the requested macro.
+	 * @param macroIndex the index of the macro (0-8)
+	 */
+	fun macro(macroIndex: Byte): Player = when {
+		rows[macroIndex / 3].getBit(27 + macroIndex % 3) -> Player.PLAYER
+		rows[3 + macroIndex / 3].getBit(27 + macroIndex % 3) -> Player.ENEMY
+		else -> Player.NEUTRAL
+	}
 
-		val newRows = IntArray(6) { 0 }
-		for (i in 0..2) newRows[i] = board.rows[i + 3]
-		for (i in 3..5) newRows[i] = board.rows[i - 3]
-		board.rows = newRows
-		board.wonBy = board.wonBy.otherWithNeutral()
-		board.nextPlayer = board.nextPlayer.otherWithNeutral()
+	/**
+	 * Returns which Player owns the requested tile.
+	 * @param index the index of the tile (0-80)
+	 */
+	fun tile(index: Coord): Player = when {
+		rows[index / 27].getBit(index % 27) -> Player.PLAYER
+		rows[3 + index / 27].getBit(index % 27) -> Player.ENEMY
+		else -> Player.NEUTRAL
+	}
 
-		return board
+	/**
+	 * Swaps the Players. After this call [nextPlayer] will be the previous [nextPlayer] but with
+	 * [Player.other] called on it
+	 */
+	fun flip() {
+		nextPlayer = nextPlayer.otherWithNeutral()
+		wonBy = wonBy.otherWithNeutral()
+		rows = IntArray(6) { 0 }.apply {
+			for (i in 0..2) this[i] = rows[i + 3]
+			for (i in 3..5) this[i] = rows[i - 3]
+		}
 	}
 
 	//todo byte array
@@ -98,7 +113,7 @@ class Board : Serializable {
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
 				val row = rows[om / 3] or rows[om / 3 + 3]
-				for (index in om*9 until 9+om*9){
+				for (index in om * 9 until 9 + om * 9) {
 					if (!row.getBit(index % 27)) output.add(index.toByte())
 				}
 			}
@@ -111,26 +126,19 @@ class Board : Serializable {
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
 				val row = rows[om / 3] or rows[om / 3 + 3]
-				for (index in om*9 until 9+om*9){
-						if (!row.getBit(index % 27)) output.add(index.toByte().let(map))
+				for (index in om * 9 until 9 + om * 9) {
+					if (!row.getBit(index % 27)) output.add(index.toByte().let(map))
 				}
 			}
 		}
 		return output
 	}
 
-	fun macro(index: Byte): Player = when {
-		rows[index / 3].getBit(27 + index % 3) -> Player.PLAYER
-		rows[3 + index / 3].getBit(27 + index % 3) -> Player.ENEMY
-		else -> Player.NEUTRAL
-	}
-
-	fun tile(index: Coord): Player = when {
-		rows[index / 27].getBit(index % 27) -> Player.PLAYER
-		rows[3 + index / 27].getBit(index % 27) -> Player.ENEMY
-		else -> Player.NEUTRAL
-	}
-
+	/**
+	 * Plays the given coord on the board.
+	 * @param index the index of the coord to be played (0-80)
+	 * @return whether the move wins the macro being played in
+	 */
 	fun play(index: Coord): Boolean {
 		val row = index / 27                     //Row (0,1,2)
 		val macroShift = (index / 9) % 3 * 9     //Shift to go to the right micro (9om)
@@ -204,6 +212,7 @@ class Board : Serializable {
 	}
 
 	override fun hashCode() = 31 * Arrays.hashCode(rows) + macroMask
+
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
