@@ -137,26 +137,28 @@ class Board : Serializable {
 	/**
 	 * Get the available moves mapped to another type.
 	 * Available moves are not cached when using this method.
-	 * @param map the map applied to the available
-	 * @return a list containing the [Coord]'s mapped with the input map
+	 * @param map the map applied to the available.
+	 * @return An Array containing the [Coord]'s mapped with the input map.
 	 */
-	fun <T> availableMoves(map: (Coord) -> T): List<T> {
-		val output = mutableListOf<T>()
+	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
+	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
+		var size = 0
+		val out = Array<T?>(81,{null})
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
 				val row = rows[om / 3] or rows[om / 3 + 3]
 				for (index in om * 9 until 9 + om * 9) {
-					if (!row.getBit(index % 27)) output.add(index.toByte().let(map))
+					if (!row.getBit(index % 27)) out[size++] = index.toByte().let(map)
 				}
 			}
 		}
-		return output
+		return Arrays.copyOf(out,size)
 	}
 
 	/**
 	 * Plays the given coord on the board.
-	 * @param index the index of the coord to be played (0-80)
-	 * @return whether the move wins the macro being played in
+	 * @param index the index of the coord to be played (0-80).
+	 * @return Whether the move wins the macro being played in.
 	 */
 	fun play(index: Coord): Boolean {
 		val row = index / 27                     //Row (0,1,2)

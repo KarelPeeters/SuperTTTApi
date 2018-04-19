@@ -24,15 +24,10 @@ class MCTSBot : Bot {
 	}
 
 	override fun move(board: Board, timer: Timer): Byte? {
-/*		var exploring = false
-		lateinit var exploreHead: Node*/
 		val visited = LinkedList<Node>()
-
 		val head = Node(-1)
-		repeat(2000) {
-/*			if (!exploring){
 
-			}*/
+		repeat(2000) {
 			var cNode = head
 			val cBoard = board.copy()
 			visited.clear()
@@ -41,8 +36,7 @@ class MCTSBot : Bot {
 			while (!cBoard.isDone) {
 				//Init children
 				if (cNode.children == null) {
-					val moves = cBoard.availableMoves
-					cNode.children = Array(moves.size,{ i -> Node(moves[i])})
+					cNode.children = cBoard.availableMoves { Node(it) }
 				}
 
 				//Exploration
