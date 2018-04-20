@@ -25,21 +25,22 @@ class Board : Serializable {
 	A/B/C: bit enabled if the player won the macro
 	 */
 	private var rows = IntArray(6) { 0 }
+	private var macroMask = 0b111111111
 	private var _availableMoves: ByteArray? = null
-	val availableMoves get() = availableMoves()
-	val isDone get() = availableMoves.isEmpty()
 
 	var nextPlayer = Player.PLAYER; private set
-	var macroMask = 0b111111111; private set
 	var lastMove: Coord? = null; private set
 	var wonBy = Player.NEUTRAL; private set
 
+	val availableMoves get() = availableMoves()
+	val isDone get() = availableMoves.isEmpty()
+
+	/** Constructs an empty [Board]. */
 	constructor()
 
 	/** Returns a copy of the current board. */
 	fun copy() = Board(this)
-
-	constructor(board: Board) {
+	private constructor(board: Board) {
 		rows = board.rows.copyOf()
 		wonBy = board.wonBy
 		nextPlayer = board.nextPlayer
@@ -48,33 +49,33 @@ class Board : Serializable {
 	}
 
 	/**
-	 * Constructs a Board using a 2 dimensional Array of players, a macroMask a lastMove
-	 * @param board 2 dimensional array containing who owns each tile. The format is board[x][y]
+	 * Constructs a Board using a 2 dimensional Array of players, a macroMask a lastMove.
+	 * @param board `2 dimensional array containing who owns each tile. The format is board[x][y]`
+	 * @param nextPlayer the next player that can play next
+	 * @param lastMove the [Coord] of the last move played on the board, null if the board is still empty
 	 * */
-	constructor(board: Array<Array<Player>>, macroMask: Int, lastMove: Coord?) {
-		if (board.size != 9 && board.all { it.size != 9 } || macroMask < 0 || macroMask > 0b111111111)
-			throw IllegalArgumentException("Invalid arguments (lastMove: $lastMove, macroMask: $macroMask, board: $board)")
+	constructor(board: Array<Array<Player>>, nextPlayer: Player, lastMove: Coord?) {
+		if (board.size != 9 && board.all { it.size != 9 } || nextPlayer==Player.NEUTRAL ||
+				(lastMove!=null && (lastMove<0 || lastMove>80)))
+			throw IllegalArgumentException("Invalid arguments ($nextPlayer, $lastMove")
 
-		var xCount = 0
 		for (i in 0 until 81) {
-			val macroShift = (i / 9) % 3 * 9
 			val owner = board[i.toPair().first][i.toPair().second]
 			if (owner != Player.NEUTRAL) {
-				xCount += if (owner == Player.PLAYER) 1 else -1
 				rows[i / 27 + owner.ordinal * 3] += 1 shl i % 27
-				if (wonGrid((rows[i / 27 + owner.ordinal * 3] shr macroShift) and 0b111111111, i % 9)) {
-					rows[i / 27 + owner.ordinal * 3] += (1 shl (27 + macroShift / 9)) //27 + macro number
-					if (wonGrid(winGrid(owner), i / 9)) wonBy = nextPlayer
+				if (wonGrid((rows[i / 27 + owner.ordinal * 3] shr (((i / 9) % 3) * 9)) and 0b111111111, i % 9)) {
+					rows[i / 27 + owner.ordinal * 3] = rows[i / 27 + owner.ordinal * 3] or (1 shl (27 + (i / 9) % 3))
+					if (wonGrid(macroWinGrid(owner), i / 9)) wonBy = nextPlayer
 				}
 			}
 		}
 
 		this.lastMove = lastMove
-		this.macroMask = macroMask
-		nextPlayer = when (xCount) {
-			-1, 0 -> Player.PLAYER
-			1 -> Player.ENEMY
-			else -> throw IllegalArgumentException("Input board is invalid (input: $board)")
+		this.nextPlayer = nextPlayer
+		this.macroMask = if (lastMove==null) 0b111111111 else{
+			val winGrid = macroWinGrid(Player.PLAYER) or macroWinGrid(Player.ENEMY)
+			val freeMove = winGrid.getBit(lastMove % 9) || macroFull(lastMove % 9)
+			if (freeMove) (0b111111111 and winGrid.inv()) else (1 shl (lastMove % 9))
 		}
 	}
 
@@ -99,10 +100,10 @@ class Board : Serializable {
 	}
 
 	/**
-	 * Swaps the Players. After this call [nextPlayer] will be the previous [nextPlayer] but with
-	 * [Player.other] called on it
+	 * Returns a copy of the Board with the [Player]'s swapped.
+	 * @return A copy of the original [Board] with the [Player]'s swapped
 	 */
-	fun flip() {
+	fun flip() = copy().apply {
 		nextPlayer = nextPlayer.otherWithNeutral()
 		wonBy = wonBy.otherWithNeutral()
 		rows = IntArray(6) { 0 }.apply {
@@ -179,11 +180,11 @@ class Board : Serializable {
 		//Check if the current player won
 		if (macroWin) {
 			rows[pRow] += (1 shl (27 + macroShift / 9))
-			if (wonGrid(winGrid(nextPlayer), index / 9)) wonBy = nextPlayer
+			if (wonGrid(macroWinGrid(nextPlayer), index / 9)) wonBy = nextPlayer
 		}
 
 		//Prepare the board for the next player
-		val winGrid = winGrid(Player.PLAYER) or winGrid(Player.ENEMY)
+		val winGrid = macroWinGrid(Player.PLAYER) or macroWinGrid(Player.ENEMY)
 		val freeMove = winGrid.getBit(moveShift) || macroFull(moveShift)
 		_availableMoves = null
 		macroMask = if (freeMove) (0b111111111 and winGrid.inv()) else (1 shl moveShift)
@@ -196,7 +197,7 @@ class Board : Serializable {
 	private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
 	private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
 	private inline fun macroFull(om: Int) = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
-	private inline fun winGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
+	private inline fun macroWinGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
 			.or((rows[1 + 3 * player.ordinal] shr 27) shl 3)
 			.or((rows[2 + 3 * player.ordinal] shr 27) shl 6)
 
@@ -232,16 +233,16 @@ class Board : Serializable {
 		}
 	}
 
-	override fun hashCode() = 31 * Arrays.hashCode(rows) + macroMask
+	override fun hashCode() = 31 * (31 * Arrays.hashCode(rows) + nextPlayer.hashCode()) + (lastMove ?: -1)
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
 
 		other as Board
-
 		if (!Arrays.equals(rows, other.rows)) return false
-		if (macroMask != other.macroMask) return false
+		if (nextPlayer != other.nextPlayer) return false
+		if (lastMove != other.lastMove) return false
 
 		return true
 	}

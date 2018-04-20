@@ -1,6 +1,19 @@
+/*
 package com.flaghacker.sttt.common;
 
-/*
+import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 @RunWith(Parameterized.class)
 public class BoardPlayTest
 {
@@ -108,7 +121,7 @@ public class BoardPlayTest
 			return json;
 		}
 
-		public List<Coord> getMoves()
+		public List<Byte> getMoves()
 		{
 			return moves;
 		}
