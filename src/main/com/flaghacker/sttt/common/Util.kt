@@ -8,11 +8,8 @@ fun moveBotWithTimeOut(bot: Bot, board: Board, time: Long): Byte? {
 	return bot.move(board, timer)
 }
 
-fun moveBotWithTimeOutAsync(
-		executor: ExecutorService, bot: Bot, board: Board, time: Long): Future<Byte> {
-	val timer = Timer(time)
-	timer.start()
-
+fun moveBotWithTimeOutAsync(executor: ExecutorService, bot: Bot, board: Board, time: Long): Future<Byte> {
+	val timer = Timer(time).apply { start() }
 	val future = executor.submit(Callable<Byte> { bot.move(board, timer) })
 
 	return object : Future<Byte> {
