@@ -4,6 +4,7 @@ class Timer(private val time: Long) {
 
 	private var start = -1L
 	var isInterrupted: Boolean = false
+	val running get() = timeLeft() > 0
 
 	fun started() = start != -1L
 	fun start() {
@@ -14,7 +15,6 @@ class Timer(private val time: Long) {
 		this.isInterrupted = true
 	}
 
-	fun running() = timeLeft() > 0
 	fun timeLeft(): Long {
 		if (!started())
 			throw IllegalStateException("this Timer has not been started yet")

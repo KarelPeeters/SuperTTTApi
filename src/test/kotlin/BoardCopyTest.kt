@@ -14,7 +14,7 @@ val random = Random(0)
 class BoardCopyTest(private val board: Board) {
 	@Test
 	fun testCopySeparate() {
-		assertEquals(board,board.copy())
+		assertEquals(board, board.copy())
 		checkMatch(board, boardToJSON(board))
 
 		val copy = board.copy()
@@ -33,6 +33,6 @@ class BoardCopyTest(private val board: Board) {
 	companion object {
 		@JvmStatic
 		@Parameterized.Parameters
-		fun data() = (0..9).map { randomBoard(random,it) }
+		fun data() = (0..9).map { randomBoard(random, it) }
 	}
 }

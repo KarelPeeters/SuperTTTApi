@@ -19,7 +19,7 @@ class JSONBoard {
 		fun toJSON(board: Board) = JSONObject().apply {
 			put("board", JSONArray().apply { for (i in 0 until 81) put(board.tile(i.toByte()).niceString) })
 			put("nextPlayer", board.nextPlayer.niceString)
-			if (board.lastMove!=null) put("lastMove", board.lastMove!!.toInt())
+			if (board.lastMove != null) put("lastMove", board.lastMove!!.toInt())
 		}
 	}
 }

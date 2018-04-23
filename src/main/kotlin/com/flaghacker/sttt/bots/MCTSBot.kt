@@ -27,7 +27,7 @@ class MCTSBot : Bot {
 		val visited = LinkedList<Node>()
 		val head = Node(-1)
 
-		repeat(2000) {
+		while (timer.running) {
 			var cNode = head
 			val cBoard = board.copy()
 			visited.clear()

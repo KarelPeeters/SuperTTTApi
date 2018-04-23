@@ -40,6 +40,7 @@ class Board : Serializable {
 
 	/** Returns a copy of the current board. */
 	fun copy() = Board(this)
+
 	private constructor(board: Board) {
 		rows = board.rows.copyOf()
 		wonBy = board.wonBy
@@ -55,8 +56,8 @@ class Board : Serializable {
 	 * @param lastMove the [Coord] of the last move played on the board, null if the board is still empty
 	 * */
 	constructor(board: Array<Array<Player>>, nextPlayer: Player, lastMove: Coord?) {
-		if (board.size != 9 && board.all { it.size != 9 } || nextPlayer==Player.NEUTRAL ||
-				(lastMove!=null && (lastMove<0 || lastMove>80)))
+		if (board.size != 9 && board.all { it.size != 9 } || nextPlayer == Player.NEUTRAL ||
+				(lastMove != null && (lastMove < 0 || lastMove > 80)))
 			throw IllegalArgumentException("Invalid arguments ($nextPlayer, $lastMove")
 
 		for (i in 0 until 81) {
@@ -72,7 +73,7 @@ class Board : Serializable {
 
 		this.lastMove = lastMove
 		this.nextPlayer = nextPlayer
-		this.macroMask = if (lastMove==null) 0b111111111 else{
+		this.macroMask = if (lastMove == null) 0b111111111 else {
 			val winGrid = macroWinGrid(Player.PLAYER) or macroWinGrid(Player.ENEMY)
 			val freeMove = winGrid.getBit(lastMove % 9) || macroFull(lastMove % 9)
 			if (freeMove) (0b111111111 and winGrid.inv()) else (1 shl (lastMove % 9))
@@ -118,7 +119,7 @@ class Board : Serializable {
 	 * @return a [ByteArray] containing the available [Coord]'s.
 	 */
 	private fun availableMoves(): ByteArray {
-		if(wonBy != Player.NEUTRAL) return ByteArray(0)
+		if (wonBy != Player.NEUTRAL) return ByteArray(0)
 		else if (_availableMoves == null) {
 			var size = 0
 			val out = ByteArray(81)
@@ -144,7 +145,7 @@ class Board : Serializable {
 	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
 		var size = 0
-		val out = Array<T?>(81,{null})
+		val out = Array<T?>(81, { null })
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
 				val row = rows[om / 3] or rows[om / 3 + 3]
@@ -153,7 +154,7 @@ class Board : Serializable {
 				}
 			}
 		}
-		return Arrays.copyOf(out,size)
+		return Arrays.copyOf(out, size)
 	}
 
 	/**

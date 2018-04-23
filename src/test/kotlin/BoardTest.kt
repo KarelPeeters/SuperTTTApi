@@ -71,7 +71,7 @@ class BoardTest {
 
 	@Theory
 	fun testOtherSymmetry(player: Player) {
-		assertEquals("test player.other symmetry",player, player.other().other())
+		assertEquals("test player.other symmetry", player, player.other().other())
 	}
 
 	@Theory
@@ -79,9 +79,9 @@ class BoardTest {
 		for (om in 0..8) {
 			for (i in 0..2) {
 				assertEquals("horizontal $i in macro $om", player,
-						playedBoard(player, 0 + 3*i + 9*om, 1 + 3*i + 9*om, 2 + 3*i + 9*om).macro(om.toByte()))
+						playedBoard(player, 0 + 3 * i + 9 * om, 1 + 3 * i + 9 * om, 2 + 3 * i + 9 * om).macro(om.toByte()))
 				assertEquals("vertical $i in macro $om", player,
-						playedBoard(player, 0 + i + 9*om, 3 + i + 9*om, 6 + i + 9*om).macro(om.toByte()))
+						playedBoard(player, 0 + i + 9 * om, 3 + i + 9 * om, 6 + i + 9 * om).macro(om.toByte()))
 			}
 		}
 	}
@@ -90,9 +90,9 @@ class BoardTest {
 	fun testDiagonalWin(player: Player) {
 		for (om in 0..8) {
 			assertEquals("diagonal / in macro $om", player,
-				playedBoard(player, 0 + 9*om, 4 + 9*om, 8 + 9*om).macro(om.toByte()))
+					playedBoard(player, 0 + 9 * om, 4 + 9 * om, 8 + 9 * om).macro(om.toByte()))
 			assertEquals("diagonal \\ in macro $om", player,
-				playedBoard(player, 2 + 9*om, 4 + 9*om, 6 + 9*om).macro(om.toByte()))
+					playedBoard(player, 2 + 9 * om, 4 + 9 * om, 6 + 9 * om).macro(om.toByte()))
 		}
 	}
 

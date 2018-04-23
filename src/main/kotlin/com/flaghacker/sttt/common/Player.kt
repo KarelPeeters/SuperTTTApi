@@ -5,7 +5,7 @@ enum class Player(val niceString: String) {
 	ENEMY("O"),
 	NEUTRAL(" ");
 
-	fun other(): Player = when(this) {
+	fun other(): Player = when (this) {
 		PLAYER -> ENEMY
 		ENEMY -> PLAYER
 		else -> throw IllegalArgumentException("player should be one of [PLAYER, ENEMY]; was " + this)
