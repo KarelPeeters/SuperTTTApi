@@ -1,7 +1,6 @@
-package com.flaghacker.sttt.common
+package com.flaghacker.sttt
 
-import boardToJSON
-import checkMatch
+import com.flaghacker.sttt.common.Board
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith

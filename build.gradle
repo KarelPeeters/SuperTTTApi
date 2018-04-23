@@ -20,7 +20,7 @@ task aizip (type:Zip) {
     description 'Zips the code for uploading to riddles.io'
     from 'src/main/kotlin'
     exclude 'Main.kt'
-    exclude 'com/flaghacker/sttt/common/JSONBoard.kt'
+    exclude 'com/com.flaghacker/sttt/common/JSONBoard.kt'
     destinationDir file('ignored')
 }
 
@@ -35,6 +35,24 @@ buildscript {
         classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.5"
     }
 }
+
+sourceSets {
+    main {
+        kotlin.srcDirs = ["src/main"]
+        java.srcDirs = ["src/main"]
+        resources.srcDirs = ["src/main"]
+    }
+    jmh {
+        kotlin.srcDirs = ["src/jmh"]
+        java.srcDirs = ["src/jmh"]
+        resources.srcDirs = ["src/jmh"]
+    }
+    test {
+        kotlin.srcDirs = ["src/test"]
+        java.srcDirs = ["src/test"]
+    }
+}
+
 compileKotlin {
     kotlinOptions {
         jvmTarget = "1.8"

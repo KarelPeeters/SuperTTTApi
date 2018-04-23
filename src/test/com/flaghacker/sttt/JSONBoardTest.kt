@@ -1,6 +1,7 @@
+package com.flaghacker.sttt
+
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.JSONBoard
-import com.flaghacker.sttt.common.randomBoard
 import com.flaghacker.sttt.common.toJSON
 import org.junit.Assert.assertEquals
 import org.junit.Test

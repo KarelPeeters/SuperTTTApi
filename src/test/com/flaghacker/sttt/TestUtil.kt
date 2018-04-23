@@ -1,3 +1,5 @@
+package com.flaghacker.sttt
+
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Player
 import org.json.JSONArray

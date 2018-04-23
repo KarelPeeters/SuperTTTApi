@@ -1,14 +1,14 @@
 /*
-package com.flaghacker.sttt.games;
+package com.com.flaghacker.sttt.games;
 
-import com.flaghacker.sttt.common.*;
+import com.com.flaghacker.sttt.common.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import static com.flaghacker.sttt.common.Player.ENEMY;
-import static com.flaghacker.sttt.common.Player.PLAYER;
+import static com.com.flaghacker.sttt.common.Player.ENEMY;
+import static com.com.flaghacker.sttt.common.Player.PLAYER;
 
 public class OldConsoleGame
 {

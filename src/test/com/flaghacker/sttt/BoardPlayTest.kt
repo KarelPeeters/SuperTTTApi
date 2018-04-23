@@ -1,23 +1,19 @@
-package com.flaghacker.sttt.common
+package com.flaghacker.sttt
 
-import boardToJSON
-import checkMatch
+import com.flaghacker.sttt.bots.RandomBot
+import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.common.Timer
 import org.apache.commons.io.IOUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.io.IOException
-import java.io.OutputStream
+import java.io.*
+import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.zip.GZIPInputStream
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPOutputStream
-
-
 
 
 @RunWith(Parameterized::class)
@@ -94,6 +90,30 @@ class BoardPlayTest(private val play: PlayTrough) {
 		}
 
 		@Throws(IOException::class)
+		fun decompress(compressed: ByteArray): String {
+			val bis = ByteArrayInputStream(compressed)
+			val gis = GZIPInputStream(bis)
+			val bytes = IOUtils.toByteArray(gis)
+			return String(bytes, StandardCharsets.UTF_8)
+		}
+
+		fun generateAndSavePlayThroughs(count: Int) {
+			val playTroughs = mutableListOf<PlayTrough>()
+			repeat(count) {
+				val board = Board()
+				val boards = mutableListOf(board.copy())
+				while (!board.isDone) {
+					board.play(RandomBot().move(board, Timer(30))!!)
+					boards.add(board.copy())
+				}
+				playTroughs.add(PlayTrough(boards))
+			}
+
+			val out = FileOutputStream("${System.getProperty("user.dir")}\\${PLAYTROUGHS_LOCATION}")
+			savePlayTroughs(playTroughs, out)
+		}
+
+		@Throws(IOException::class)
 		fun savePlayTroughs(playTroughs: List<PlayTrough>, out: OutputStream) {
 			val arr = JSONArray()
 			for (playTrough in playTroughs)
@@ -111,14 +131,6 @@ class BoardPlayTest(private val play: PlayTrough) {
 			val compressed = bos.toByteArray()
 			bos.close()
 			return compressed
-		}
-
-		@Throws(IOException::class)
-		fun decompress(compressed: ByteArray): String {
-			val bis = ByteArrayInputStream(compressed)
-			val gis = GZIPInputStream(bis)
-			val bytes = IOUtils.toByteArray(gis)
-			return String(bytes, StandardCharsets.UTF_8)
 		}
 	}
 }

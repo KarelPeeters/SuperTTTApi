@@ -1,6 +1,10 @@
-package com.flaghacker.sttt.common
+package com.flaghacker.sttt
 
+import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.Player.*
+import com.flaghacker.sttt.common.toCoord
+import com.flaghacker.sttt.common.toPair
 import org.apache.commons.lang3.SerializationUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
