@@ -51,8 +51,8 @@ class Board : Serializable {
 
 	/**
 	 * Constructs a Board using a 2 dimensional Array of players, a macroMask a lastMove.
-	 * @param board `2 dimensional array containing who owns each tile. The format is board[x][y]`
-	 * @param nextPlayer the next player that can play next
+	 * @param board 2 dimensional array containing who owns each tile. The format is `board[x][y]`
+	 * @param nextPlayer the next player
 	 * @param lastMove the [Coord] of the last move played on the board, null if the board is still empty
 	 * */
 	constructor(board: Array<Array<Player>>, nextPlayer: Player, lastMove: Coord?) {
@@ -101,8 +101,8 @@ class Board : Serializable {
 	}
 
 	/**
-	 * Returns a copy of the Board with the [Player]'s swapped.
-	 * @return A copy of the original [Board] with the [Player]'s swapped
+	 * Returns a copy of the Board with the [Player]s swapped.
+	 * @return A copy of the original [Board] with the [Player]s swapped
 	 */
 	fun flip() = copy().apply {
 		nextPlayer = nextPlayer.otherWithNeutral()
@@ -114,9 +114,9 @@ class Board : Serializable {
 	}
 
 	/**
-	 * Returns the available [Coord]'s. The coords are cached so the available moves
+	 * Returns the available [Coord]s. The coords are cached so the available moves
 	 * will only be calculated on the first call.
-	 * @return a [ByteArray] containing the available [Coord]'s.
+	 * @return a [ByteArray] containing the available [Coord]s.
 	 */
 	private fun availableMoves(): ByteArray {
 		if (wonBy != Player.NEUTRAL) return ByteArray(0)
@@ -140,12 +140,12 @@ class Board : Serializable {
 	 * Get the available moves mapped to another type.
 	 * Available moves are not cached when using this method.
 	 * @param map the map applied to the available.
-	 * @return An Array containing the [Coord]'s mapped with the input map.
+	 * @return An Array containing the [Coord]s mapped with the input map.
 	 */
 	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
 		var size = 0
-		val out = Array<T?>(81, { null })
+		val out = arrayOfNulls<T>(81)
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
 				val row = rows[om / 3] or rows[om / 3 + 3]
@@ -172,7 +172,8 @@ class Board : Serializable {
 		//If the move is not available throw exception
 		if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
 			throw RuntimeException("Position $index not available")
-		else if (wonBy != Player.NEUTRAL) throw RuntimeException("Can't play; game already over")
+		else if (wonBy != Player.NEUTRAL)
+			throw RuntimeException("Can't play; game already over")
 
 		//Write move to board & check for macro win
 		rows[pRow] += (1 shl shift)

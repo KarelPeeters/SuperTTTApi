@@ -76,7 +76,8 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 	}
 
 	private fun printDetail(message: String) {
-		if (logLevel == LogLevel.ALL) println(message)
+		if (logLevel == LogLevel.ALL)
+			println(message)
 	}
 
 	private fun printImportant(message: String) {

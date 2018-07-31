@@ -1,7 +1,6 @@
 package com.flaghacker.sttt.common
 
-class Timer(private val time: Long) {
-
+class Timer(private val length: Long) {
 	private var start = -1L
 	var isInterrupted: Boolean = false
 	val running get() = timeLeft() > 0
@@ -19,7 +18,7 @@ class Timer(private val time: Long) {
 		if (!started())
 			throw IllegalStateException("this Timer has not been started yet")
 
-		val left = time - (System.currentTimeMillis() - start)
+		val left = length - (System.currentTimeMillis() - start)
 		return if (left > 0 && !isInterrupted) left else 0
 	}
 }

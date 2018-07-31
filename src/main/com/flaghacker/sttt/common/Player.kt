@@ -14,9 +14,7 @@ enum class Player(val niceString: String) {
 	fun otherWithNeutral(): Player = if (this == NEUTRAL) NEUTRAL else this.other()
 
 	companion object {
-		fun fromNiceString(string: String): Player {
-			Player.values().filter { it.niceString == string }.forEach { return it }
-			throw IllegalArgumentException("$string is not a valid Player")
-		}
+		fun fromNiceString(string: String) = Player.values().find { it.niceString == string }
+				?: throw IllegalArgumentException("$string is not a valid Player")
 	}
 }

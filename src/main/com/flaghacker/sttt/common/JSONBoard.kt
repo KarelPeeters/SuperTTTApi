@@ -4,10 +4,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 fun Board.toJSON() = JSONBoard.toJSON(this)
+
 class JSONBoard {
 	companion object {
 		fun fromJSON(json: JSONObject): Board {
-			val board = Array(9, { Array(9, { Player.NEUTRAL }) })
+			val board = Array(9) { Array(9) { Player.NEUTRAL } }
 			for (i in 0 until 81)
 				board[i.toPair().first][i.toPair().second] = Player.fromNiceString(json.getJSONArray("board").getString(i))
 			val nextPlayer = Player.fromNiceString(json.getString("nextPlayer"))
