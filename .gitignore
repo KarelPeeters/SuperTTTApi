@@ -1,6 +1,8 @@
-.gradle
-.idea
+.gitignore
+
+.gradle/
 build/
-ignored/
-classes/
-out
+out/
+
+.idea/
+*.iml
