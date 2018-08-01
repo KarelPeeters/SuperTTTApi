@@ -79,6 +79,6 @@ class MCTSBot : Bot {
 			}
 		}
 
-		return head.children!!.maxBy { it.visits }?.coord ?: RandomBot().move(board,timer)
+		return head.children?.maxBy { it.visits }?.coord ?: RandomBot().move(board,timer)
 	}
 }

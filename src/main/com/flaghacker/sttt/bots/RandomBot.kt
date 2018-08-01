@@ -12,8 +12,8 @@ class RandomBot : Bot {
 		random = Random()
 	}
 
-	constructor(seed: Int) {
-		random = Random(seed.toLong())
+	constructor(seed: Long) {
+		random = Random(seed)
 	}
 
 	override fun move(board: Board, timer: Timer): Byte? {
@@ -21,7 +21,5 @@ class RandomBot : Bot {
 		return moves[random.nextInt(moves.size)]
 	}
 
-	override fun toString(): String {
-		return "RandomBot"
-	}
+	override fun toString() = "RandomBot"
 }

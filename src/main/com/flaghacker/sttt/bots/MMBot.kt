@@ -8,11 +8,16 @@ import java.lang.Double.NEGATIVE_INFINITY
 import java.lang.Double.POSITIVE_INFINITY
 import java.lang.Math.max
 
+private const val TILE_VALUE = 1.0
+private const val MACRO_VALUE = 10e9
+
+private const val CENTER_FACTOR = 4.0
+private const val CORNER_FACTOR = 3.0
+private const val EDGE_FACTOR = 1.0
+
 class MMBot(private val depth: Int) : Bot {
-	override fun move(board: Board, timer: Timer): Byte? {
-		return negaMax(board, value(board), depth,
-				NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer)).move
-	}
+	override fun move(board: Board, timer: Timer) = negaMax(board, value(board), depth,
+			NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer)).move
 
 	private class ValuedMove(val move: Byte, val value: Double)
 
@@ -46,7 +51,8 @@ class MMBot(private val depth: Int) : Bot {
 		return ValuedMove(bestMove!!, bestValue)
 	}
 
-	private fun value(board: Board) = if (board.isDone) POSITIVE_INFINITY * playerSign(board.wonBy)
+	private fun value(board: Board) = if (board.isDone)
+		POSITIVE_INFINITY * playerSign(board.wonBy)
 	else {
 		(0 until 81).sumByDouble {
 			TILE_VALUE * factor(it % 9) * factor(it / 9) * playerSign(board.tile(it.toByte())).toDouble()
@@ -68,13 +74,4 @@ class MMBot(private val depth: Int) : Bot {
 	}
 
 	override fun toString() = "MMBot"
-
-	companion object {
-		private const val TILE_VALUE = 1.0
-		private const val MACRO_VALUE = 10e9
-
-		private const val CENTER_FACTOR = 4.0
-		private const val CORNER_FACTOR = 3.0
-		private const val EDGE_FACTOR = 1.0
-	}
 }
