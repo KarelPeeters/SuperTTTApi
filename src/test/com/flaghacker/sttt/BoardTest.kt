@@ -6,19 +6,12 @@ import com.flaghacker.sttt.common.Player.*
 import com.flaghacker.sttt.common.toCoord
 import com.flaghacker.sttt.common.toPair
 import org.apache.commons.lang3.SerializationUtils
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import org.junit.experimental.theories.DataPoints
-import org.junit.experimental.theories.Theories
-import org.junit.experimental.theories.Theory
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.util.*
-
-fun playedBoard(moves: List<Byte>): Board {
-	val board = Board()
-	for (move in moves) board.play(move)
-	return board
-}
 
 fun randomBoard(rand: Random, moveCount: Int): Board {
 	return playRandom(Board(), rand, moveCount)
@@ -34,21 +27,18 @@ fun playRandom(startBoard: Board, rand: Random, moveCount: Int): Board {
 	return startBoard
 }
 
-@RunWith(Theories::class)
-class BoardTest {
-	companion object {
-		@DataPoints @JvmField val players = arrayOf(Player.PLAYER, Player.ENEMY)
-	}
+private fun playedBoard(player: Player, vararg moves: Int): Board {
+	val board = Array(9) { Array(9) { Player.NEUTRAL } }
+	for (move in moves) board[move.toPair().first][move.toPair().second] = player
+	return Board(board, player, moves.last().toByte())
+}
 
+class BoardTest {
 	@Test
 	fun testOther() {
 		assertEquals(PLAYER, ENEMY.other())
 		assertEquals(ENEMY, PLAYER.other())
-	}
-
-	@Test(expected = IllegalArgumentException::class)
-	fun testOtherNeutralFails() {
-		NEUTRAL.other()
+		assertThrows<IllegalArgumentException> { NEUTRAL.other() }
 	}
 
 	@Test
@@ -64,50 +54,49 @@ class BoardTest {
 	@Test
 	fun testSerializedEquals() {
 		val board = randomBoard(Random(0), 10)
-		assertEquals(board, SerializationUtils.clone(board))
+		assertBoardEquals(board, SerializationUtils.clone(board))
 	}
 
 	@Test
 	fun testDoubleFlip() {
 		val board = randomBoard(Random(0), 10)
-		assertEquals(board, board.flip().flip())
+		assertBoardEquals(board, board.flip().flip())
 	}
 
-	@Theory
-	fun testOtherSymmetry(player: Player) {
-		assertEquals("test player.other symmetry", player, player.other().other())
-	}
-
-	@Theory
+	@ParameterizedTest
+	@EnumSource(Player::class, names = ["PLAYER", "ENEMY"])
 	fun testManhattanWin(player: Player) {
 		for (om in 0..8) {
 			for (i in 0..2) {
-				assertEquals("horizontal $i in macro $om", player,
-						playedBoard(player, 0 + 3 * i + 9 * om, 1 + 3 * i + 9 * om, 2 + 3 * i + 9 * om).macro(om.toByte()))
-				assertEquals("vertical $i in macro $om", player,
-						playedBoard(player, 0 + i + 9 * om, 3 + i + 9 * om, 6 + i + 9 * om).macro(om.toByte()))
+				assertEquals(player, playedBoard(player, 0 + 3 * i + 9 * om, 1 + 3 * i + 9 * om, 2 + 3 * i + 9 * om).macro(om.toByte())) {
+					"horizontal $i in macro $om"
+				}
+				assertEquals(player, playedBoard(player, 0 + i + 9 * om, 3 + i + 9 * om, 6 + i + 9 * om).macro(om.toByte())) {
+					"vertical $i in macro $om"
+				}
 			}
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@EnumSource(Player::class, names = ["PLAYER", "ENEMY"])
 	fun testDiagonalWin(player: Player) {
 		for (om in 0..8) {
-			assertEquals("diagonal / in macro $om", player,
-					playedBoard(player, 0 + 9 * om, 4 + 9 * om, 8 + 9 * om).macro(om.toByte()))
-			assertEquals("diagonal \\ in macro $om", player,
-					playedBoard(player, 2 + 9 * om, 4 + 9 * om, 6 + 9 * om).macro(om.toByte()))
+			assertEquals(player, playedBoard(player, 0 + 9 * om, 4 + 9 * om, 8 + 9 * om).macro(om.toByte())) {
+				"diagonal / in macro $om"
+			}
+			assertEquals(player, playedBoard(player, 2 + 9 * om, 4 + 9 * om, 6 + 9 * om).macro(om.toByte())) {
+				"diagonal \\ in macro $om"
+			}
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@EnumSource(Player::class, names = ["PLAYER", "ENEMY"])
 	fun testFullWin(player: Player) {
-		assertEquals("macro top line", player, playedBoard(player, 0, 1, 2, 9, 10, 11, 18, 19, 20).wonBy)
+		assertEquals(player, playedBoard(player, 0, 1, 2, 9, 10, 11, 18, 19, 20).wonBy) {
+			"macro top line"
+		}
 	}
 }
 
-private fun playedBoard(player: Player, vararg moves: Int): Board {
-	val board = Array(9, { Array(9, { Player.NEUTRAL }) })
-	for (move in moves) board[move.toPair().first][move.toPair().second] = player
-	return Board(board, player, moves.last().toByte())
-}

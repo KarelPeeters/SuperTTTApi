@@ -3,8 +3,7 @@ package com.flaghacker.sttt
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.JSONBoard
 import com.flaghacker.sttt.common.toJSON
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class JSONBoardTest {
@@ -13,14 +12,14 @@ class JSONBoardTest {
 		val board = Board()
 		val result = JSONBoard.fromJSON(board.toJSON())
 
-		assertEquals(board, result)
+		assertBoardEquals(board, result)
 	}
 
 	@Test
 	fun testRandom() {
-		val board = randomBoard(Random(), 10)
+		val board = randomBoard(Random(0), 10)
 		val result = JSONBoard.fromJSON(board.toJSON())
 
-		assertEquals(board, result)
+		assertBoardEquals(board, result)
 	}
 }

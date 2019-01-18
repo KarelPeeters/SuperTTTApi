@@ -3,134 +3,81 @@ package com.flaghacker.sttt
 import com.flaghacker.sttt.bots.RandomBot
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Timer
-import org.apache.commons.io.IOUtils
-import org.json.JSONArray
-import org.json.JSONObject
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.io.*
-import java.nio.charset.StandardCharsets
-import java.util.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
+import org.junit.jupiter.api.Test
+import java.io.InputStreamReader
+import java.io.Writer
+import java.lang.reflect.Type
 import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
+import kotlin.text.Charsets.UTF_8
 
+const val PLAYTHROUGHS_FILE = "playthroughs.json.gzip"
 
-@RunWith(Parameterized::class)
-class BoardPlayTest(private val play: PlayTrough) {
+typealias Playthrough = List<State>
+
+val PLAYTHROUGH_TYPE: Type = object : TypeToken<Playthrough>() {}.type
+
+class BoardPlayTest {
 	@Test
-	fun testPlayTrough() {
-		play.check()
-	}
-
-	class PlayTrough {
-		private val moves = mutableListOf<Byte>()
-		private val expected = mutableListOf<JSONObject>()
-
-		constructor(json: JSONArray) {
-			for (i in 0 until json.length()) {
-				val obj = json.getJSONObject(i)
-
-				if (i > 0) moves.add(obj.getInt("move").toByte())
-				expected.add(obj.getJSONObject("expected"))
-			}
-
-			if (expected.size != moves.size + 1) throw IllegalArgumentException()
-		}
-
-		constructor(boards: List<Board>) {
-			for (i in boards.indices) {
-				val board = boards[i]
-				if (i > 0) moves.add(board.lastMove!!)
-				expected.add(boardToJSON(board))
-			}
-		}
-
-		fun check() {
-			val board = Board()
-
-			for (i in expected.indices) {
-				checkMatch(board, expected[i])
-				if (i < moves.size) board.play(moves[i])
-			}
-		}
-
-		fun toJSON(): JSONArray {
-			val json = JSONArray()
-
-			for (i in expected.indices) {
-				val obj = JSONObject()
-				obj.put("expected", expected[i])
-				if (i > 0) obj.put("move", moves[i - 1])
-				json.put(obj)
-			}
-
-			return json
+	fun testPlaythroughs() {
+		for (playthrough in loadPlaythroughs()) {
+			checkPlaythrough(playthrough)
 		}
 	}
 
-	companion object {
-		val PLAYTROUGHS_LOCATION = "playtroughs.json"
+	private fun checkPlaythrough(playthrough: Playthrough) {
+		val board = Board()
 
-		@JvmStatic
-		@Parameterized.Parameters
-		fun loadPlayTroughs(): List<PlayTrough> {
-			try {
-				val resource = BoardPlayTest::class.java.getResource(PLAYTROUGHS_LOCATION)
-				val json = JSONArray(decompress(IOUtils.toByteArray(resource)))
+		for (state in playthrough) {
+			if (state.move != null)
+				board.play(state.move.toByte())
+			assertBoardMatches(state.expected, board)
+		}
+	}
+}
 
-				val playTroughs = ArrayList<PlayTrough>()
-				for (i in 0 until json.length())
-					playTroughs.add(PlayTrough(json.getJSONArray(i)))
+private fun loadPlaythroughs(): Sequence<Playthrough> = sequence {
+	val gson = Gson()
 
-				return playTroughs
-			} catch (e: IOException) {
-				throw RuntimeException(e)
+	val input = BoardPlayTest::class.java.getResourceAsStream(PLAYTHROUGHS_FILE)
+	val gis = GZIPInputStream(input)
+
+	JsonReader(InputStreamReader(gis, UTF_8)).use { reader ->
+		reader.beginArray()
+		while (reader.hasNext()) {
+			val playthrough = gson.fromJson<Playthrough>(reader, PLAYTHROUGH_TYPE)
+			yield(playthrough)
+		}
+		reader.endArray()
+	}
+}
+
+@Suppress("unused")
+object GeneratePlaythroughs {
+	fun generatePlaythroughs(): Sequence<Playthrough> = generateSequence {
+		val board = Board()
+		sequence {
+			yield(State(null, board.toExpected()))
+			while (!board.isDone) {
+				val move = RandomBot().move(board, Timer(30))!!
+				board.play(move)
+				yield(State(move, board.toExpected()))
 			}
-		}
+		}.toList()
+	}
 
-		@Throws(IOException::class)
-		fun decompress(compressed: ByteArray): String {
-			val bis = ByteArrayInputStream(compressed)
-			val gis = GZIPInputStream(bis)
-			val bytes = IOUtils.toByteArray(gis)
-			return String(bytes, StandardCharsets.UTF_8)
-		}
+	fun playthroughsToJSON(playthroughs: Sequence<Playthrough>, out: Writer) {
+		val gson = Gson()
+		val writer = JsonWriter(out)
 
-		fun generateAndSavePlayThroughs(count: Int) {
-			val playTroughs = mutableListOf<PlayTrough>()
-			repeat(count) {
-				val board = Board()
-				val boards = mutableListOf(board.copy())
-				while (!board.isDone) {
-					board.play(RandomBot().move(board, Timer(30))!!)
-					boards.add(board.copy())
-				}
-				playTroughs.add(PlayTrough(boards))
-			}
+		writer.beginArray()
+		for (playthrough in playthroughs)
+			gson.toJson(playthrough, PLAYTHROUGH_TYPE, writer)
+		writer.endArray()
 
-			val out = FileOutputStream("${System.getProperty("user.dir")}\\${PLAYTROUGHS_LOCATION}")
-			savePlayTroughs(playTroughs, out)
-		}
-
-		@Throws(IOException::class)
-		fun savePlayTroughs(playTroughs: List<PlayTrough>, out: OutputStream) {
-			val arr = JSONArray()
-			for (playTrough in playTroughs)
-				arr.put(playTrough.toJSON())
-
-			IOUtils.write(compress(arr.toString()), out)
-		}
-
-		@Throws(IOException::class)
-		fun compress(data: String): ByteArray {
-			val bos = ByteArrayOutputStream(data.length)
-			val gzip = GZIPOutputStream(bos)
-			gzip.write(data.toByteArray(StandardCharsets.UTF_8))
-			gzip.close()
-			val compressed = bos.toByteArray()
-			bos.close()
-			return compressed
-		}
+		writer.close()
 	}
 }

@@ -1,28 +1,25 @@
 package com.flaghacker.sttt
 
 import com.flaghacker.sttt.common.Board
-import org.junit.Assert.*
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
 
-val random = Random(0)
-
-@RunWith(Parameterized::class)
-class BoardCopyTest(private val board: Board) {
-	@Test
-	fun testCopySeparate() {
-		assertEquals(board, board.copy())
-		checkMatch(board, boardToJSON(board))
-
+class BoardCopyTest {
+	@ParameterizedTest
+	@MethodSource("data")
+	fun testCopySeparate(board: Board) {
 		val copy = board.copy()
-		playRandom(copy, random, 15)
+		assertBoardEquals(board, copy)
+
+		playRandom(copy, Random(1), 15)
 		assertNotEquals(board, copy)
 	}
 
-	@Test
-	fun testCopyEqualsHashcode() {
+	@ParameterizedTest
+	@MethodSource("data")
+	fun testCopyEqualsHashcode(board: Board) {
 		val copy = board.copy()
 
 		assertTrue(copy == board && board == copy)
@@ -31,7 +28,7 @@ class BoardCopyTest(private val board: Board) {
 
 	companion object {
 		@JvmStatic
-		@Parameterized.Parameters
-		fun data() = (0..9).map { randomBoard(random, it) }
+		@Suppress("unused")
+		fun data() = (0..9).map { randomBoard(Random(0), it) }
 	}
 }
