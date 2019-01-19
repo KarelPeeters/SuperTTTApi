@@ -4,8 +4,7 @@ import com.flaghacker.sttt.common.*
 import com.flaghacker.sttt.common.Timer
 import java.util.*
 
-class MCTSBot : Bot {
-	private val rand = Random()
+class MCTSBot(val rand: Random = Random()) : Bot {
 	override fun toString() = "MCTSBot"
 
 	private class Node(@JvmField val coord: Coord) {
@@ -64,8 +63,7 @@ class MCTSBot : Bot {
 
 			//Simulation
 			while (!cBoard.isDone) {
-				val children = cBoard.availableMoves
-				cBoard.play(children[rand.nextInt(children.size)])
+				cBoard.play(cBoard.randomAvailableMove(rand))
 			}
 
 			//Update
@@ -77,6 +75,8 @@ class MCTSBot : Bot {
 			}
 		}
 
-		return head.children?.maxBy { it.visits }?.coord ?: RandomBot().move(board)
+		println(head.visits)
+
+		return head.children?.maxBy { it.visits }?.coord ?: board.randomAvailableMove(rand)
 	}
 }

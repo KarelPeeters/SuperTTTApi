@@ -61,7 +61,7 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 				printDetail(board.toString())
 			}
 
-			val wonBy = if (!swapped) board.wonBy else board.wonBy.otherWithNeutral()
+			val wonBy = if (!swapped) board.wonBy else board.wonBy?.otherWithNeutral()
 
 			printDetail("done, won by: ${board.wonBy} swapped: $swapped")
 			results[if (wonBy == Player.PLAYER) 0 else if (wonBy == Player.ENEMY) 2 else 1]++

@@ -65,7 +65,7 @@ class MMBot(private val depth: Int) : Bot {
 	}
 
 	private fun value(board: Board) = if (board.isDone)
-		POSITIVE_INFINITY * playerSign(board.wonBy)
+		POSITIVE_INFINITY * playerSign(board.wonBy!!)
 	else {
 		(0 until 81).sumByDouble {
 			TILE_VALUE * factor(it % 9) * factor(it / 9) * playerSign(board.tile(it.toByte())).toDouble()

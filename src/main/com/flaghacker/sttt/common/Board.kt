@@ -3,6 +3,7 @@
 package com.flaghacker.sttt.common
 
 import java.io.Serializable
+import java.lang.IllegalStateException
 import java.util.*
 
 typealias Coord = Byte
@@ -16,6 +17,34 @@ fun Coord.toPair(): Pair<Int, Int> {
 }
 
 class Board : Serializable {
+	companion object {
+		val wonGrid: BooleanArray
+
+		init {
+			val max = 512
+			val arr = listOf(
+					0, 1, 2,
+					3, 4, 5,
+					6, 7, 8,
+					0, 3, 6,
+					1, 4, 7,
+					2, 5, 8,
+					0, 4, 8,
+					2, 4, 6
+			)
+
+			val wonGrid = BooleanArray(max)
+
+			for (grid in 0 until max) {
+				wonGrid[grid] = arr.chunked(3) { (a, b, c) ->
+					grid.getBit(a) && grid.getBit(b) && grid.getBit(c)
+				}.any { it }
+			}
+
+			this.wonGrid = wonGrid
+		}
+	}
+
 	/**
 	Each element represents a row of macros (3 rows of 9 tiles)
 	The first 3 Ints hold the macros for Player
@@ -32,10 +61,10 @@ class Board : Serializable {
 
 	var nextPlayer = Player.PLAYER; private set
 	var lastMove: Coord? = null; private set
-	var wonBy = Player.NEUTRAL; private set
+	var wonBy: Player? = null; private set
 
 	val availableMoves get() = availableMoves()
-	val isDone get() = availableMoves.isEmpty()
+	val isDone get() = wonBy != null
 
 	/** Constructs an empty [Board]. */
 	constructor()
@@ -108,7 +137,7 @@ class Board : Serializable {
 	 */
 	fun flip() = copy().apply {
 		nextPlayer = nextPlayer.otherWithNeutral()
-		wonBy = wonBy.otherWithNeutral()
+		wonBy = wonBy?.otherWithNeutral()
 		rows = IntArray(6) { 0 }.apply {
 			for (i in 0..2) this[i] = rows[i + 3]
 			for (i in 3..5) this[i] = rows[i - 3]
@@ -121,8 +150,9 @@ class Board : Serializable {
 	 * @return a [ByteArray] containing the available [Coord]s.
 	 */
 	private fun availableMoves(): ByteArray {
-		if (wonBy != Player.NEUTRAL) return ByteArray(0)
-		else if (_availableMoves == null) {
+		if (isDone) return ByteArray(0)
+
+		if (_availableMoves == null) {
 			var size = 0
 			val out = ByteArray(81)
 			for (om in 0 until 9) {
@@ -146,6 +176,8 @@ class Board : Serializable {
 	 */
 	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
+		if (isDone) return Array(0) { null!! }
+
 		var size = 0
 		val out = arrayOfNulls<T>(81)
 		for (om in 0 until 9) {
@@ -157,6 +189,35 @@ class Board : Serializable {
 			}
 		}
 		return Arrays.copyOf(out, size)
+	}
+
+	fun randomAvailableMove(random: Random): Coord {
+		if (isDone) throw IllegalStateException("isDone")
+
+		var count = 0
+		for (om in 0 until 9) {
+			if (macroMask.getBit(om)) {
+				val row = rows[om / 3] or rows[om / 3 + 3]
+				for (index in om * 9 until 9 + om * 9) {
+					if (!row.getBit(index % 27)) count++
+				}
+			}
+		}
+
+		val chosen = random.nextInt(count)
+		var curr = 0
+
+		for (om in 0 until 9) {
+			if (macroMask.getBit(om)) {
+				val row = rows[om / 3] or rows[om / 3 + 3]
+				for (index in om * 9 until 9 + om * 9) {
+					if (!row.getBit(index % 27) && curr++ == chosen)
+						return index.toByte()
+				}
+			}
+		}
+
+		throw IllegalStateException()
 	}
 
 	/**
@@ -174,7 +235,7 @@ class Board : Serializable {
 		//If the move is not available throw exception
 		if ((rows[row] or rows[row + 3]).getBit(shift) || !macroMask.getBit((index / 27) * 3 + (macroShift / 9)))
 			throw RuntimeException("Position $index not available")
-		else if (wonBy != Player.NEUTRAL)
+		else if (wonBy != null)
 			throw RuntimeException("Can't play; game already over")
 
 		//Write move to board & check for macro win
@@ -195,33 +256,30 @@ class Board : Serializable {
 		lastMove = index
 		nextPlayer = nextPlayer.other()
 
+		var anyMove = false
+		m@ for (om in 0 until 9) {
+			val sumRow = rows[om / 3] or rows[3 + om / 3]
+			if ((macroMask shr om) and 1 != 0)
+				for (os in 0 until 9) {
+					if (!sumRow.getBit(9 * (om % 3) + os)) {
+						anyMove = true
+						break@m
+					}
+				}
+		}
+
+		if (!anyMove)
+			wonBy = Player.NEUTRAL
+
 		return macroWin
 	}
 
-	private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
-	private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
 	private inline fun macroFull(om: Int) = (rows[om / 3] or rows[3 + om / 3]).shr((om % 3) * 9).isMaskSet(0b111111111)
 	private inline fun macroWinGrid(player: Player) = (rows[0 + 3 * player.ordinal] shr 27)
 			.or((rows[1 + 3 * player.ordinal] shr 27) shl 3)
 			.or((rows[2 + 3 * player.ordinal] shr 27) shl 6)
 
-	private fun wonGrid(grid: Int, index: Int) = when (index) {
-		4 -> grid.getBit(1) && grid.getBit(7)        //Center: line |
-				|| grid.getBit(3) && grid.getBit(5)  //Center: line -
-				|| grid.getBit(0) && grid.getBit(8)  //Center: line \
-				|| grid.getBit(6) && grid.getBit(2)  //Center: line /
-		3, 5 -> grid.getBit(index - 3) && grid.getBit(index + 3) //Horizontal side: line |
-				|| grid.getBit(4) && grid.getBit(8 - index)      //Horizontal side: line -
-		1, 7 -> grid.getBit(index - 1) && grid.getBit(index + 1) //Vertical side: line |
-				|| grid.getBit(4) && grid.getBit(8 - index)      //Vertical side: line -
-		else -> { //Corners
-			val x = index % 3
-			val y = index / 3
-			grid.getBit(4) && grid.getBit(8 - index)                                            //line \ or /
-					|| grid.getBit(3 * y + (x + 1) % 2) && grid.getBit(3 * y + (x + 2) % 4)     //line -
-					|| grid.getBit(x + ((y + 1) % 2) * 3) && grid.getBit(x + ((y + 2) % 4) * 3) //line |
-		}
-	}
+	private fun wonGrid(grid: Int, index: Int) = Board.wonGrid[grid]
 
 	override fun toString() = (0 until 81).map { it to toCoord(it % 9, it / 9) }.joinToString("") {
 		when {
@@ -251,3 +309,6 @@ class Board : Serializable {
 		return true
 	}
 }
+
+private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
+private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
