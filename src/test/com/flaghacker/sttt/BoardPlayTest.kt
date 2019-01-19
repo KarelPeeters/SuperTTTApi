@@ -62,7 +62,7 @@ object GeneratePlaythroughs {
 		sequence {
 			yield(State(null, board.toExpected()))
 			while (!board.isDone) {
-				val move = RandomBot().move(board, Timer(30))!!
+				val move = RandomBot().move(board)!!
 				board.play(move)
 				yield(State(move, board.toExpected()))
 			}

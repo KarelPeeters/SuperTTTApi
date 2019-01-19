@@ -2,17 +2,17 @@ package com.flaghacker.sttt.common
 
 import java.util.concurrent.*
 
-fun moveBotWithTimeOut(bot: Bot, board: Board, time: Long): Byte? {
+fun moveBotWithTimeOut(bot: Bot, board: Board, time: Long): Coord? {
 	val timer = Timer(time)
 	timer.start()
 	return bot.move(board, timer)
 }
 
-fun moveBotWithTimeOutAsync(executor: ExecutorService, bot: Bot, board: Board, time: Long): Future<Byte> {
+fun moveBotWithTimeOutAsync(executor: ExecutorService, bot: Bot, board: Board, time: Long): Future<Coord?> {
 	val timer = Timer(time).apply { start() }
-	val future = executor.submit(Callable<Byte> { bot.move(board, timer) })
+	val future = executor.submit(Callable { bot.move(board, timer) })
 
-	return object : Future<Byte> {
+	return object : Future<Coord?> {
 		private var cancelled = false
 
 		override fun cancel(mayInterruptIfRunning: Boolean): Boolean {

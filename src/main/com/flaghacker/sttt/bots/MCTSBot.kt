@@ -1,8 +1,6 @@
 package com.flaghacker.sttt.bots
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Player
+import com.flaghacker.sttt.common.*
 import com.flaghacker.sttt.common.Timer
 import java.util.*
 
@@ -10,7 +8,7 @@ class MCTSBot : Bot {
 	private val rand = Random()
 	override fun toString() = "MCTSBot"
 
-	private class Node(@JvmField val coord: Byte) {
+	private class Node(@JvmField val coord: Coord) {
 		@JvmField var children: Array<Node>? = null
 		@JvmField var visits = 0
 		@JvmField var wins = 0
@@ -23,7 +21,7 @@ class MCTSBot : Bot {
 		}
 	}
 
-	override fun move(board: Board, timer: Timer): Byte? {
+	override fun move(board: Board, timer: Timer): Coord? {
 		val visited = LinkedList<Node>()
 		val head = Node(-1)
 
@@ -79,6 +77,6 @@ class MCTSBot : Bot {
 			}
 		}
 
-		return head.children?.maxBy { it.visits }?.coord ?: RandomBot().move(board,timer)
+		return head.children?.maxBy { it.visits }?.coord ?: RandomBot().move(board)
 	}
 }

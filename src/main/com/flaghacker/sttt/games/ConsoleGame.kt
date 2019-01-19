@@ -2,6 +2,7 @@ package com.flaghacker.sttt.games
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Coord
 import com.flaghacker.sttt.common.moveBotWithTimeOut
 import java.util.*
 
@@ -72,7 +73,7 @@ class ConsoleGame(private val bot: Bot) {
 		println("\n$current\n")
 	}
 
-	private fun coordFromInput(input: String): Byte? {
+	private fun coordFromInput(input: String): Coord? {
 		when {
 			input.matches(Regex("play \\d")) -> {
 				val os = input.split(" ").last().toInt()
