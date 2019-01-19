@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.flaghacker.sttt.common
 
 import java.io.Serializable
