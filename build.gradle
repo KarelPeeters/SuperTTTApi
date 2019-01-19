@@ -12,6 +12,7 @@ dependencies {
     api "org.json:json:20131018"
 
     testImplementation 'com.google.code.gson:gson:2.8.5'
+    testImplementation "org.apache.commons:commons-lang3:3.5"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.2"
