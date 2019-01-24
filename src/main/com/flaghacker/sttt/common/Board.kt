@@ -16,36 +16,27 @@ fun Coord.toPair(): Pair<Int, Int> {
 }
 
 const val FULL_GRID = 0b111111111
+@JvmField
+val WIN_GRID = BooleanArray(512).apply {
+	val lines = intArrayOf(
+			0, 1, 2,
+			3, 4, 5,
+			6, 7, 8,
+			0, 3, 6,
+			1, 4, 7,
+			2, 5, 8,
+			0, 4, 8,
+			2, 4, 6
+	)
 
-class Board : Serializable {
-	companion object {
-		val wonGrid: BooleanArray
-
-		init {
-			val max = 512
-			val arr = listOf(
-					0, 1, 2,
-					3, 4, 5,
-					6, 7, 8,
-					0, 3, 6,
-					1, 4, 7,
-					2, 5, 8,
-					0, 4, 8,
-					2, 4, 6
-			)
-
-			val wonGrid = BooleanArray(max)
-
-			for (grid in 0 until max) {
-				wonGrid[grid] = arr.chunked(3) { (a, b, c) ->
-					grid.getBit(a) && grid.getBit(b) && grid.getBit(c)
-				}.any { it }
-			}
-
-			this.wonGrid = wonGrid
+	for (grid in 0 until 512) {
+		this[grid] = (0 until lines.size / 3).any { i ->
+			grid.getBit(lines[3 * i]) && grid.getBit(lines[3 * i + 1]) && grid.getBit(lines[3 * i + 2])
 		}
 	}
+}
 
+class Board : Serializable {
 	/**
 	 * Each element represents a single grid
 	 * first 9 for player,
@@ -61,11 +52,14 @@ class Board : Serializable {
 	 */
 	private var grids: IntArray
 
+	/** playable macros for the next move, each set macro is guaranteed to have at least one free tile */
 	private var macroMask: Int
+	/** macros that can't be played in because they are won or full */
 	private var doneMacroMask: Int
 
 	var lastMove: Coord?; private set
 	var nextPlayer: Player; private set
+	/** null: no one has won, NEUTRAL: tie */
 	var wonBy: Player?; private set
 
 	private var _availableMoves: ByteArray?
@@ -84,24 +78,11 @@ class Board : Serializable {
 		wonBy = null
 	}
 
-	/** Returns a copy of the current board. */
-	fun copy() = Board(this)
-
-	private constructor(board: Board) {
-		grids = board.grids.copyOf()
-		macroMask = board.macroMask
-		doneMacroMask = board.doneMacroMask
-		lastMove = board.lastMove
-		nextPlayer = board.nextPlayer
-		wonBy = board.wonBy
-		_availableMoves = board._availableMoves
-	}
-
 	/**
-	 * Constructs a Board using a 2 dimensional Array of players, the next player and the lastMove.
+	 * Constructs a Board with a given state. Macro and main wins are calculated automatically.
 	 * @param board 2 dimensional array containing who owns each tile. The format is `board[x][y]`
 	 * @param nextPlayer the next player
-	 * @param lastMove the [Coord] of the last move played on the board, null if the board is still empty
+	 * @param lastMove the last move played on the board, `null` means the next move is freeplay
 	 * */
 	constructor(board: Array<Array<Player>>, nextPlayer: Player, lastMove: Coord?) {
 		if (board.size != 9 && board.all { it.size != 9 })
@@ -133,6 +114,35 @@ class Board : Serializable {
 		this.macroMask = if (lastMove == null) doneMacroMask.inv() else calcMacroMask(lastMove % 9)
 	}
 
+	/** Returns a copy of the current board. */
+	fun copy() = Board(this)
+
+	/** Copy constructor */
+	private constructor(board: Board) {
+		grids = board.grids.copyOf()
+		macroMask = board.macroMask
+		doneMacroMask = board.doneMacroMask
+		lastMove = board.lastMove
+		nextPlayer = board.nextPlayer
+		wonBy = board.wonBy
+		_availableMoves = board._availableMoves
+	}
+
+	/**
+	 * Returns a copy of the Board with the [Player]s swapped, including win
+	 * @return A copy of the original [Board] with the [Player]s swapped
+	 */
+	fun flip() = copy().apply {
+		nextPlayer = nextPlayer.otherWithNeutral()
+		wonBy = wonBy?.otherWithNeutral()
+		grids = IntArray(20) { 0 }.apply {
+			for (i in 0 until 9) this[i] = grids[i + 9]
+			for (i in 9 until 18) this[i] = grids[i - 9]
+			this[18] = grids[19]
+			this[19] = grids[18]
+		}
+	}
+
 	/**
 	 * Returns which Player owns the requested macro.
 	 * @param macroIndex the index of the macro (0-8)
@@ -151,21 +161,6 @@ class Board : Serializable {
 		grids[index / 9].getBit(index % 9) -> Player.PLAYER
 		grids[9 + index / 9].getBit(index % 9) -> Player.ENEMY
 		else -> Player.NEUTRAL
-	}
-
-	/**
-	 * Returns a copy of the Board with the [Player]s swapped.
-	 * @return A copy of the original [Board] with the [Player]s swapped
-	 */
-	fun flip() = copy().apply {
-		nextPlayer = nextPlayer.otherWithNeutral()
-		wonBy = wonBy?.otherWithNeutral()
-		grids = IntArray(20) { 0 }.apply {
-			for (i in 0 until 9) this[i] = grids[i + 9]
-			for (i in 9 until 18) this[i] = grids[i - 9]
-			this[18] = grids[19]
-			this[19] = grids[18]
-		}
 	}
 
 	/**
@@ -198,7 +193,7 @@ class Board : Serializable {
 	 * Get the available moves mapped to another type.
 	 * Available moves are not cached when using this method.
 	 * @param map the map applied to the available.
-	 * @return An Array containing the [Coord]s mapped with the input map.
+	 * @return An [Array] containing the [Coord]s mapped with the input map.
 	 */
 	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
@@ -217,6 +212,10 @@ class Board : Serializable {
 		return Arrays.copyOf(out, size)
 	}
 
+	/**
+	 * Picks a random available move. Faster than calling [availableMoves]
+	 * because this function doensn't allocate an array.
+	 */
 	fun randomAvailableMove(random: Random): Coord {
 		if (isDone) throw IllegalStateException("isDone")
 
@@ -276,17 +275,21 @@ class Board : Serializable {
 		return macroWin
 	}
 
+	/**
+	 * Update [grids], [wonBy], [doneMacroMask] and [macroMask] when the given player plays on the given position.
+	 * @return Whether the move wins the macro being played in.
+	 */
 	private fun setTileAndUpdate(p: Int, om: Int, os: Int): Boolean {
 		//Write move to board & check for macro win
 		val newGrid = grids[9 * p + om] or (1 shl os)
 		grids[9 * p + om] = newGrid
 
 		//Check if the current player won
-		val macroWin = wonGrid[newGrid]
+		val macroWin = WIN_GRID[newGrid]
 		if (macroWin) {
 			val newMacroGrid = grids[18 + p] or (1 shl om)
 			grids[18 + p] = newMacroGrid
-			if (wonGrid[newMacroGrid])
+			if (WIN_GRID[newMacroGrid])
 				wonBy = nextPlayer
 		}
 
@@ -296,16 +299,24 @@ class Board : Serializable {
 			doneMacroMask = doneMacroMask or (1 shl om)
 
 		macroMask = calcMacroMask(os)
+		if (macroMask == 0)
+			wonBy = Player.NEUTRAL
+
 		return macroWin
 	}
 
+	/**
+	 * Calculates the new macro mask based on the previous move.
+	 * * if the target macro is done, freeplay into all non-done macros
+	 * * otherwise play in the target macro
+	 */
 	private fun calcMacroMask(os: Int) =
 			if (doneMacroMask.getBit(os)) (FULL_GRID and doneMacroMask.inv())
 			else (1 shl os)
 
 	override fun toString() = toString(false)
 
-	fun toString(showMoves: Boolean) = (0 until 81).joinToString("") {
+	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
 		val coord = toCoord(it % 9, it / 9)
 		when {
 			(it == 0 || it == 80) -> ""
@@ -316,7 +327,7 @@ class Board : Serializable {
 		} + when {
 			tile(coord) == Player.PLAYER -> "X"
 			tile(coord) == Player.ENEMY -> "O"
-			showMoves && coord in availableMoves -> "."
+			showAvailableMoves && coord in availableMoves -> "."
 			else -> " "
 		}
 	}

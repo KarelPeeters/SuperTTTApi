@@ -7,6 +7,7 @@ import com.flaghacker.sttt.common.toCoord
 import com.flaghacker.sttt.common.toPair
 import org.apache.commons.lang3.SerializationUtils
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.*
@@ -122,6 +123,22 @@ class BoardTest {
 		)
 
 		assertEquals(81 - 9, board.availableMoves.size) { "freeplay" }
+	}
+
+	@TestPlayers
+	fun testNeutralWin(player: Player) {
+		val pMoves = listOf(0, 1, 4, 5, 6)
+		val eMoves = listOf(2, 3, 7, 8)
+
+		val board = playedBoard(
+				player,
+				(0 until 9).flatMap { om -> pMoves.map { om * 9 + it } }.toIntArray(),
+				(0 until 9).flatMap { om -> eMoves.map { om * 9 + it } }.toIntArray(),
+				0
+		)
+
+		assertEquals(NEUTRAL, board.wonBy)
+		assertTrue(board.isDone)
 	}
 }
 

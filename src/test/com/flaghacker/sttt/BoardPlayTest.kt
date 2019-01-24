@@ -22,11 +22,8 @@ val PLAYTHROUGH_TYPE: Type = object : TypeToken<Playthrough>() {}.type
 class BoardPlayTest {
 	@Test
 	fun testPlaythroughs() {
-		var i = 0
-		for (playthrough in loadPlaythroughs()) {
-			println(i++)
+		for (playthrough in loadPlaythroughs())
 			checkPlaythrough(playthrough)
-		}
 	}
 
 	private fun checkPlaythrough(playthrough: Playthrough) {
