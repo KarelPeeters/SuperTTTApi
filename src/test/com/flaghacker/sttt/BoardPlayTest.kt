@@ -22,7 +22,9 @@ val PLAYTHROUGH_TYPE: Type = object : TypeToken<Playthrough>() {}.type
 class BoardPlayTest {
 	@Test
 	fun testPlaythroughs() {
+		var i = 0
 		for (playthrough in loadPlaythroughs()) {
+			println(i++)
 			checkPlaythrough(playthrough)
 		}
 	}
@@ -63,7 +65,7 @@ object GeneratePlaythroughs {
 			sequence {
 				yield(State(null, board.toExpected()))
 				while (!board.isDone) {
-					val move = board.randomAvailableMove(random)!!
+					val move = board.randomAvailableMove(random)
 					board.play(move)
 					yield(State(move, board.toExpected()))
 				}

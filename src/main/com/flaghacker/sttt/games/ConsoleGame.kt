@@ -23,11 +23,11 @@ class ConsoleGame(private val bot: Bot) {
 					if (history.size > 1) {
 						history.removeAt(history.lastIndex)
 						current = history.last().copy()
-						println("\n$current\n")
+						printCurrent()
 					} else {
 						history.clear()
 						current = Board()
-						println("\n$current\n")
+						printCurrent()
 					}
 				}
 				"exit" -> return
@@ -43,24 +43,28 @@ class ConsoleGame(private val bot: Bot) {
 						if (current.availableMoves.contains(coord)) {
 							println("you played on $coord")
 							current.play(coord)
-							println("\n$current\n")
+							printCurrent()
 
 							if (!current.isDone) {
 								val botMove = moveBotWithTimeOut(bot, current.copy(), time)!!
 								println("bot played on $botMove")
 								current.play(botMove)
 								history.add(current.copy())
-								println("\n$current\n")
+								printCurrent()
 							}
 						} else System.err.println("coord not available please choose out of ${Arrays.toString(current.availableMoves)}")
 					}
 				}
 				else -> {
 					System.err.println("invalid command")
-					println("\n$current\n")
+					printCurrent()
 				}
 			}
 		}
+	}
+
+	private fun printCurrent() {
+		println("\n${current.toString(true)}\n")
 	}
 
 	private fun printHelp() {
@@ -70,7 +74,7 @@ class ConsoleGame(private val bot: Bot) {
 		println("play <os>\t\t: play os [0-8] in current macro")
 		println("play <om> <os>\t: play os [0-8] in macro om [0-8]")
 		println("time <int>\t\t: change the amount of time the bot gets (currently " + time + "ms)")
-		println("\n$current\n")
+		printCurrent()
 	}
 
 	private fun coordFromInput(input: String): Coord? {
