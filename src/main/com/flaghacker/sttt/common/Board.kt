@@ -57,11 +57,6 @@ class Board : Serializable {
 	 * tile: (grid >> os) & 1
 	 */
 	private var grids: IntArray
-	/**
-	 * Contains for each macro all of the occupied tiles
-	 * `fullGrids[om] = grids[om] or grids[9 + om]`
-	 */
-	private var fullGrids: IntArray
 
 	/** playable macros for the next move, each set macro is guaranteed to have at least one free tile */
 	private var macroMask: Int
@@ -81,7 +76,6 @@ class Board : Serializable {
 	/** Constructs an empty [Board]. */
 	constructor() {
 		grids = IntArray(20)
-		fullGrids = IntArray(9)
 		macroMask = FULL_GRID
 		openMacroMask = FULL_GRID
 		_availableMoves = null
@@ -109,7 +103,6 @@ class Board : Serializable {
 		this.wonBy = null
 
 		this.grids = IntArray(20)
-		this.fullGrids = IntArray(9)
 		for (i in 0 until 81) {
 			val owner = board[i.toPair().first][i.toPair().second]
 			if (owner != Player.NEUTRAL) {
@@ -133,7 +126,6 @@ class Board : Serializable {
 	/** Copy constructor */
 	private constructor(board: Board) {
 		grids = board.grids.copyOf()
-		fullGrids = board.fullGrids.copyOf()
 		macroMask = board.macroMask
 		openMacroMask = board.openMacroMask
 		lastMove = board.lastMove
@@ -239,7 +231,7 @@ class Board : Serializable {
 		while (leftMacroMask != 0) {
 			val om = Integer.numberOfTrailingZeros(leftMacroMask)
 			leftMacroMask = leftMacroMask.withoutLastBit()
-			count += (9 - Integer.bitCount(fullGrids[om]))
+			count += (9 - Integer.bitCount(grids[om] or grids[om + 9]))
 		}
 
 		var left = random.nextInt(count) + 1
@@ -249,7 +241,7 @@ class Board : Serializable {
 			val om = Integer.numberOfTrailingZeros(leftMacroMask)
 			leftMacroMask = leftMacroMask.withoutLastBit()
 
-			val grid = fullGrids[om]
+			val grid = grids[om] or grids[om + 9]
 			left += Integer.bitCount(grid) - 9
 
 			if (left <= 0) {
@@ -273,7 +265,8 @@ class Board : Serializable {
 		val p = nextPlayer.ordinal
 
 		//If the move is not available throw exception
-		if (!macroMask.hasBit(om) || fullGrids[om].hasBit(os))
+		val fullGrid = grids[om] or grids[om + 9]
+		if (!macroMask.hasBit(om) || fullGrid.hasBit(os))
 			throw IllegalStateException("Position $index not playable")
 
 		//Actually do the move
@@ -295,8 +288,7 @@ class Board : Serializable {
 		//Write move to board & check for macro win
 		val newGrid = grids[9 * p + om] or (1 shl os)
 		grids[9 * p + om] = newGrid
-		val newTotalGrid = fullGrids[om] or newGrid
-		fullGrids[om] = newTotalGrid
+		val newTotalGrid = newGrid or grids[9 * (1 - p) + om]
 
 		//Check if the current player won
 		val macroWin = newGrid.winGrid()
