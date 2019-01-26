@@ -68,8 +68,6 @@ class Board : Serializable {
 	/** null: no one has won, NEUTRAL: tie */
 	var wonBy: Player?; private set
 
-	private var _availableMoves: ByteArray?
-
 	val availableMoves get() = availableMoves()
 	val isDone get() = wonBy != null
 
@@ -78,7 +76,6 @@ class Board : Serializable {
 		grids = IntArray(20)
 		macroMask = FULL_GRID
 		openMacroMask = FULL_GRID
-		_availableMoves = null
 		nextPlayer = Player.PLAYER
 		lastMove = null
 		wonBy = null
@@ -99,7 +96,6 @@ class Board : Serializable {
 			throw IllegalArgumentException("lastMove must be null or in range, was $lastMove")
 
 		this.openMacroMask = FULL_GRID
-		this._availableMoves = null
 		this.wonBy = null
 
 		this.grids = IntArray(20)
@@ -131,7 +127,6 @@ class Board : Serializable {
 		lastMove = board.lastMove
 		nextPlayer = board.nextPlayer
 		wonBy = board.wonBy
-		_availableMoves = board._availableMoves
 	}
 
 	/**
@@ -176,22 +171,19 @@ class Board : Serializable {
 	 * @return a [ByteArray] containing the available [Coord]s.
 	 */
 	private fun availableMoves(): ByteArray {
-		val availableMoves = _availableMoves ?: if (isDone)
+		return if (isDone)
 			ByteArray(0)
 		else {
 			var size = 0
 			val out = ByteArray(81)
 			macroMask.forEachBit { om ->
-				val grid = grids[om] or grids[9 + om]
+				val combinedGrid = grids[om] or grids[9 + om]
 				for (os in 0 until 9) {
-					if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte()
+					if (!combinedGrid.hasBit(os)) out[size++] = (9 * om + os).toByte()
 				}
 			}
 			out.copyOf(size)
 		}
-
-		_availableMoves = availableMoves
-		return availableMoves
 	}
 
 	/**
@@ -207,7 +199,7 @@ class Board : Serializable {
 		var size = 0
 		val out = arrayOfNulls<T>(81)
 		macroMask.forEachBit { om ->
-			val grid = grids[om] or grids[9 + om]
+			val grid = grids[om] or grids[om + 9]
 			for (os in 0 until 9) {
 				if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte().let(map)
 			}
@@ -255,15 +247,14 @@ class Board : Serializable {
 		val p = nextPlayer.ordinal
 
 		//If the move is not available throw exception
-		val fullGrid = grids[om] or grids[om + 9]
-		if (!macroMask.hasBit(om) || fullGrid.hasBit(os))
+		val combinedGrid = grids[om] or grids[om + 9]
+		if (!macroMask.hasBit(om) || combinedGrid.hasBit(os))
 			throw IllegalStateException("Position $index not playable")
 
 		//Actually do the move
 		val macroWin = setTileAndUpdate(p, om, os)
 
 		//Prepare the board for the next player
-		_availableMoves = null
 		lastMove = index
 		nextPlayer = nextPlayer.other()
 
@@ -278,7 +269,6 @@ class Board : Serializable {
 		//Write move to board & check for macro win
 		val newGrid = grids[9 * p + om] or (1 shl os)
 		grids[9 * p + om] = newGrid
-		val newTotalGrid = newGrid or grids[9 * (1 - p) + om]
 
 		//Check if the current player won
 		val macroWin = newGrid.winGrid()
@@ -290,7 +280,8 @@ class Board : Serializable {
 		}
 
 		//Mark the macro as done if won or full
-		if (macroWin || newTotalGrid == FULL_GRID) {
+		val combinedGrid = newGrid or grids[9 * (1 - p) + om]
+		if (macroWin || combinedGrid == FULL_GRID) {
 			openMacroMask = openMacroMask and (1 shl om).inv()
 			if (openMacroMask == 0)
 				wonBy = Player.NEUTRAL
@@ -348,15 +339,13 @@ class Board : Serializable {
 	}
 }
 
-private inline fun Int.getBit(index: Int) = ((this shr index) and 1)
-private inline fun Int.hasBit(index: Int) = getBit(index) != 0
+private inline fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
 private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
 private inline fun Int.withoutLastBit() = this and (this - 1)
 
 private inline fun Int.getNthSetIndex(n: Int): Int {
 	var x = this
-	for (i in 0 until n)
-		x = x.withoutLastBit()
+	repeat(n) { x = x.withoutLastBit() }
 	return Integer.numberOfTrailingZeros(x)
 }
 
