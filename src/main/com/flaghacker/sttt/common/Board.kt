@@ -42,12 +42,6 @@ private val WIN_GRID = IntArray(512) {
 	res
 }
 
-/**
- * The index of the single bit set.
- * `BIT_INDEX[(1 << i) % 11] == i` for all `0 <= i < 9`
- */
-private val BIT_INDEX = intArrayOf(-1, 0, 1, 8, 2, 4, -1, 7, 3, 6, 5)
-
 class Board : Serializable {
 	/**
 	 * Each element represents a single grid
@@ -249,7 +243,7 @@ class Board : Serializable {
 
 		var leftMacroMask = macroMask
 		while (leftMacroMask != 0) {
-			val om = leftMacroMask.gridLastSetIndex()
+			val om = leftMacroMask.lastSetIndex()
 			leftMacroMask = leftMacroMask.withoutLastBit()
 
 			val grid = fullGrids[om]
@@ -259,7 +253,7 @@ class Board : Serializable {
 				curr += c
 			else {
 				val delta = chosen - curr
-				val os = grid.inv().gridGetNthSetIndex(delta)
+				val os = grid.inv().getNthSetIndex(delta)
 				return (9 * om + os).toByte()
 			}
 		}
@@ -378,12 +372,12 @@ private inline fun Int.hasBit(index: Int) = getBit(index) != 0
 private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
 private inline fun Int.withoutLastBit() = this and (this - 1)
 
-private inline fun Int.gridGetNthSetIndex(n: Int): Int {
+private inline fun Int.getNthSetIndex(n: Int): Int {
 	var x = this
 	for (i in 0 until n)
 		x = x.withoutLastBit()
-	return x.gridLastSetIndex()
+	return x.lastSetIndex()
 }
 
-private inline fun Int.gridLastSetIndex() = BIT_INDEX[(this and (-this)) % 11]
+private inline fun Int.lastSetIndex(): Int = Integer.numberOfTrailingZeros(this)
 private inline fun Int.winGrid() = WIN_GRID[this / 32].hasBit(this % 32)
