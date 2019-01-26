@@ -35,6 +35,12 @@ val WIN_GRID = BooleanArray(512).apply {
 		}
 	}
 }
+/**
+ * The index of the single bit set.
+ * `BIT_INDEX[(1 << i) % 11] == i` for all `0 <= i < 9`
+ */
+@JvmField
+val BIT_INDEX = intArrayOf(-1, 0, 1, 8, 2, 4, -1, 7, 3, 6, 5)
 
 class Board : Serializable {
 	/**
@@ -239,12 +245,13 @@ class Board : Serializable {
 			if (macroMask.getBit(om)) {
 				val grid = fullGrids[om]
 				val c = 9 - Integer.bitCount(grid)
-				if (curr + c < chosen)
+
+				if (curr + c <= chosen)
 					curr += c
 				else {
-					for (os in 0 until 9)
-						if (!grid.getBit(os) && curr++ == chosen)
-							return (9 * om + os).toByte()
+					val delta = chosen - curr
+					val os = grid.inv().getNthSetIndex(delta)
+					return (9 * om + os).toByte()
 				}
 			}
 		}
@@ -360,3 +367,10 @@ class Board : Serializable {
 
 private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
 private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
+inline fun Int.getNthSetIndex(n: Int): Int {
+	var x = this
+	for (i in 0 until n) {
+		x = x and (x - 1)
+	}
+	return BIT_INDEX[(x and (-x)) % 11]
+}
