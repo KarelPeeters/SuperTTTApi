@@ -241,18 +241,20 @@ class Board : Serializable {
 		val chosen = random.nextInt(count)
 		var curr = 0
 
-		for (om in 0 until 9) {
-			if (macroMask.hasBit(om)) {
-				val grid = fullGrids[om]
-				val c = 9 - Integer.bitCount(grid)
+		var leftMacroMask = macroMask
+		while (leftMacroMask != 0) {
+			val om = leftMacroMask.gridLastSetIndex()
+			leftMacroMask = leftMacroMask.withoutLastBit()
 
-				if (curr + c <= chosen)
-					curr += c
-				else {
-					val delta = chosen - curr
-					val os = grid.inv().getNthSetIndex(delta)
-					return (9 * om + os).toByte()
-				}
+			val grid = fullGrids[om]
+			val c = 9 - Integer.bitCount(grid)
+
+			if (curr + c <= chosen)
+				curr += c
+			else {
+				val delta = chosen - curr
+				val os = grid.inv().gridGetNthSetIndex(delta)
+				return (9 * om + os).toByte()
 			}
 		}
 
@@ -368,10 +370,13 @@ class Board : Serializable {
 private inline fun Int.getBit(index: Int) = ((this shr index) and 1)
 private inline fun Int.hasBit(index: Int) = getBit(index) != 0
 private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
-private inline fun Int.getNthSetIndex(n: Int): Int {
+private inline fun Int.withoutLastBit() = this and (this - 1)
+
+private inline fun Int.gridGetNthSetIndex(n: Int): Int {
 	var x = this
-	for (i in 0 until n) {
-		x = x and (x - 1)
-	}
-	return BIT_INDEX[(x and (-x)) % 11]
+	for (i in 0 until n)
+		x = x.withoutLastBit()
+	return x.gridLastSetIndex()
 }
+
+private inline fun Int.gridLastSetIndex() = BIT_INDEX[(this and (-this)) % 11]
