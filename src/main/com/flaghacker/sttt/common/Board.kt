@@ -51,6 +51,11 @@ class Board : Serializable {
 	 * tile: (grid >> os) & 1
 	 */
 	private var grids: IntArray
+	/**
+	 * Contains for each macro all of the occupied tiles
+	 * `fullGrids[om] = grids[om] or grids[9 + om]`
+	 */
+	private var fullGrids: IntArray
 
 	/** playable macros for the next move, each set macro is guaranteed to have at least one free tile */
 	private var macroMask: Int
@@ -70,6 +75,7 @@ class Board : Serializable {
 	/** Constructs an empty [Board]. */
 	constructor() {
 		grids = IntArray(20)
+		fullGrids = IntArray(9)
 		macroMask = 0b111111111
 		doneMacroMask = 0
 		_availableMoves = null
@@ -97,6 +103,7 @@ class Board : Serializable {
 		this.wonBy = null
 
 		this.grids = IntArray(20)
+		this.fullGrids = IntArray(9)
 		for (i in 0 until 81) {
 			val owner = board[i.toPair().first][i.toPair().second]
 			if (owner != Player.NEUTRAL) {
@@ -120,6 +127,7 @@ class Board : Serializable {
 	/** Copy constructor */
 	private constructor(board: Board) {
 		grids = board.grids.copyOf()
+		fullGrids = board.fullGrids.copyOf()
 		macroMask = board.macroMask
 		doneMacroMask = board.doneMacroMask
 		lastMove = board.lastMove
@@ -132,15 +140,16 @@ class Board : Serializable {
 	 * Returns a copy of the Board with the [Player]s swapped, including win
 	 * @return A copy of the original [Board] with the [Player]s swapped
 	 */
-	fun flip() = copy().apply {
-		nextPlayer = nextPlayer.otherWithNeutral()
-		wonBy = wonBy?.otherWithNeutral()
-		grids = IntArray(20) { 0 }.apply {
-			for (i in 0 until 9) this[i] = grids[i + 9]
-			for (i in 9 until 18) this[i] = grids[i - 9]
-			this[18] = grids[19]
-			this[19] = grids[18]
-		}
+	fun flip(): Board {
+		val cpy = copy()
+		cpy.nextPlayer = nextPlayer.otherWithNeutral()
+		cpy.wonBy = wonBy?.otherWithNeutral()
+
+		for (i in 0 until 9) cpy.grids[i] = grids[i + 9]
+		for (i in 9 until 18) cpy.grids[i] = grids[i - 9]
+		cpy.grids[18] = grids[19]
+		cpy.grids[19] = grids[18]
+		return cpy
 	}
 
 	/**
@@ -182,7 +191,7 @@ class Board : Serializable {
 					}
 				}
 			}
-			Arrays.copyOf(out, size)
+			out.copyOf(size)
 		}
 
 		_availableMoves = availableMoves
@@ -214,33 +223,28 @@ class Board : Serializable {
 
 	/**
 	 * Picks a random available move. Faster than calling [availableMoves]
-	 * because this function doensn't allocate an array.
+	 * because this function doesn't allocate an array.
 	 */
 	fun randomAvailableMove(random: Random): Coord {
 		if (isDone) throw IllegalStateException("isDone")
 
 		var count = 0
-		for (om in 0 until 9) {
-			if (macroMask.getBit(om)) {
-				val grid = grids[om] or grids[9 + om]
-				for (os in 0 until 9) {
-					if (!grid.getBit(os)) count++
-				}
-			}
-		}
-
-		if (count == 0)
-			throw IllegalStateException("No moves available")
+		for (om in 0 until 9)
+			count += ((macroMask shr om) and 1) * (9 - Integer.bitCount(fullGrids[om]))
 
 		val chosen = random.nextInt(count)
 		var curr = 0
 
 		for (om in 0 until 9) {
 			if (macroMask.getBit(om)) {
-				val grid = grids[om] or grids[9 + om]
-				for (os in 0 until 9) {
-					if (!grid.getBit(os) && curr++ == chosen)
-						return (9 * om + os).toByte()
+				val grid = fullGrids[om]
+				val c = 9 - Integer.bitCount(grid)
+				if (curr + c < chosen)
+					curr += c
+				else {
+					for (os in 0 until 9)
+						if (!grid.getBit(os) && curr++ == chosen)
+							return (9 * om + os).toByte()
 				}
 			}
 		}
@@ -283,6 +287,8 @@ class Board : Serializable {
 		//Write move to board & check for macro win
 		val newGrid = grids[9 * p + om] or (1 shl os)
 		grids[9 * p + om] = newGrid
+		val newTotalGrid = fullGrids[om] or newGrid
+		fullGrids[om] = newTotalGrid
 
 		//Check if the current player won
 		val macroWin = WIN_GRID[newGrid]
@@ -294,8 +300,7 @@ class Board : Serializable {
 		}
 
 		//Mark the macro as done if won or full
-		val totalGrid = newGrid or grids[9 * (1 - p) + om]
-		if (macroWin || totalGrid == FULL_GRID)
+		if (macroWin || newTotalGrid == FULL_GRID)
 			doneMacroMask = doneMacroMask or (1 shl om)
 
 		macroMask = calcMacroMask(os)
