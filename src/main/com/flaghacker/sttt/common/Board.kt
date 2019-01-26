@@ -235,29 +235,28 @@ class Board : Serializable {
 		if (isDone) throw IllegalStateException("isDone")
 
 		var count = 0
-		for (om in 0 until 9)
-			count += ((macroMask shr om) and 1) * (9 - Integer.bitCount(fullGrids[om]))
-
-		val chosen = random.nextInt(count)
-		var curr = 0
-
 		var leftMacroMask = macroMask
 		while (leftMacroMask != 0) {
-			val om = leftMacroMask.lastSetIndex()
+			val om = Integer.numberOfTrailingZeros(leftMacroMask)
+			leftMacroMask = leftMacroMask.withoutLastBit()
+			count += (9 - Integer.bitCount(fullGrids[om]))
+		}
+
+		var left = random.nextInt(count) + 1
+
+		leftMacroMask = macroMask
+		while (leftMacroMask != 0) {
+			val om = Integer.numberOfTrailingZeros(leftMacroMask)
 			leftMacroMask = leftMacroMask.withoutLastBit()
 
 			val grid = fullGrids[om]
-			val c = 9 - Integer.bitCount(grid)
+			left += Integer.bitCount(grid) - 9
 
-			if (curr + c <= chosen)
-				curr += c
-			else {
-				val delta = chosen - curr
-				val os = grid.inv().getNthSetIndex(delta)
+			if (left <= 0) {
+				val os = grid.inv().getNthSetIndex(-left)
 				return (9 * om + os).toByte()
 			}
 		}
-
 		throw IllegalStateException()
 	}
 
@@ -376,8 +375,7 @@ private inline fun Int.getNthSetIndex(n: Int): Int {
 	var x = this
 	for (i in 0 until n)
 		x = x.withoutLastBit()
-	return x.lastSetIndex()
+	return Integer.numberOfTrailingZeros(x)
 }
 
-private inline fun Int.lastSetIndex(): Int = Integer.numberOfTrailingZeros(this)
 private inline fun Int.winGrid() = WIN_GRID[this / 32].hasBit(this % 32)
