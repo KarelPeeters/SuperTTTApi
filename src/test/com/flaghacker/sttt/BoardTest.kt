@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.*
+import kotlin.math.abs
 
 fun randomBoard(rand: Random, moveCount: Int): Board {
 	return playRandom(Board(), rand, moveCount)
@@ -139,6 +140,34 @@ class BoardTest {
 
 		assertEquals(NEUTRAL, board.wonBy)
 		assertTrue(board.isDone)
+	}
+
+	@Test
+	fun testRandomAvailableMoveDistribution() {
+		val testCount = 100_000
+
+		val random = Random(42)
+		val board = Board()
+
+		repeat(40) {
+			val counts = IntArray(81)
+			repeat(testCount) {
+				counts[board.randomAvailableMove(random).toInt()]++
+			}
+
+			val moves = board.availableMoves
+
+			assertTrue(counts.withIndex().all { (i, c) -> c == 0 || i.toByte() in moves }) { "should only return available moves" }
+			assertTrue(moves.all { i -> counts[i.toInt()] > 0 }) { "should return every available move" }
+
+			val maxDev = counts
+					.filter { it != 0 }
+					.map { abs(it.toDouble() / testCount - 1.0 / moves.size) }
+					.max() ?: return
+			assertTrue(maxDev < 0.05) { "should be uniformly distributed" }
+
+			board.play(board.randomAvailableMove(random))
+		}
 	}
 }
 
