@@ -31,7 +31,7 @@ val WIN_GRID = BooleanArray(512).apply {
 
 	for (grid in 0 until 512) {
 		this[grid] = (0 until lines.size / 3).any { i ->
-			grid.getBit(lines[3 * i]) && grid.getBit(lines[3 * i + 1]) && grid.getBit(lines[3 * i + 2])
+			grid.getBit(lines[3 * i]) and grid.getBit(lines[3 * i + 1]) and grid.getBit(lines[3 * i + 2]) != 0
 		}
 	}
 }
@@ -163,8 +163,8 @@ class Board : Serializable {
 	 * @param macroIndex the index of the macro (0-8)
 	 */
 	fun macro(macroIndex: Byte): Player = when {
-		grids[18].getBit(macroIndex.toInt()) -> Player.PLAYER
-		grids[19].getBit(macroIndex.toInt()) -> Player.ENEMY
+		grids[18].hasBit(macroIndex.toInt()) -> Player.PLAYER
+		grids[19].hasBit(macroIndex.toInt()) -> Player.ENEMY
 		else -> Player.NEUTRAL
 	}
 
@@ -173,8 +173,8 @@ class Board : Serializable {
 	 * @param index the index of the tile (0-80)
 	 */
 	fun tile(index: Coord): Player = when {
-		grids[index / 9].getBit(index % 9) -> Player.PLAYER
-		grids[9 + index / 9].getBit(index % 9) -> Player.ENEMY
+		grids[index / 9].hasBit(index % 9) -> Player.PLAYER
+		grids[9 + index / 9].hasBit(index % 9) -> Player.ENEMY
 		else -> Player.NEUTRAL
 	}
 
@@ -190,10 +190,10 @@ class Board : Serializable {
 			var size = 0
 			val out = ByteArray(81)
 			for (om in 0 until 9) {
-				if (macroMask.getBit(om)) {
+				if (macroMask.hasBit(om)) {
 					val grid = grids[om] or grids[9 + om]
 					for (os in 0 until 9) {
-						if (!grid.getBit(os)) out[size++] = (9 * om + os).toByte()
+						if (grid.getBit(os) == 0) out[size++] = (9 * om + os).toByte()
 					}
 				}
 			}
@@ -217,10 +217,10 @@ class Board : Serializable {
 		var size = 0
 		val out = arrayOfNulls<T>(81)
 		for (om in 0 until 9) {
-			if (macroMask.getBit(om)) {
+			if (macroMask.hasBit(om)) {
 				val grid = grids[om] or grids[9 + om]
 				for (os in 0 until 9) {
-					if (!grid.getBit(os)) out[size++] = (9 * om + os).toByte().let(map)
+					if (grid.getBit(os) == 0) out[size++] = (9 * om + os).toByte().let(map)
 				}
 			}
 		}
@@ -242,7 +242,7 @@ class Board : Serializable {
 		var curr = 0
 
 		for (om in 0 until 9) {
-			if (macroMask.getBit(om)) {
+			if (macroMask.hasBit(om)) {
 				val grid = fullGrids[om]
 				val c = 9 - Integer.bitCount(grid)
 
@@ -272,7 +272,7 @@ class Board : Serializable {
 		val p = nextPlayer.ordinal
 
 		//If the move is not available throw exception
-		if ((grids[om] or grids[9 + om]).getBit(os) || !macroMask.getBit(om))
+		if ((grids[om] or grids[9 + om]).getBit(os) or (1 - macroMask.getBit(om)) != 0)
 			throw IllegalStateException("Position $index not playable")
 
 		//Actually do the move
@@ -323,7 +323,7 @@ class Board : Serializable {
 	 * * otherwise play in the target macro
 	 */
 	private fun calcMacroMask(os: Int) =
-			if (doneMacroMask.getBit(os)) (FULL_GRID and doneMacroMask.inv())
+			if (doneMacroMask.getBit(os) != 0) (FULL_GRID and doneMacroMask.inv())
 			else (1 shl os)
 
 	override fun toString() = toString(false)
@@ -365,9 +365,10 @@ class Board : Serializable {
 	}
 }
 
-private inline fun Int.getBit(index: Int) = ((this shr index) and 1) != 0
+private inline fun Int.getBit(index: Int) = ((this shr index) and 1)
+private inline fun Int.hasBit(index: Int) = getBit(index) != 0
 private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
-inline fun Int.getNthSetIndex(n: Int): Int {
+private inline fun Int.getNthSetIndex(n: Int): Int {
 	var x = this
 	for (i in 0 until n) {
 		x = x and (x - 1)
