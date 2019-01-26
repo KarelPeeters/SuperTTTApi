@@ -181,12 +181,10 @@ class Board : Serializable {
 		else {
 			var size = 0
 			val out = ByteArray(81)
-			for (om in 0 until 9) {
-				if (macroMask.hasBit(om)) {
-					val grid = grids[om] or grids[9 + om]
-					for (os in 0 until 9) {
-						if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte()
-					}
+			macroMask.forEachBit { om ->
+				val grid = grids[om] or grids[9 + om]
+				for (os in 0 until 9) {
+					if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte()
 				}
 			}
 			out.copyOf(size)
@@ -208,12 +206,10 @@ class Board : Serializable {
 
 		var size = 0
 		val out = arrayOfNulls<T>(81)
-		for (om in 0 until 9) {
-			if (macroMask.hasBit(om)) {
-				val grid = grids[om] or grids[9 + om]
-				for (os in 0 until 9) {
-					if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte().let(map)
-				}
+		macroMask.forEachBit { om ->
+			val grid = grids[om] or grids[9 + om]
+			for (os in 0 until 9) {
+				if (!grid.hasBit(os)) out[size++] = (9 * om + os).toByte().let(map)
 			}
 		}
 		return Arrays.copyOf(out, size)
@@ -227,20 +223,13 @@ class Board : Serializable {
 		if (isDone) throw IllegalStateException("isDone")
 
 		var count = 0
-		var leftMacroMask = macroMask
-		while (leftMacroMask != 0) {
-			val om = Integer.numberOfTrailingZeros(leftMacroMask)
-			leftMacroMask = leftMacroMask.withoutLastBit()
+		macroMask.forEachBit { om ->
 			count += (9 - Integer.bitCount(grids[om] or grids[om + 9]))
 		}
 
 		var left = random.nextInt(count) + 1
 
-		leftMacroMask = macroMask
-		while (leftMacroMask != 0) {
-			val om = Integer.numberOfTrailingZeros(leftMacroMask)
-			leftMacroMask = leftMacroMask.withoutLastBit()
-
+		macroMask.forEachBit { om ->
 			val grid = grids[om] or grids[om + 9]
 			left += Integer.bitCount(grid) - 9
 
@@ -249,6 +238,7 @@ class Board : Serializable {
 				return (9 * om + os).toByte()
 			}
 		}
+
 		throw IllegalStateException()
 	}
 
@@ -371,3 +361,11 @@ private inline fun Int.getNthSetIndex(n: Int): Int {
 }
 
 private inline fun Int.winGrid() = WIN_GRID[this / 32].hasBit(this % 32)
+
+private inline fun Int.forEachBit(block: (index: Int) -> Unit) {
+	var x = this
+	while (x != 0) {
+		block(Integer.numberOfTrailingZeros(x))
+		x = x.withoutLastBit()
+	}
+}
