@@ -32,7 +32,7 @@ private val LINE_MASKS = intArrayOf(
  * Whether
  * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1`
  */
-private val WIN_GRID = IntArray(512) {
+private val WIN_GRID = IntArray(16) {
 	var res = 0
 	for (i in 0 until 32) {
 		val grid = it * 32 + i
