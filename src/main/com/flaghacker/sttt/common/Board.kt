@@ -29,8 +29,8 @@ private val LINE_MASKS = intArrayOf(
 )
 
 /**
- * Whether
- * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1`
+ * Whether `grid` is won:
+ * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1 != 0`
  */
 private val WIN_GRID = IntArray(16) {
 	var res = 0
@@ -137,7 +137,8 @@ class Board : Serializable {
 		val cpy = copy()
 		cpy.nextPlayer = nextPlayer.otherWithNeutral()
 		cpy.wonBy = wonBy?.otherWithNeutral()
-		for (i in 0 until 10) cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
+		for (i in 0 until 10)
+			cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
 		return cpy
 	}
 
@@ -174,7 +175,8 @@ class Board : Serializable {
 			val out = ByteArray(81)
 			macroMask.forEachBit { om ->
 				for (os in 0 until 9) {
-					if (!grids[om].hasBit(os) && !grids[om].hasBit(os+9)) out[size++] = (9 * om + os).toByte()
+					if (!grids[om].hasBit(os) && !grids[om].hasBit(os + 9))
+						out[size++] = (9 * om + os).toByte()
 				}
 			}
 			out.copyOf(size)
@@ -195,7 +197,8 @@ class Board : Serializable {
 		val out = arrayOfNulls<T>(81)
 		macroMask.forEachBit { om ->
 			for (os in 0 until 9) {
-				if (!grids[om].hasBit(os) && !grids[om].hasBit(os+9)) out[size++] = (9 * om + os).toByte().let(map)
+				if (!grids[om].hasBit(os) && !grids[om].hasBit(os + 9))
+					out[size++] = (9 * om + os).toByte().let(map)
 			}
 		}
 		return Arrays.copyOf(out, size)
@@ -208,9 +211,10 @@ class Board : Serializable {
 	fun randomAvailableMove(random: Random): Coord {
 		if (isDone) throw IllegalStateException("isDone")
 
-		var count = 0
+		var count = 9 * Integer.bitCount(macroMask)
 		macroMask.forEachBit { om ->
-			count += (9 - Integer.bitCount(grids[om]))
+			count -= Integer.bitCount(grids[om])
+
 		}
 
 		var left = random.nextInt(count) + 1
@@ -241,7 +245,7 @@ class Board : Serializable {
 		val p = nextPlayer.ordinal
 
 		//If the move is not available throw exception
-		if (!macroMask.hasBit(om) || grids[om].hasBit(os) || grids[om].hasBit(os+9))
+		if (!macroMask.hasBit(om) || grids[om].hasBit(os) || grids[om].hasBit(os + 9))
 			throw IllegalStateException("Position $index not playable")
 
 		//Actually do the move
@@ -266,15 +270,15 @@ class Board : Serializable {
 		//Check if the current player won
 		val macroWin = newGrid.getPlayer(p).winGrid()
 		if (macroWin) {
-			val newMacroGrid = grids[9] or (1 shl (om + 9*p)) //grids[18 + p] or (1 shl om)
+			val newMacroGrid = grids[9] or (1 shl (om + 9 * p)) //grids[18 + p] or (1 shl om)
 			grids[9] = newMacroGrid
 			if (newMacroGrid.getPlayer(p).winGrid())
 				wonBy = nextPlayer
 		}
 
 		//Mark the macro as done if won or full
-		if (macroWin || Integer.bitCount(grids[om])==9) {
-			openMacroMask = openMacroMask and (1 shl om).inv()
+		if (macroWin || Integer.bitCount(grids[om]) == 9) {
+			openMacroMask = openMacroMask xor (1 shl om)
 			if (openMacroMask == 0 && wonBy == null)
 				wonBy = Player.NEUTRAL
 		}
@@ -290,7 +294,7 @@ class Board : Serializable {
 	 */
 	private fun calcMacroMask(os: Int) =
 			if (openMacroMask.hasBit(os)) (1 shl os)
-			else (FULL_GRID and openMacroMask)
+			else openMacroMask
 
 	override fun toString() = toString(false)
 
@@ -341,7 +345,7 @@ private inline fun Int.getNthSetIndex(n: Int): Int {
 	return Integer.numberOfTrailingZeros(x)
 }
 
-private inline fun Int.getPlayer(p:Int) = if (p==0) (this and FULL_GRID) else (this shr 9)
+private inline fun Int.getPlayer(p: Int) = if (p == 0) (this and FULL_GRID) else (this shr 9)
 private inline fun Int.winGrid() = WIN_GRID[this / 32].hasBit(this % 32)
 
 private inline fun Int.forEachBit(block: (index: Int) -> Unit) {
