@@ -57,6 +57,7 @@ class Board : Serializable {
 	 * Tile: (grid >> os + 9*p) & 1 (p=0 for player p=1 for enemy)
 	 */
 	private var grids: IntArray
+	private var mainGrid: Int
 
 	/** playable macros for the next move, each set macro is guaranteed to have at least one free tile */
 	private var macroMask: Int
@@ -73,7 +74,8 @@ class Board : Serializable {
 
 	/** Constructs an empty [Board]. */
 	constructor() {
-		grids = IntArray(10)
+		grids = IntArray(9)
+		mainGrid = 0
 		macroMask = FULL_GRID
 		openMacroMask = FULL_GRID
 		nextPlayer = Player.PLAYER
@@ -99,6 +101,7 @@ class Board : Serializable {
 		this.wonBy = null
 
 		this.grids = IntArray(10)
+		this.mainGrid = 0
 		for (i in 0 until 81) {
 			val owner = board[i.toPair().first][i.toPair().second]
 			if (owner != Player.NEUTRAL) {
@@ -122,6 +125,7 @@ class Board : Serializable {
 	/** Copy constructor */
 	private constructor(board: Board) {
 		grids = board.grids.copyOf()
+		mainGrid = board.mainGrid
 		macroMask = board.macroMask
 		openMacroMask = board.openMacroMask
 		lastMove = board.lastMove
@@ -137,8 +141,9 @@ class Board : Serializable {
 		val cpy = copy()
 		cpy.nextPlayer = nextPlayer.otherWithNeutral()
 		cpy.wonBy = wonBy?.otherWithNeutral()
-		for (i in 0 until 10)
+		for (i in 0 until 9)
 			cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
+		cpy.mainGrid = (mainGrid shr 9) or ((mainGrid and FULL_GRID) shl 9)
 		return cpy
 	}
 
@@ -147,8 +152,8 @@ class Board : Serializable {
 	 * @param macroIndex the index of the macro (0-8)
 	 */
 	fun macro(macroIndex: Byte): Player = when {
-		grids[9].hasBit(macroIndex.toInt()) -> Player.PLAYER
-		grids[9].hasBit(macroIndex.toInt() + 9) -> Player.ENEMY
+		mainGrid.hasBit(macroIndex.toInt()) -> Player.PLAYER
+		mainGrid.hasBit(macroIndex.toInt() + 9) -> Player.ENEMY
 		else -> Player.NEUTRAL
 	}
 
@@ -270,9 +275,8 @@ class Board : Serializable {
 		//Check if the current player won
 		val macroWin = newGrid.getPlayer(p).winGrid()
 		if (macroWin) {
-			val newMacroGrid = grids[9] or (1 shl (om + 9 * p)) //grids[18 + p] or (1 shl om)
-			grids[9] = newMacroGrid
-			if (newMacroGrid.getPlayer(p).winGrid())
+			mainGrid = mainGrid or (1 shl (om + 9 * p))
+			if (mainGrid.getPlayer(p).winGrid())
 				wonBy = nextPlayer
 		}
 
