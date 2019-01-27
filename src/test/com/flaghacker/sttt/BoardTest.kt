@@ -41,6 +41,15 @@ private fun playedBoard(player: Player, moves: IntArray, lastMove: Int) =
 private fun playedBoard(player: Player, vararg moves: Int) =
 		playedBoard(player, moves, IntArray(0), moves.last())
 
+/**
+ * These moves represent the following grid, won by neither player:
+ *   XXO
+ *   OXX
+ *   XOO
+ */
+private val P_MOVES = listOf(0, 1, 4, 5, 6)
+private val E_MOVES = listOf(2, 3, 7, 8)
+
 class BoardTest {
 	@Test
 	fun testOther() {
@@ -112,14 +121,12 @@ class BoardTest {
 
 	@TestPlayersAndMacros
 	fun testFullMixedMacro(player: Player, om: Int) {
-		val pMoves = listOf(0, 1, 4, 5, 6)
-		val eMoves = listOf(2, 3, 7, 8)
 		val lastMove = (8 - om) * 9 + om
 
 		val board = playedBoard(
 				player,
-				pMoves.map { om * 9 + it }.toIntArray(),
-				eMoves.map { om * 9 + it }.toIntArray(),
+				P_MOVES.map { om * 9 + it }.toIntArray(),
+				E_MOVES.map { om * 9 + it }.toIntArray(),
 				lastMove
 		)
 
@@ -128,18 +135,35 @@ class BoardTest {
 
 	@TestPlayers
 	fun testNeutralWin(player: Player) {
-		val pMoves = listOf(0, 1, 4, 5, 6)
-		val eMoves = listOf(2, 3, 7, 8)
-
 		val board = playedBoard(
 				player,
-				(0 until 9).flatMap { om -> pMoves.map { om * 9 + it } }.toIntArray(),
-				(0 until 9).flatMap { om -> eMoves.map { om * 9 + it } }.toIntArray(),
+				(0 until 9).flatMap { om -> P_MOVES.map { om * 9 + it } }.toIntArray(),
+				(0 until 9).flatMap { om -> E_MOVES.map { om * 9 + it } }.toIntArray(),
 				0
 		)
 
 		assertEquals(NEUTRAL, board.wonBy)
 		assertTrue(board.isDone)
+	}
+
+	@Test//Players
+	//player: Player
+	fun testWinFullBoard() {
+		val player = PLAYER
+		//fill macros 0-5 without winning anything
+		val pFill = (0 until 6).flatMap { om -> P_MOVES.map { om * 9 + it } }
+		val eFill = (0 until 6).flatMap { om -> E_MOVES.map { om * 9 + it } }
+
+		//almost fill y = 6
+		val pWin = (0 until 8).map { x -> toCoord(x, 6).toInt() }
+		//point to bottom right corner
+		val lastMove = 8
+
+		val board = playedBoard(player, (pFill + pWin).toIntArray(), eFill.toIntArray(), lastMove)
+
+		//win the board
+		board.play(toCoord(8, 6))
+		assertEquals(player, board.wonBy)
 	}
 
 	@Test

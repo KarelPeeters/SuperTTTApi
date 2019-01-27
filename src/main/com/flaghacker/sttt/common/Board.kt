@@ -262,7 +262,7 @@ class Board : Serializable {
 	}
 
 	/**
-	 * Update [grids], [wonBy], [doneMacroMask] and [macroMask] when the given player plays on the given position.
+	 * Update [grids], [wonBy], [openMacroMask] and [macroMask] when the given player plays on the given position.
 	 * @return Whether the move wins the macro being played in.
 	 */
 	private fun setTileAndUpdate(p: Int, om: Int, os: Int): Boolean {
@@ -283,7 +283,7 @@ class Board : Serializable {
 		val combinedGrid = newGrid or grids[9 * (1 - p) + om]
 		if (macroWin || combinedGrid == FULL_GRID) {
 			openMacroMask = openMacroMask and (1 shl om).inv()
-			if (openMacroMask == 0)
+			if (openMacroMask == 0 && wonBy == null)
 				wonBy = Player.NEUTRAL
 		}
 		macroMask = calcMacroMask(os)
