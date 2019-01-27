@@ -22,7 +22,9 @@ val PLAYTHROUGH_TYPE: Type = object : TypeToken<Playthrough>() {}.type
 class BoardPlayTest {
 	@Test
 	fun testPlaythroughs() {
-		for (playthrough in loadPlaythroughs())
+		val limit = System.getProperty("playthroughLimit")?.toIntOrNull() ?: Int.MAX_VALUE
+
+		for (playthrough in loadPlaythroughs().take(limit))
 			checkPlaythrough(playthrough)
 	}
 
