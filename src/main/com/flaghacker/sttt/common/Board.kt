@@ -29,8 +29,8 @@ private val LINE_MASKS = intArrayOf(
 )
 
 /**
- * Whether `grid` was won
- * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1 != 0`
+ * Whether
+ * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1`
  */
 private val WIN_GRID = IntArray(16) {
 	var res = 0
@@ -64,9 +64,7 @@ class Board : Serializable {
 	private var openMacroMask: Int
 
 	var lastMove: Coord?; private set
-	val nextPlayer: Player get() = Player.values()[_nextPlayer]
-	/** 0: player, 1: enemy */
-	private var _nextPlayer: Int
+	var nextPlayer: Player; private set
 	/** null: no one has won, NEUTRAL: tie */
 	var wonBy: Player?; private set
 
@@ -78,7 +76,7 @@ class Board : Serializable {
 		grids = IntArray(10)
 		macroMask = FULL_GRID
 		openMacroMask = FULL_GRID
-		_nextPlayer = 0
+		nextPlayer = Player.PLAYER
 		lastMove = null
 		wonBy = null
 	}
@@ -108,12 +106,13 @@ class Board : Serializable {
 				val om = i / 9
 				val os = i % 9
 
+				this.nextPlayer = owner
 				setTileAndUpdate(p, om, os)
 			}
 		}
 
 		this.lastMove = lastMove
-		this._nextPlayer = nextPlayer.ordinal
+		this.nextPlayer = nextPlayer
 		this.macroMask = if (lastMove == null) openMacroMask else calcMacroMask(lastMove % 9)
 	}
 
@@ -126,7 +125,7 @@ class Board : Serializable {
 		macroMask = board.macroMask
 		openMacroMask = board.openMacroMask
 		lastMove = board.lastMove
-		_nextPlayer = board._nextPlayer
+		nextPlayer = board.nextPlayer
 		wonBy = board.wonBy
 	}
 
@@ -136,10 +135,9 @@ class Board : Serializable {
 	 */
 	fun flip(): Board {
 		val cpy = copy()
-		cpy._nextPlayer = 1 - _nextPlayer
+		cpy.nextPlayer = nextPlayer.otherWithNeutral()
 		cpy.wonBy = wonBy?.otherWithNeutral()
-		for (i in 0 until 10)
-			cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
+		for (i in 0 until 10) cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
 		return cpy
 	}
 
@@ -240,18 +238,18 @@ class Board : Serializable {
 
 		val om = index / 9
 		val os = index % 9
+		val p = nextPlayer.ordinal
 
 		//If the move is not available throw exception
-		val grid = grids[om]
-		if (!macroMask.hasBit(om) || grid.hasBit(os) || grid.hasBit(os + 9))
+		if (!macroMask.hasBit(om) || grids[om].hasBit(os) || grids[om].hasBit(os+9))
 			throw IllegalStateException("Position $index not playable")
 
 		//Actually do the move
-		val macroWin = setTileAndUpdate(_nextPlayer, om, os)
+		val macroWin = setTileAndUpdate(p, om, os)
 
 		//Prepare the board for the next player
 		lastMove = index
-		_nextPlayer = 1 - _nextPlayer
+		nextPlayer = nextPlayer.other()
 
 		return macroWin
 	}
@@ -268,15 +266,15 @@ class Board : Serializable {
 		//Check if the current player won
 		val macroWin = newGrid.getPlayer(p).winGrid()
 		if (macroWin) {
-			val newMacroGrid = grids[9] or (1 shl (om + 9 * p))
+			val newMacroGrid = grids[9] or (1 shl (om + 9*p)) //grids[18 + p] or (1 shl om)
 			grids[9] = newMacroGrid
 			if (newMacroGrid.getPlayer(p).winGrid())
-				wonBy = Player.values()[p]
+				wonBy = nextPlayer
 		}
 
 		//Mark the macro as done if won or full
-		if (macroWin || Integer.bitCount(grids[om]) == 9) {
-			openMacroMask = openMacroMask xor (1 shl om)
+		if (macroWin || Integer.bitCount(grids[om])==9) {
+			openMacroMask = openMacroMask and (1 shl om).inv()
 			if (openMacroMask == 0 && wonBy == null)
 				wonBy = Player.NEUTRAL
 		}
@@ -292,7 +290,7 @@ class Board : Serializable {
 	 */
 	private fun calcMacroMask(os: Int) =
 			if (openMacroMask.hasBit(os)) (1 shl os)
-			else openMacroMask
+			else (FULL_GRID and openMacroMask)
 
 	override fun toString() = toString(false)
 
@@ -315,7 +313,7 @@ class Board : Serializable {
 	override fun hashCode(): Int {
 		var result = grids.contentHashCode()
 		result = 31 * result + (lastMove ?: 0)
-		result = 31 * result + _nextPlayer
+		result = 31 * result + nextPlayer.hashCode()
 		return result
 	}
 
@@ -326,7 +324,7 @@ class Board : Serializable {
 		other as Board
 
 		if (!grids.contentEquals(other.grids)) return false
-		if (_nextPlayer != other._nextPlayer) return false
+		if (nextPlayer != other.nextPlayer) return false
 		if (lastMove != other.lastMove) return false
 
 		return true
