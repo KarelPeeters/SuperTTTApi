@@ -37,11 +37,20 @@ class MCTSBot(val rand: Random = Random()) : Bot {
 				}
 
 				//Exploration
-				if (cNode.children!!.any { it.visits == 0 }) {
-					val unexploredChildren = cNode.children!!.filter { it.visits == 0 }
-					cNode = unexploredChildren[rand.nextInt(unexploredChildren.size)]
-					visited.add(cNode)
-					cBoard.play(cNode.coord)
+				var count = cNode.children!!.count { it.visits==0 }
+				if (count>0){
+					count = rand.nextInt(count)
+					for (node in cNode.children!!){
+						if (node.visits==0){
+							if (count==0){
+								cNode=node
+								visited.add(cNode)
+								cBoard.play(cNode.coord)
+								break
+							}
+							count--
+						}
+					}
 					break
 				}
 
@@ -74,8 +83,6 @@ class MCTSBot(val rand: Random = Random()) : Bot {
 				if (won) node.wins += 1
 			}
 		}
-
-		println(head.visits)
 
 		return head.children?.maxBy { it.visits }?.coord ?: board.randomAvailableMove(rand)
 	}
