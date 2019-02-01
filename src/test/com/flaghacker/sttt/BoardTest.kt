@@ -6,8 +6,7 @@ import com.flaghacker.sttt.common.Player.*
 import com.flaghacker.sttt.common.toCoord
 import com.flaghacker.sttt.common.toPair
 import org.apache.commons.lang3.SerializationUtils
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.*
@@ -176,7 +175,8 @@ class BoardTest {
 		repeat(40) {
 			val counts = IntArray(81)
 			repeat(testCount) {
-				counts[board.randomAvailableMove(random).toInt()]++
+				val move = board.randomAvailableMove(random).toInt()
+				counts[move]++
 			}
 
 			val moves = board.availableMoves
@@ -190,6 +190,20 @@ class BoardTest {
 					.max() ?: return
 			assertTrue(maxDev < 0.05) { "should be uniformly distributed" }
 
+			board.play(board.randomAvailableMove(random))
+		}
+	}
+
+	@Test
+	fun availableMovesVariants() {
+		val random = Random(12)
+		val board = Board()
+
+		while (!board.isDone) {
+			val t1 = board.availableMoves
+			val t2 = board.availableMoves { it }.toByteArray()
+
+			assertArrayEquals(t1, t2)
 			board.play(board.randomAvailableMove(random))
 		}
 	}
