@@ -1,9 +1,11 @@
 package com.flaghacker.sttt.bots
 
-import com.flaghacker.sttt.common.*
+import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Coord
+import com.flaghacker.sttt.common.Player
 import java.lang.Double.NEGATIVE_INFINITY
 import java.lang.Double.POSITIVE_INFINITY
-import java.lang.IllegalArgumentException
 import java.lang.Math.max
 
 private const val TILE_VALUE = 1.0
@@ -19,9 +21,7 @@ class MMBot(private val depth: Int) : Bot {
 			throw IllegalArgumentException("depth must be >= 1, was $depth")
 	}
 
-	override fun move(board: Board, timer: Timer): Coord? = move(board)
-
-	fun move(board: Board): Coord? {
+	override fun move(board: Board): Coord? {
 		if (board.isDone)
 			return null
 

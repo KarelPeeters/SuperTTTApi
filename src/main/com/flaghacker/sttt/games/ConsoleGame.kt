@@ -3,13 +3,11 @@ package com.flaghacker.sttt.games
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
 import com.flaghacker.sttt.common.Coord
-import com.flaghacker.sttt.common.moveBotWithTimeOut
 import java.util.*
 
 class ConsoleGame(private val bot: Bot) {
 	private var current = Board()
 	private val history = mutableListOf<Board>()
-	private var time: Long = 1000
 
 	fun run() {
 		println("You (X) vs $bot (O)")
@@ -32,11 +30,6 @@ class ConsoleGame(private val bot: Bot) {
 				}
 				"exit" -> return
 				"help" -> printHelp()
-				"time" -> {
-					if (input.matches(Regex("time \\d+"))) {
-						time = input.split(" ").last().toLong()
-					}
-				}
 				"play" -> {
 					val coord = coordFromInput(input)
 					if (coord != null) {
@@ -46,7 +39,7 @@ class ConsoleGame(private val bot: Bot) {
 							printCurrent()
 
 							if (!current.isDone) {
-								val botMove = moveBotWithTimeOut(bot, current.copy(), time)!!
+								val botMove = bot.move(current.copy())!!
 								println("bot played on $botMove")
 								current.play(botMove)
 								history.add(current.copy())
@@ -73,7 +66,6 @@ class ConsoleGame(private val bot: Bot) {
 		println("undo\t\t\t: undo your last move")
 		println("play <os>\t\t: play os [0-8] in current macro")
 		println("play <om> <os>\t: play os [0-8] in macro om [0-8]")
-		println("time <int>\t\t: change the amount of time the bot gets (currently " + time + "ms)")
 		printCurrent()
 	}
 

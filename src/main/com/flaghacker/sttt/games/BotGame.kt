@@ -3,18 +3,15 @@ package com.flaghacker.sttt.games
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
 import com.flaghacker.sttt.common.Player
-import com.flaghacker.sttt.common.moveBotWithTimeOut
 import java.util.*
 
 class BotGame(private val p1: Bot, private val p2: Bot) {
 	private var count = 1
 	private var logLevel = LogLevel.ALL
-	private var timePerMove = 500
 	private var shuffling: Boolean = false
 	private var random = Random()
 
 	fun setLogLevel(logLevel: LogLevel) = apply { this.logLevel = logLevel }
-	fun setTimePerMove(time: Int) = apply { this.timePerMove = time }
 	fun setShuffling(shuffling: Boolean) = apply { this.shuffling = shuffling }
 	fun setRandomSeed(seed: Long) = apply { this.random = Random(seed) }
 	fun setCount(count: Int) = apply {
@@ -45,7 +42,7 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 			while (!board.isDone) {
 				printDetail("Round #" + nextRound++)
 
-				val pMove = moveBotWithTimeOut(p1, board.copy(), timePerMove.toLong())
+				val pMove = p1.move(board.copy())
 				printDetail("p1 move: " + pMove!!)
 				board.play(pMove)
 
@@ -54,7 +51,7 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 				if (board.isDone)
 					continue
 
-				val rMove = moveBotWithTimeOut(p2, board.copy(), timePerMove.toLong())
+				val rMove = p2.move(board.copy())
 				printDetail("p2 move: " + rMove!!)
 				board.play(rMove)
 

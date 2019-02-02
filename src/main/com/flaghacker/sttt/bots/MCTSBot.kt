@@ -1,16 +1,25 @@
 package com.flaghacker.sttt.bots
 
-import com.flaghacker.sttt.common.*
-import com.flaghacker.sttt.common.Timer
+import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Coord
+import com.flaghacker.sttt.common.Player
 import java.util.*
 
-class MCTSBot(val rand: Random = Random()) : Bot {
+class MCTSBot(
+		private val rand: Random = Random(),
+		private val maxIterations: Int,
+		private val callback: ((Double) -> Unit)? = null
+) : Bot {
 	override fun toString() = "MCTSBot"
 
 	private class Node(@JvmField val coord: Coord) {
-		@JvmField var children: Array<Node>? = null
-		@JvmField var visits = 0
-		@JvmField var wins = 0
+		@JvmField
+		var children: Array<Node>? = null
+		@JvmField
+		var visits = 0
+		@JvmField
+		var wins = 0
 
 		fun print(prefix: String = "", isTail: Boolean = true, depth: Int) {
 			if (depth == 0 || children == null) return
@@ -20,11 +29,20 @@ class MCTSBot(val rand: Random = Random()) : Bot {
 		}
 	}
 
-	override fun move(board: Board, timer: Timer): Coord? {
+	override fun move(board: Board): Coord? {
+		callback?.invoke(0.0)
+		var lastIterations = 0
+
 		val visited = LinkedList<Node>()
 		val head = Node(-1)
 
-		while (timer.running) {
+		while (head.visits < maxIterations) {
+			val iterations = head.visits
+			if (iterations - lastIterations > maxIterations / 100) {
+				callback?.invoke(iterations.toDouble() / maxIterations)
+				lastIterations = iterations
+			}
+
 			var cNode = head
 			val cBoard = board.copy()
 			visited.clear()
@@ -84,6 +102,9 @@ class MCTSBot(val rand: Random = Random()) : Bot {
 			}
 		}
 
+//		println(head.visits)
+
+//		callback?.invoke(1.0)
 		return head.children?.maxBy { it.visits }?.coord ?: board.randomAvailableMove(rand)
 	}
 }
