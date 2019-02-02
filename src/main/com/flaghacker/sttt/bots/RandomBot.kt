@@ -2,22 +2,14 @@ package com.flaghacker.sttt.bots
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Timer
+import com.flaghacker.sttt.common.Coord
 import java.util.*
 
-class RandomBot : Bot {
-	private val random: Random
-
-	constructor() {
-		random = Random()
-	}
-
-	constructor(seed: Long) {
-		random = Random(seed)
-	}
-
-	override fun move(board: Board, timer: Timer): Byte? {
+class RandomBot(private val random: Random = Random()) : Bot {
+	override fun move(board: Board): Coord? {
 		val moves = board.availableMoves
+		if (moves.isEmpty())
+			return null
 		return moves[random.nextInt(moves.size)]
 	}
 

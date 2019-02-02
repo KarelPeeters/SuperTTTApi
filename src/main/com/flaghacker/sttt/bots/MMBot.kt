@@ -2,8 +2,8 @@ package com.flaghacker.sttt.bots
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Coord
 import com.flaghacker.sttt.common.Player
-import com.flaghacker.sttt.common.Timer
 import java.lang.Double.NEGATIVE_INFINITY
 import java.lang.Double.POSITIVE_INFINITY
 import java.lang.Math.max
@@ -16,16 +16,29 @@ private const val CORNER_FACTOR = 3.0
 private const val EDGE_FACTOR = 1.0
 
 class MMBot(private val depth: Int) : Bot {
-	override fun move(board: Board, timer: Timer) = negaMax(board, value(board), depth,
-			NEGATIVE_INFINITY, POSITIVE_INFINITY, playerSign(board.nextPlayer)).move
+	init {
+		if (depth < 1)
+			throw IllegalArgumentException("depth must be >= 1, was $depth")
+	}
 
-	private class ValuedMove(val move: Byte, val value: Double)
+	override fun move(board: Board): Coord? {
+		if (board.isDone)
+			return null
+
+		return negaMax(
+				board, value(board), depth,
+				NEGATIVE_INFINITY, POSITIVE_INFINITY,
+				playerSign(board.nextPlayer)
+		).move
+	}
+
+	private class ValuedMove(val move: Coord, val value: Double)
 
 	private fun negaMax(board: Board, cValue: Double, depth: Int, a: Double, b: Double, player: Int): ValuedMove {
 		if (depth == 0 || board.isDone) return ValuedMove(board.lastMove!!, player * cValue)
 
 		var bestValue = NEGATIVE_INFINITY
-		var bestMove: Byte? = null
+		var bestMove: Coord? = null
 		var newA = a
 
 		for (move in board.availableMoves) {
@@ -52,7 +65,7 @@ class MMBot(private val depth: Int) : Bot {
 	}
 
 	private fun value(board: Board) = if (board.isDone)
-		POSITIVE_INFINITY * playerSign(board.wonBy)
+		POSITIVE_INFINITY * playerSign(board.wonBy!!)
 	else {
 		(0 until 81).sumByDouble {
 			TILE_VALUE * factor(it % 9) * factor(it / 9) * playerSign(board.tile(it.toByte())).toDouble()

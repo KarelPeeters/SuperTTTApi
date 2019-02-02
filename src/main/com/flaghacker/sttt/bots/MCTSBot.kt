@@ -2,18 +2,24 @@ package com.flaghacker.sttt.bots
 
 import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
+import com.flaghacker.sttt.common.Coord
 import com.flaghacker.sttt.common.Player
-import com.flaghacker.sttt.common.Timer
 import java.util.*
 
-class MCTSBot : Bot {
-	private val rand = Random()
+class MCTSBot(
+		private val rand: Random = Random(),
+		private val maxIterations: Int,
+		private val callback: ((Double) -> Unit)? = null
+) : Bot {
 	override fun toString() = "MCTSBot"
 
-	private class Node(@JvmField val coord: Byte) {
-		@JvmField var children: Array<Node>? = null
-		@JvmField var visits = 0
-		@JvmField var wins = 0
+	private class Node(@JvmField val coord: Coord) {
+		@JvmField
+		var children: Array<Node>? = null
+		@JvmField
+		var visits = 0
+		@JvmField
+		var wins = 0
 
 		fun print(prefix: String = "", isTail: Boolean = true, depth: Int) {
 			if (depth == 0 || children == null) return
@@ -23,11 +29,20 @@ class MCTSBot : Bot {
 		}
 	}
 
-	override fun move(board: Board, timer: Timer): Byte? {
+	override fun move(board: Board): Coord? {
+		callback?.invoke(0.0)
+		var lastIterations = 0
+
 		val visited = LinkedList<Node>()
 		val head = Node(-1)
 
-		while (timer.running) {
+		while (head.visits < maxIterations) {
+			val iterations = head.visits
+			if (iterations - lastIterations > maxIterations / 100) {
+				callback?.invoke(iterations.toDouble() / maxIterations)
+				lastIterations = iterations
+			}
+
 			var cNode = head
 			val cBoard = board.copy()
 			visited.clear()
@@ -40,11 +55,20 @@ class MCTSBot : Bot {
 				}
 
 				//Exploration
-				if (cNode.children!!.any { it.visits == 0 }) {
-					val unexploredChildren = cNode.children!!.filter { it.visits == 0 }
-					cNode = unexploredChildren[rand.nextInt(unexploredChildren.size)]
-					visited.add(cNode)
-					cBoard.play(cNode.coord)
+				var count = cNode.children!!.count { it.visits==0 }
+				if (count>0){
+					count = rand.nextInt(count)
+					for (node in cNode.children!!){
+						if (node.visits==0){
+							if (count==0){
+								cNode=node
+								visited.add(cNode)
+								cBoard.play(cNode.coord)
+								break
+							}
+							count--
+						}
+					}
 					break
 				}
 
@@ -66,8 +90,7 @@ class MCTSBot : Bot {
 
 			//Simulation
 			while (!cBoard.isDone) {
-				val children = cBoard.availableMoves
-				cBoard.play(children[rand.nextInt(children.size)])
+				cBoard.play(cBoard.randomAvailableMove(rand))
 			}
 
 			//Update
@@ -79,6 +102,9 @@ class MCTSBot : Bot {
 			}
 		}
 
-		return head.children?.maxBy { it.visits }?.coord ?: RandomBot().move(board,timer)
+//		println(head.visits)
+
+//		callback?.invoke(1.0)
+		return head.children?.maxBy { it.visits }?.coord ?: board.randomAvailableMove(rand)
 	}
 }

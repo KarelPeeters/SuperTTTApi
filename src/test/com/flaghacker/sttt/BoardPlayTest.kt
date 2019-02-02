@@ -1,8 +1,6 @@
 package com.flaghacker.sttt
 
-import com.flaghacker.sttt.bots.RandomBot
 import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Timer
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
@@ -11,6 +9,7 @@ import org.junit.jupiter.api.Test
 import java.io.InputStreamReader
 import java.io.Writer
 import java.lang.reflect.Type
+import java.util.*
 import java.util.zip.GZIPInputStream
 import kotlin.text.Charsets.UTF_8
 
@@ -23,9 +22,10 @@ val PLAYTHROUGH_TYPE: Type = object : TypeToken<Playthrough>() {}.type
 class BoardPlayTest {
 	@Test
 	fun testPlaythroughs() {
-		for (playthrough in loadPlaythroughs()) {
+		val limit = System.getProperty("playthroughLimit")?.toIntOrNull() ?: Int.MAX_VALUE
+
+		for (playthrough in loadPlaythroughs().take(limit))
 			checkPlaythrough(playthrough)
-		}
 	}
 
 	private fun checkPlaythrough(playthrough: Playthrough) {
@@ -57,16 +57,19 @@ private fun loadPlaythroughs(): Sequence<Playthrough> = sequence {
 
 @Suppress("unused")
 object GeneratePlaythroughs {
-	fun generatePlaythroughs(): Sequence<Playthrough> = generateSequence {
-		val board = Board()
-		sequence {
-			yield(State(null, board.toExpected()))
-			while (!board.isDone) {
-				val move = RandomBot().move(board, Timer(30))!!
-				board.play(move)
-				yield(State(move, board.toExpected()))
-			}
-		}.toList()
+	fun generatePlaythroughs(): Sequence<Playthrough> {
+		val random = Random(0)
+		return generateSequence {
+			val board = Board()
+			sequence {
+				yield(State(null, board.toExpected()))
+				while (!board.isDone) {
+					val move = board.randomAvailableMove(random)
+					board.play(move)
+					yield(State(move, board.toExpected()))
+				}
+			}.toList()
+		}
 	}
 
 	fun playthroughsToJSON(playthroughs: Sequence<Playthrough>, out: Writer) {
