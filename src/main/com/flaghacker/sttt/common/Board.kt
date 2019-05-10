@@ -85,38 +85,36 @@ class Board : Serializable {
 
 	/**
 	 * Constructs a Board with a given state. Macro and main wins are calculated automatically.
-	 * @param board 2 dimensional array containing who owns each tile. The format is `board[x][y]`
-	 * @param nextPlayer the next player
-	 * @param lastMove the last move played on the board, `null` means the next move is freeplay
+	 * @param board 81 Char String containing the board. This string can be generated with toCompactString().
 	 * */
-	constructor(board: Array<Array<Player>>, nextPlayer: Player, lastMove: Coord?) {
-		if (board.size != 9 && board.all { it.size != 9 })
-			throw IllegalArgumentException("Wrong board dimensions $board")
-		if (nextPlayer == Player.NEUTRAL)
-			throw IllegalArgumentException("nextPlayer can't be $nextPlayer")
-		if (lastMove != null && lastMove !in 0 until 81)
-			throw IllegalArgumentException("lastMove must be null or in range, was $lastMove")
+	constructor(board: String) {
+		if (board.length != 81 || board.toUpperCase().any { !Player.legalChar(it) } || board.count { it.isLowerCase() } > 1)
+			throw IllegalArgumentException("Illegal board string; $board")
+
+		val lastMove = board.indexOfFirst { it.isLowerCase() }
+		if (lastMove == -1 && board.any { it != Player.NEUTRAL.char })
+			throw IllegalArgumentException("No lastMove for a non-empty board; $board")
+		if (lastMove != -1 && (lastMove !in 0 until 81 || board[lastMove] == Player.NEUTRAL.char))
+			throw IllegalArgumentException("Illegal lastMove ($lastMove) for board; $board")
+
+		//val playCountDiff = board.count { it == Player.PLAYER.char } - board.count { it == Player.ENEMY.char }
+		//if (playCountDiff != 0 && playCountDiff != 1)
+		// throw IllegalArgumentException("The difference between Player and Enemy moves is too big; $playCountDiff")
 
 		this.openMacroMask = FULL_GRID
+		this.grids = IntArray(9)
+		this.mainGrid = 0
 		this.wonBy = null
 
-		this.grids = IntArray(10)
-		this.mainGrid = 0
 		for (i in 0 until 81) {
-			val owner = board[i.toPair().first][i.toPair().second]
-			if (owner != Player.NEUTRAL) {
-				val p = owner.ordinal
-				val om = i / 9
-				val os = i % 9
-
-				this.nextPlayer = owner
-				setTileAndUpdate(p, om, os)
-			}
+			val owner = Player.fromChar(board[i].toUpperCase())
+			if (owner != Player.NEUTRAL)
+				setTileAndUpdate(owner.ordinal, i / 9, i % 9)
 		}
 
-		this.lastMove = lastMove
-		this.nextPlayer = nextPlayer
-		this.macroMask = if (lastMove == null) openMacroMask else calcMacroMask(lastMove % 9)
+		this.lastMove = if (lastMove == -1) null else lastMove.toByte()
+		this.nextPlayer = if (lastMove == -1) Player.PLAYER else Player.fromChar(board[lastMove].toUpperCase()).other()
+		this.macroMask = if (lastMove == -1) openMacroMask else calcMacroMask(lastMove % 9)
 	}
 
 	/** Returns a copy of the current board. */
@@ -131,20 +129,6 @@ class Board : Serializable {
 		lastMove = board.lastMove
 		nextPlayer = board.nextPlayer
 		wonBy = board.wonBy
-	}
-
-	/**
-	 * Returns a copy of the Board with the [Player]s swapped, including win
-	 * @return A copy of the original [Board] with the [Player]s swapped
-	 */
-	fun flip(): Board {
-		val cpy = copy()
-		cpy.nextPlayer = nextPlayer.otherWithNeutral()
-		cpy.wonBy = wonBy?.otherWithNeutral()
-		for (i in 0 until 9)
-			cpy.grids[i] = (grids[i] shr 9) or ((grids[i] and FULL_GRID) shl 9)
-		cpy.mainGrid = (mainGrid shr 9) or ((mainGrid and FULL_GRID) shl 9)
-		return cpy
 	}
 
 	/**
@@ -300,8 +284,13 @@ class Board : Serializable {
 			if (openMacroMask.hasBit(os)) (1 shl os)
 			else openMacroMask
 
-	override fun toString() = toString(false)
+	fun toCompactString() = (0 until 81).map { toCoord(it % 9, it / 9) }.map {
+		if (it == lastMove)
+			tile(it).char.toLowerCase()
+		else tile(it).char
+	}.joinToString("")
 
+	override fun toString() = toString(false)
 	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
 		val coord = toCoord(it % 9, it / 9)
 		when {

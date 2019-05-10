@@ -12,6 +12,7 @@ import org.junit.jupiter.api.assertThrows
 import java.util.*
 import kotlin.math.abs
 
+
 fun randomBoard(rand: Random, moveCount: Int): Board {
 	return playRandom(Board(), rand, moveCount)
 }
@@ -27,11 +28,20 @@ fun playRandom(startBoard: Board, rand: Random, moveCount: Int): Board {
 }
 
 private fun playedBoard(player: Player, playerMoves: IntArray, enemyMoves: IntArray, lastMove: Int): Board {
-	val board = Array(9) { Array(9) { Player.NEUTRAL } }
-	for (move in playerMoves) board[move.toPair().first][move.toPair().second] = player
-	for (move in enemyMoves) board[move.toPair().first][move.toPair().second] = player.other()
 
-	return Board(board, player, lastMove.toByte())
+	val board = (0 until 81).map {
+		when {
+			playerMoves.contains(it) -> player.char
+			enemyMoves.contains(it) -> player.other().char
+			else -> ' '
+		}
+	}.joinToString("")
+
+
+	//val lastMove = board.indexOfFirst { it.isUpperCase() }
+	val chars = board.toCharArray()
+	chars[lastMove] = chars[lastMove].toLowerCase()
+	return Board(String(chars))
 }
 
 private fun playedBoard(player: Player, moves: IntArray, lastMove: Int) =
@@ -73,12 +83,6 @@ class BoardTest {
 		assertBoardEquals(board, SerializationUtils.clone(board))
 	}
 
-	@Test
-	fun testDoubleFlip() {
-		val board = randomBoard(Random(0), 10)
-		assertBoardEquals(board, board.flip().flip())
-	}
-
 	@TestPlayersAndMacros
 	fun testManhattanWin(player: Player, om: Int) {
 		for (i in 0..2) {
@@ -103,7 +107,10 @@ class BoardTest {
 
 	@TestPlayers
 	fun testFullWin(player: Player) {
-		assertEquals(player, playedBoard(player, 0, 1, 2, 9, 10, 11, 18, 19, 20).wonBy) {
+		val board = playedBoard(player, 6, 7, 8, 15, 16, 17, 24, 25)
+		board.play(65)
+		board.play(26)
+		assertEquals(player, board.wonBy) {
 			"macro top line"
 		}
 	}
@@ -112,7 +119,7 @@ class BoardTest {
 	fun testFullMacro(player: Player, om: Int) {
 		//fill the macro and direct the next move to that macrp
 		val moves = ((9 * om) until (9 * om + 9)).toArray()
-		val lastMove = (8 - om) * 9 + om
+		val lastMove = om * 9 + om
 		val board = playedBoard(player, moves, lastMove)
 
 		assertEquals(81 - 9, board.availableMoves.size) { "freeplay" }
@@ -120,8 +127,7 @@ class BoardTest {
 
 	@TestPlayersAndMacros
 	fun testFullMixedMacro(player: Player, om: Int) {
-		val lastMove = (8 - om) * 9 + om
-
+		val lastMove = om * 9 + om
 		val board = playedBoard(
 				player,
 				P_MOVES.map { om * 9 + it }.toIntArray(),
