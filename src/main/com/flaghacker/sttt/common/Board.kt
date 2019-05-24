@@ -284,7 +284,7 @@ class Board : Serializable {
 			if (openMacroMask.hasBit(os)) (1 shl os)
 			else openMacroMask
 
-	fun toCompactString() = (0 until 81).map { toCoord(it % 9, it / 9) }.map {
+	fun toCompactString() = (0 until 81).map { it.toByte() }.map {
 		if (it == lastMove)
 			tile(it).char.toLowerCase()
 		else tile(it).char
