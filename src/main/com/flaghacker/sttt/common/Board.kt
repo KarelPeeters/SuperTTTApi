@@ -284,11 +284,12 @@ class Board : Serializable {
 			if (openMacroMask.hasBit(os)) (1 shl os)
 			else openMacroMask
 
-	fun toCompactString() = (0 until 81).map { it.toByte() }.map {
-		if (it == lastMove)
-			tile(it).char.toLowerCase()
-		else tile(it).char
-	}.joinToString("")
+	fun toCompactString() = (0 until 81).joinToString("") {
+		val coord = it.toByte()
+		val tile = tile(coord).char.toString()
+
+		if (coord == lastMove) tile.toLowerCase() else tile
+	}
 
 	override fun toString() = toString(false)
 	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {

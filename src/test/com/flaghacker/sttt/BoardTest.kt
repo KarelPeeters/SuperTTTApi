@@ -4,7 +4,6 @@ import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.Player.*
 import com.flaghacker.sttt.common.toCoord
-import com.flaghacker.sttt.common.toPair
 import org.apache.commons.lang3.SerializationUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -27,20 +26,26 @@ fun playRandom(startBoard: Board, rand: Random, moveCount: Int): Board {
 	return startBoard
 }
 
-private fun playedBoard(player: Player, playerMoves: IntArray, enemyMoves: IntArray, lastMove: Int): Board {
+private fun playedBoard(vararg moves: Int): Board {
+	val board = Board()
+	for (move in moves)
+		board.play(move.toByte())
+	return board
+}
 
-	val board = (0 until 81).map {
-		when {
-			playerMoves.contains(it) -> player.char
-			enemyMoves.contains(it) -> player.other().char
+private fun playedBoard(player: Player, playerMoves: IntArray, enemyMoves: IntArray, lastMove: Int): Board {
+	val chars = CharArray(81) { coord ->
+		when (coord) {
+			in playerMoves -> player.char
+			in enemyMoves -> player.other().char
 			else -> ' '
 		}
-	}.joinToString("")
+	}
 
+	val lastMoveChar = chars[lastMove]
+	require(lastMoveChar != ' ') { "lastMove must be an actual move" }
+	chars[lastMove] = lastMoveChar.toLowerCase()
 
-	//val lastMove = board.indexOfFirst { it.isUpperCase() }
-	val chars = board.toCharArray()
-	chars[lastMove] = chars[lastMove].toLowerCase()
 	return Board(String(chars))
 }
 
@@ -56,8 +61,26 @@ private fun playedBoard(player: Player, vararg moves: Int) =
  *   OXX
  *   XOO
  */
-private val P_MOVES = listOf(0, 1, 4, 5, 6)
-private val E_MOVES = listOf(2, 3, 7, 8)
+private val TIE_P_MOVES = listOf(0, 1, 4, 5, 6)
+private val TIE_E_MOVES = listOf(2, 3, 7, 8)
+
+private val COMPACT_STRING_PAIRS = listOf(
+		"                                                                                 " to intArrayOf(),
+		"                                                                          x      " to intArrayOf(74),
+		"                                  X                                   o          " to intArrayOf(34, 70),
+		"    x             O                            X                                 " to intArrayOf(47, 18, 4),
+		"                         X   OX                                       o          " to intArrayOf(30, 29, 25, 70),
+		"        OXO                                                     X               x" to intArrayOf(64, 10, 9, 8, 80),
+		"               O     X           o             O           X    X                " to intArrayOf(64, 15, 59, 47, 21, 33),
+		"Ox  O O  X                          X                 X                          " to intArrayOf(9, 4, 36, 6, 54, 0, 1),
+		" X           O         X     o           X   O       O                     X     " to intArrayOf(23, 45, 1, 13, 41, 53, 75, 29),
+		"       X   O             xX          X                             O   XO O      " to intArrayOf(71, 74, 26, 72, 7, 67, 37, 11, 25),
+		"     X  X                         O               O  XO           X  X     o   O " to intArrayOf(5, 50, 53, 79, 66, 34, 69, 54, 8, 75),
+		"      O   O      X                 O                  X  X   X       O  xX      O" to intArrayOf(61, 69, 54, 6, 57, 35, 73, 10, 17, 80, 72),
+		"                X         X             o                 X  O  OO   XXO      OX " to intArrayOf(69, 61, 70, 71, 79, 64, 16, 65, 26, 78, 58, 40),
+		"      X                         X  O            X  O         XO   O O  XOx     X " to intArrayOf(71, 72, 6, 62, 79, 66, 32, 51, 61, 68, 48, 35, 73),
+		"XO O    oX X           OO    X               X      X        X O    O            " to intArrayOf(11, 24, 61, 63, 0, 1, 9, 3, 29, 23, 52, 68, 45, 8)
+)
 
 class BoardTest {
 	@Test
@@ -130,8 +153,8 @@ class BoardTest {
 		val lastMove = om * 9 + om
 		val board = playedBoard(
 				player,
-				P_MOVES.map { om * 9 + it }.toIntArray(),
-				E_MOVES.map { om * 9 + it }.toIntArray(),
+				TIE_P_MOVES.map { om * 9 + it }.toIntArray(),
+				TIE_E_MOVES.map { om * 9 + it }.toIntArray(),
 				lastMove
 		)
 
@@ -142,8 +165,8 @@ class BoardTest {
 	fun testNeutralWin(player: Player) {
 		val board = playedBoard(
 				player,
-				(0 until 9).flatMap { om -> P_MOVES.map { om * 9 + it } }.toIntArray(),
-				(0 until 9).flatMap { om -> E_MOVES.map { om * 9 + it } }.toIntArray(),
+				(0 until 9).flatMap { om -> TIE_P_MOVES.map { om * 9 + it } }.toIntArray(),
+				(0 until 9).flatMap { om -> TIE_E_MOVES.map { om * 9 + it } }.toIntArray(),
 				0
 		)
 
@@ -156,8 +179,8 @@ class BoardTest {
 	fun testWinFullBoard() {
 		val player = PLAYER
 		//fill macros 0-5 without winning anything
-		val pFill = (0 until 6).flatMap { om -> P_MOVES.map { om * 9 + it } }
-		val eFill = (0 until 6).flatMap { om -> E_MOVES.map { om * 9 + it } }
+		val pFill = (0 until 6).flatMap { om -> TIE_P_MOVES.map { om * 9 + it } }
+		val eFill = (0 until 6).flatMap { om -> TIE_E_MOVES.map { om * 9 + it } }
 
 		//almost fill y = 6
 		val pWin = (0 until 8).map { x -> toCoord(x, 6).toInt() }
@@ -211,6 +234,25 @@ class BoardTest {
 
 			assertArrayEquals(t1, t2)
 			board.play(board.randomAvailableMove(random))
+		}
+	}
+
+	@Test
+	fun toCompactString() {
+		for ((str, moves) in COMPACT_STRING_PAIRS) {
+			val moveBoard = playedBoard(*moves)
+
+			assertEquals(str, moveBoard.toCompactString())
+		}
+	}
+
+	@Test
+	fun fromCompactString() {
+		for ((str, moves) in COMPACT_STRING_PAIRS) {
+			val moveBoard = playedBoard(*moves)
+			val strBoard = Board(str)
+
+			assertEquals(moveBoard, strBoard)
 		}
 	}
 }
