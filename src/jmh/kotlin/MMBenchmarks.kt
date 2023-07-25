@@ -10,12 +10,12 @@ import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
 
 open class MMBenchmarks {
-	@Benchmark
+/*	@Benchmark
 	@BenchmarkMode(Mode.AverageTime)
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	fun averageGame(blackhole: Blackhole) {
 		val mv = MMBot(12).move(Board())
 		blackhole.consume(mv)
-	}
+	}*/
 }
 

@@ -8,6 +8,7 @@ import com.google.gson.stream.JsonWriter
 import org.junit.jupiter.api.Test
 import java.io.InputStreamReader
 import java.io.Writer
+import java.lang.Exception
 import java.lang.reflect.Type
 import java.util.*
 import java.util.zip.GZIPInputStream
@@ -42,7 +43,14 @@ class BoardPlayTest {
 private fun loadPlaythroughs(): Sequence<Playthrough> = sequence {
 	val gson = Gson()
 
-	val input = BoardPlayTest::class.java.getResourceAsStream(PLAYTHROUGHS_FILE)
+	val input = javaClass.getResourceAsStream("/playthroughs.json.gzip")
+	//val input = javaClass.getResourceAsStream("C:\\Users\\henry\\IdeaProjects\\REMOVEME2\\src\\test\\kotlin\\playthroughs.json.gzip")
+
+	if (input == null) {
+		throw Exception("NULL")
+	} else if (input.available() == 0) {
+		throw Exception("ZERO")
+	}
 	val gis = GZIPInputStream(input)
 
 	JsonReader(InputStreamReader(gis, UTF_8)).use { reader ->

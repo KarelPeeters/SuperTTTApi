@@ -44,7 +44,7 @@ private fun playedBoard(player: Player, playerMoves: IntArray, enemyMoves: IntAr
 
 	val lastMoveChar = chars[lastMove]
 	require(lastMoveChar != ' ') { "lastMove must be an actual move" }
-	chars[lastMove] = lastMoveChar.toLowerCase()
+	chars[lastMove] = lastMoveChar.lowercaseChar()
 
 	return Board(String(chars))
 }
@@ -216,7 +216,7 @@ class BoardTest {
 			val maxDev = counts
 					.filter { it != 0 }
 					.map { abs(it.toDouble() / testCount - 1.0 / moves.size) }
-					.max() ?: return
+					.max()
 			assertTrue(maxDev < 0.05) { "should be uniformly distributed" }
 
 			board.play(board.randomAvailableMove(random))

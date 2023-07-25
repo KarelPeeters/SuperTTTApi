@@ -4,21 +4,20 @@ import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
 import com.flaghacker.sttt.common.Coord
 import com.flaghacker.sttt.common.Player
-import java.lang.Double.NEGATIVE_INFINITY
-import java.lang.Double.POSITIVE_INFINITY
+import java.lang.Float.NEGATIVE_INFINITY
+import java.lang.Float.POSITIVE_INFINITY
 import java.lang.Math.max
 
-private const val TILE_VALUE = 1.0
-private const val MACRO_VALUE = 10e9
+private const val TILE_FACTOR = 1
+private const val MACRO_FACTOR = 1000
 
-private const val CENTER_FACTOR = 4.0
-private const val CORNER_FACTOR = 3.0
-private const val EDGE_FACTOR = 1.0
+private const val CENTER_FACTOR = 4
+private const val CORNER_FACTOR = 2
+private const val EDGE_FACTOR = 1
 
-class MMBot(private val depth: Int) : Bot {
+class MMBotFloat(private val depth: Int) : Bot {
 	init {
-		if (depth < 1)
-			throw IllegalArgumentException("depth must be >= 1, was $depth")
+		require(depth >= 1) { "depth must be >= 1, was $depth" }
 	}
 
 	override fun move(board: Board): Coord? {
@@ -26,15 +25,15 @@ class MMBot(private val depth: Int) : Bot {
 			return null
 
 		return negaMax(
-				board, value(board), depth,
+				board, 0.0F, depth,
 				NEGATIVE_INFINITY, POSITIVE_INFINITY,
 				playerSign(board.nextPlayer)
 		).move
 	}
 
-	private class ValuedMove(val move: Coord, val value: Double)
+	private class ValuedMove(val move: Coord, val value: Float)
 
-	private fun negaMax(board: Board, cValue: Double, depth: Int, a: Double, b: Double, player: Int): ValuedMove {
+	private fun negaMax(board: Board, cValue: Float, depth: Int, a: Float, b: Float, player: Int): ValuedMove {
 		if (depth == 0 || board.isDone) return ValuedMove(board.lastMove!!, player * cValue)
 
 		var bestValue = NEGATIVE_INFINITY
@@ -45,10 +44,10 @@ class MMBot(private val depth: Int) : Bot {
 			val child = board.copy()
 
 			//Calculate the new score
-			var childValue = cValue + TILE_VALUE * factor(move % 9) * factor(move / 9) * player
+			var childValue = cValue + TILE_FACTOR*factor(move % 9) * factor(move / 9) * player
 			if (child.play(move)) {
 				if (child.isDone) childValue = POSITIVE_INFINITY * player
-				else childValue += MACRO_VALUE * factor(move / 9) * player
+				else childValue += MACRO_FACTOR * factor(move / 9) * player
 			}
 
 			//Check if the (global) value of this child is better then the previous best child
@@ -64,16 +63,6 @@ class MMBot(private val depth: Int) : Bot {
 		return ValuedMove(bestMove!!, bestValue)
 	}
 
-	private fun value(board: Board) = if (board.isDone)
-		POSITIVE_INFINITY * playerSign(board.wonBy!!)
-	else {
-		(0 until 81).sumByDouble {
-			TILE_VALUE * factor(it % 9) * factor(it / 9) * playerSign(board.tile(it.toByte())).toDouble()
-		} + (0 until 9).sumByDouble {
-			MACRO_VALUE * factor(it) * playerSign(board.macro(it.toByte())).toDouble()
-		}
-	}
-
 	private fun playerSign(player: Player) = when (player) {
 		Player.NEUTRAL -> 0
 		Player.PLAYER -> 1
@@ -86,5 +75,5 @@ class MMBot(private val depth: Int) : Bot {
 		else -> EDGE_FACTOR
 	}
 
-	override fun toString() = "MMBot"
+	override fun toString() = "MMBotFloat"
 }
