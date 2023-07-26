@@ -16,7 +16,7 @@ class ConsoleGame(private val bot: Bot) {
 		while (!current.isDone) {
 			val input = Scanner(System.`in`).nextLine()
 
-			when (input.split(" ").first().toLowerCase()) {
+			when (input.split(" ").first().lowercase()) {
 				"undo" -> {
 					if (history.size > 1) {
 						history.removeAt(history.lastIndex)

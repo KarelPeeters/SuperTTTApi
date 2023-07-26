@@ -88,7 +88,7 @@ class Board : Serializable {
 	 * @param board 81 Char String containing the board. This string can be generated with toCompactString().
 	 * */
 	constructor(board: String) {
-		if (board.length != 81 || board.toUpperCase().any { !Player.legalChar(it) } || board.count { it.isLowerCase() } > 1)
+		if (board.length != 81 || board.uppercase().any { !Player.legalChar(it) } || board.count { it.isLowerCase() } > 1)
 			throw IllegalArgumentException("Illegal board string; $board")
 
 		val lastMove = board.indexOfFirst { it.isLowerCase() }
@@ -107,13 +107,13 @@ class Board : Serializable {
 		this.wonBy = null
 
 		for (i in 0 until 81) {
-			val owner = Player.fromChar(board[i].toUpperCase())
+			val owner = Player.fromChar(board[i].uppercaseChar())
 			if (owner != Player.NEUTRAL)
 				setTileAndUpdate(owner.ordinal, i / 9, i % 9)
 		}
 
 		this.lastMove = if (lastMove == -1) null else lastMove.toByte()
-		this.nextPlayer = if (lastMove == -1) Player.PLAYER else Player.fromChar(board[lastMove].toUpperCase()).other()
+		this.nextPlayer = if (lastMove == -1) Player.PLAYER else Player.fromChar(board[lastMove].uppercaseChar()).other()
 		this.macroMask = if (lastMove == -1) openMacroMask else calcMacroMask(lastMove % 9)
 	}
 
@@ -288,7 +288,7 @@ class Board : Serializable {
 		val coord = it.toByte()
 		val tile = tile(coord).char.toString()
 
-		if (coord == lastMove) tile.toLowerCase() else tile
+		if (coord == lastMove) tile.lowercase() else tile
 	}
 
 	override fun toString() = toString(false)
