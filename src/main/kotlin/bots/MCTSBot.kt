@@ -5,6 +5,8 @@ import com.flaghacker.sttt.common.Bot
 import com.flaghacker.sttt.common.Coord
 import com.flaghacker.sttt.common.Player
 import java.util.*
+import kotlin.math.ln
+import kotlin.math.sqrt
 
 class MCTSBot(
 		private val rand: Random = Random(),
@@ -77,7 +79,7 @@ class MCTSBot(
 				var bestValue = Double.NEGATIVE_INFINITY
 				for (child in cNode.children!!) {
 					val uctValue = (child.wins.toDouble() / child.visits.toDouble()) +
-							Math.sqrt(2.0 * Math.log(cNode.visits.toDouble()) / (child.visits.toDouble()))
+							sqrt(2.0 * ln(cNode.visits.toDouble()) / (child.visits.toDouble()))
 					if (uctValue > bestValue) {
 						selected = child
 						bestValue = uctValue
