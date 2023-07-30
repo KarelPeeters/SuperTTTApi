@@ -4,12 +4,12 @@ import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Bot
 import com.flaghacker.sttt.common.Coord
 import common.*
-import java.util.*
+import java.util.random.RandomGenerator
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 class MCTSBotArray(
-    private val rand: Random = Random(),
+    private val rand: RandomGenerator = RandomGenerator.of("Xoroshiro128PlusPlus"),
     private val maxIterations: Int
 ) : Bot {
     override fun toString() = "MCTSBotArray"

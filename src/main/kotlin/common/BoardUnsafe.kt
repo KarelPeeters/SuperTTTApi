@@ -5,6 +5,7 @@ import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.toCoord
 import java.io.Serializable
 import java.util.*
+import java.util.random.RandomGenerator
 
 internal const val GRID_MASK = 0b111111111
 internal const val GRID_BITS = 9
@@ -99,7 +100,7 @@ class BoardUnsafe : Serializable {
 	 * Picks a random available move. Faster than calling [availableMoves]
 	 * because this function doesn't allocate an array.
 	 */
-	fun randomPlayWinner(random: Random): Boolean { // null => TIE, // True => X WON, // False => O WON
+	fun randomPlayWinner(random: RandomGenerator): Boolean { // null => TIE, // True => X WON, // False => O WON
 		// Board is already finished
 		if (openMacroMask == 0) TODO()
 
@@ -118,7 +119,8 @@ class BoardUnsafe : Serializable {
 			macroMask.forEachBit { count -= Integer.bitCount(grids[it])}
 
 			// Pick a random move without allocating array
-			var rem = random.nextInt(count) + 1
+			//var rem = random.nextInt(count) + 1 // Statistically superior random ;)
+			var rem = ((random.nextInt() ushr 1) % count) + 1
 			findMove@while (macroMask != 0) {
 				// TODO check speed versus >>1 eight times to iterate over all bits
 				// Add available moves in macro OM
@@ -129,7 +131,7 @@ class BoardUnsafe : Serializable {
 				if (rem <= 0) {
 					// Fetch chosen tile OS
 					var openTileMask = ((grids[om] shr GRID_BITS) or (grids[om] and GRID_MASK)).inv()
-					repeat(-rem) { openTileMask = openTileMask and (openTileMask - 1) }
+					repeat(-rem) { openTileMask = openTileMask.removeLastSetBit() }
 					val os = Integer.numberOfTrailingZeros(openTileMask)
 
 					// Play move and return
@@ -137,7 +139,7 @@ class BoardUnsafe : Serializable {
 					break@findMove
 				}
 
-				macroMask = macroMask and (macroMask - 1) // Remove last bit
+				macroMask = macroMask.removeLastSetBit()
 			}
 
 		}
@@ -176,33 +178,33 @@ class BoardUnsafe : Serializable {
 		return Arrays.copyOf(out, size)
     }
 
-	fun play(index: Coord): Int { // 0 => Not done, // 1 => X won, // 2 => O won // 3 => Tie
-		val idx = index.toInt() and 0xFF // remove sign extension
-		val om = idx shr 4                 // top bits
-		val os = idx and 0b1111         // lower bits
+    fun play(index: Coord): Int { // 0 => Not done, // 1 => X won, // 2 => O won // 3 => Tie
+        val idx = index.toInt() and 0xFF // remove sign extension
+        val om = idx shr 4		 		 // top bits
+        val os = idx and 0b1111  		 // lower bits
 
 		val osShift = (1 shl os)
-		val macroGridPlayer: Int
+		val macroGridPlayer : Int
 
 		// Update and extract player local board
 		lastMove = index
-		if (nextPlayX) {
-			grids[om] = grids[om] or osShift
+        if (nextPlayX){
+			grids[om] 		= grids[om] or osShift
 			macroGridPlayer = grids[om] and GRID_MASK
-		} else {
-			grids[om] = grids[om] or (osShift shl GRID_BITS)
+        } else {
+			grids[om] 		= grids[om] or (osShift shl GRID_BITS)
 			macroGridPlayer = grids[om] shr GRID_BITS
 		}
 
 		// Check if the macro is won
 		val omShift = (1 shl om)
-		val macroWin = (WIN_GRID[macroGridPlayer / 32] shr (macroGridPlayer % 32)) and 1 != 0
+		val macroWin = macroGridPlayer.gridWon()
 		if (macroWin) {
-			val mainGridPlayer: Int
+			val mainGridPlayer : Int
 
 			// Update and extract player global board
 			openMacroMask = openMacroMask xor omShift
-			if (nextPlayX) {
+			if (nextPlayX){
 				mainGrid = mainGrid or omShift
 				mainGridPlayer = mainGrid and GRID_MASK
 			} else {
@@ -211,17 +213,17 @@ class BoardUnsafe : Serializable {
 			}
 
 			// Check if the game is won
-			if ((WIN_GRID[mainGridPlayer / 32] shr (mainGridPlayer % 32)) and 1 != 0) {
+			if (mainGridPlayer.gridWon()){
 				openMacroMask = 0
 				return if (nextPlayX) 1 /*WIN X*/ else 2 /*WIN O*/
 			}
-		} else if (Integer.bitCount(grids[om]) == 9) {
+		} else if (Integer.bitCount(grids[om]) == 9){
 			openMacroMask = openMacroMask xor omShift
 		}
 
 		nextPlayX = !nextPlayX
 		return if (openMacroMask != 0) 0 /*NOT FINISHED*/ else 3 /*TIE*/
-	}
+    }
 
 	override fun toString() = toString(true)
 	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
@@ -250,7 +252,9 @@ class BoardUnsafe : Serializable {
 	}
 }
 
-private fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
+private inline fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
+private inline fun Int.gridWon() = (WIN_GRID[this / 32] shr (this % 32)) and 1 != 0
+private inline fun Int.removeLastSetBit() = this and (this - 1)
 
 internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
 	var x = this
