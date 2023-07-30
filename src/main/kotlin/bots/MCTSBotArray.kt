@@ -14,15 +14,17 @@ class MCTSBotArray(
 ) : Bot {
     override fun toString() = "MCTSBotArray"
 
+    private val INIT_SIZE = 1024 * 8
+
     override fun move(boardOld: Board): Coord {
         val board = BoardUnsafe(boardOld) // TODO REMOVE
 
         // Flattened tree structure
-		var nodeCoords = ByteArray(1024)       //coord[N]
-		var nodeVisits = IntArray(1024)        //visits[N]
-		var nodeWins = IntArray(1024)          //wins[N]
-		var nodeChildStart = IntArray(1024)    //indexFirstChild[N]
-		var nodeChildCount = IntArray(1024)    //nbChildren[N]
+		var nodeCoords = ByteArray(INIT_SIZE)       //coord[N]
+		var nodeVisits = IntArray(INIT_SIZE)        //visits[N]
+		var nodeWins = IntArray(INIT_SIZE)          //wins[N]
+		var nodeChildStart = IntArray(INIT_SIZE)    //indexFirstChild[N]
+		var nodeChildCount = IntArray(INIT_SIZE)    //nbChildren[N]
 
         // Create (childless) head
         nodeCoords[0] = -1
@@ -32,10 +34,11 @@ class MCTSBotArray(
         // Bookkeeping vars
         var newIdx = 1
         val touchedIdx = LinkedList<Int>() // cleared every iteration
+        val nodeBoard = board.copy()
 
         while (nodeVisits[0] < maxIterations) {
             var nodeIdx = 0
-            val nodeBoard = board.copy()
+            nodeBoard.loadInstance(board)
             touchedIdx.clear()
             touchedIdx.add(nodeIdx)
 
@@ -47,8 +50,8 @@ class MCTSBotArray(
 
                     // Create playable macro mask
                     var macroMask = GRID_MASK
-                    nodeBoard.lastMove?.let {
-                        val tileLastMove = it.toInt() and 0xF
+                    if (nodeBoard.lastMove != (-1).toByte()){
+                        val tileLastMove = nodeBoard.lastMove.toInt() and 0xF
                         macroMask = (1 shl tileLastMove) and nodeBoard.openMacroMask
                         if (macroMask == 0) macroMask = nodeBoard.openMacroMask // free-move
                     }
@@ -118,9 +121,7 @@ class MCTSBotArray(
             }
 
             /** Simulation **/
-            var won = if (playResult == 0) {
-                nodeBoard.randomPlayWinner(rand)?.let { it == board.nextPlayX } ?: rand.nextBoolean()
-            } else when (playResult) {
+            var won = if (playResult == 0) nodeBoard.randomPlayWinner(rand) == board.nextPlayX else when (playResult) {
                 1 -> board.nextPlayX    // X WINS
                 2 -> !board.nextPlayX   // O WINS
                 else -> rand.nextBoolean()  // TIE

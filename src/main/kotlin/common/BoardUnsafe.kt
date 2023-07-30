@@ -47,7 +47,7 @@ class BoardUnsafe : Serializable {
     private var mainGrid: Int
 	internal var openMacroMask: Int
 	var nextPlayX : Boolean; private set
-	var lastMove : Coord?; private set
+	var lastMove : Coord; private set // default -1
 
     val isDone get() = openMacroMask == 0
 	val availableMoves get() = availableMoves<Byte> { it }
@@ -58,7 +58,7 @@ class BoardUnsafe : Serializable {
         mainGrid = 0
         openMacroMask = GRID_MASK
 		nextPlayX = true
-        lastMove = null
+        lastMove = -1
     }
 
     /** Returns a copy of the current board. */
@@ -73,6 +73,14 @@ class BoardUnsafe : Serializable {
         lastMove = board.lastMove
     }
 
+	fun loadInstance(board: BoardUnsafe) {
+		for (om in 0..<9) grids[om] = board.grids[om]
+		mainGrid = board.mainGrid
+		openMacroMask = board.openMacroMask
+		nextPlayX = board.nextPlayX
+		lastMove = board.lastMove
+	}
+
 	// copy from a safe board
 	public constructor(board: Board) {
 		grids = board.grids.copyOf()
@@ -81,7 +89,7 @@ class BoardUnsafe : Serializable {
 		nextPlayX = board.nextPlayer == Player.PLAYER
 
 		// Convert safe moves to unsafe move format
-		lastMove = if (board.lastMove == null) null else {
+		lastMove = if (board.lastMove == null) -1 else {
 			val om = (board.lastMove!!.toInt() and 0xFF) / 9
 			val os = (board.lastMove!!.toInt() and 0xFF) % 9
 			((om shl 4) + os).toByte()
@@ -93,30 +101,23 @@ class BoardUnsafe : Serializable {
 	 * Picks a random available move. Faster than calling [availableMoves]
 	 * because this function doesn't allocate an array.
 	 */
-	fun randomPlayWinner(random: Random): Boolean? { // null => TIE, // True => X WON, // False => O WON
+	fun randomPlayWinner(random: Random): Boolean { // null => TIE, // True => X WON, // False => O WON
 		// Board is already finished
 		if (openMacroMask == 0) TODO()
 
 		// If empty board force AI to play center => avoid null check in loop
-		if (lastMove == null) TODO() // this should not occur on an empty board
+		if (lastMove == (-1).toByte()) TODO() // this should not occur on an empty board
 
 		var finish = 0
 		while (finish == 0){
 			// Generate macro mask
-			val tileLastMove = lastMove!!.toInt() and 0xF
+			val tileLastMove = lastMove.toInt() and 0xF
 			var macroMask = (1 shl tileLastMove) and openMacroMask
 			if (macroMask == 0) macroMask = openMacroMask // free-move
 
 			// Count available moves without allocating array
 			var count = 9 * Integer.bitCount(macroMask)
 			macroMask.forEachBit { count -= Integer.bitCount(grids[it])}
-
-			if (false){ // allocate array to pick random move...... // TODO REMOVE
-				val moves = availableMoves {it}
-				val move = moves[random.nextInt(moves.size)]
-				if (moves.size != count) throw Exception("THIS SHOULD NOT TRIGGER")
-				finish = play(move)
-			}
 
 			// Pick a random move without allocating array
 			var rem = random.nextInt(count) + 1
@@ -144,9 +145,9 @@ class BoardUnsafe : Serializable {
 		}
 
 		return when (finish) {
-			1    -> true  // X WINS
-			2    -> false // O WINS
-			else -> null  // TIE
+			1 -> true
+			2 -> false
+			else -> random.nextBoolean()
 		}
 	}
 
@@ -160,8 +161,8 @@ class BoardUnsafe : Serializable {
 		val out = arrayOfNulls<T>(81)
 
 		// If there exists a last move update the playable macro mask
-		lastMove?.let {
-			val tileLastMove = it.toInt() and 0xF
+		if (lastMove != (-1).toByte()){
+			val tileLastMove = lastMove.toInt() and 0xF
 			macroMask = (1 shl tileLastMove) and openMacroMask
 			if (macroMask == 0) macroMask = openMacroMask // free-move
 		}
@@ -186,7 +187,7 @@ class BoardUnsafe : Serializable {
 		val macroGridPlayer : Int
 
 		// Update and extract player local board
-		lastMove = index;
+		lastMove = index
         if (nextPlayX){
 			grids[om] 		= grids[om] or osShift
 			macroGridPlayer = grids[om] and GRID_MASK
