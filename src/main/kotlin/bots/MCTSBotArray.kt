@@ -33,14 +33,15 @@ class MCTSBotArray(
 
         // Bookkeeping vars
         var newIdx = 1
-        val touchedIdx = LinkedList<Int>() // cleared every iteration
+        var touchedCount: Int
+        val touched = IntArray(81) // indices of visited nodes for iteration
         val nodeBoard = board.copy()
 
         while (nodeVisits[0] < maxIterations) {
             var nodeIdx = 0
             nodeBoard.loadInstance(board)
-            touchedIdx.clear()
-            touchedIdx.add(nodeIdx)
+            touchedCount = 0
+            touched[touchedCount++] = nodeIdx
 
             var playResult = if (!nodeBoard.isDone) 0 else 999
             while (playResult == 0) {
@@ -92,7 +93,7 @@ class MCTSBotArray(
                             if (remaining == 0) {
                                 nodeIdx = childIdx
                                 playResult = nodeBoard.play(nodeCoords[nodeIdx])
-                                touchedIdx.add(nodeIdx)
+                                touched[touchedCount++] = nodeIdx
                                 break
                             }
                             remaining--
@@ -117,7 +118,7 @@ class MCTSBotArray(
                 }
                 nodeIdx = selected
                 playResult = nodeBoard.play(nodeCoords[nodeIdx])
-                touchedIdx.add(nodeIdx)
+                touched[touchedCount++] = nodeIdx
             }
 
             /** Simulation **/
@@ -128,10 +129,11 @@ class MCTSBotArray(
             }
 
             /** Update **/
-            for (node in touchedIdx) {
+            for (i in 0..<touchedCount) {
+                val touchedIdx = touched[i]
                 won = !won
-                nodeVisits[node] = nodeVisits[node] + 1
-                if (won) nodeWins[node] = nodeWins[node] + 1
+                nodeVisits[touchedIdx] += 1
+                if (won) nodeWins[touchedIdx] += 1
             }
         }
 

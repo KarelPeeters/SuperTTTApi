@@ -4,8 +4,6 @@ import com.flaghacker.sttt.common.Board
 import com.flaghacker.sttt.common.Player
 import com.flaghacker.sttt.common.toCoord
 import java.io.Serializable
-import java.lang.Exception
-import java.security.KeyStore.TrustedCertificateEntry
 import java.util.*
 
 internal const val GRID_MASK = 0b111111111
@@ -131,7 +129,7 @@ class BoardUnsafe : Serializable {
 				if (rem <= 0) {
 					// Fetch chosen tile OS
 					var openTileMask = ((grids[om] shr GRID_BITS) or (grids[om] and GRID_MASK)).inv()
-					repeat(-rem) { openTileMask = openTileMask.removeLastSetBit() }
+					repeat(-rem) { openTileMask = openTileMask and (openTileMask - 1) }
 					val os = Integer.numberOfTrailingZeros(openTileMask)
 
 					// Play move and return
@@ -139,7 +137,7 @@ class BoardUnsafe : Serializable {
 					break@findMove
 				}
 
-				macroMask = macroMask.removeLastSetBit()
+				macroMask = macroMask and (macroMask - 1) // Remove last bit
 			}
 
 		}
@@ -169,42 +167,42 @@ class BoardUnsafe : Serializable {
 
 		// Iterate over all macros in the macroMask
 		macroMask.forEachBit { om ->
-			for (os in 0 until 9) {
-				if (!grids[om].hasBit(os) && !grids[om].hasBit(os + 9))
-					out[size++] = ((om shl 4) + os).toByte().let(map)
+			val osFree = ((grids[om] shr GRID_BITS) or grids[om]).inv() and GRID_MASK
+			osFree.forEachBit { os ->
+				out[size++] = ((om shl 4) + os).toByte().let(map)
 			}
 		}
 
 		return Arrays.copyOf(out, size)
     }
 
-    fun play(index: Coord): Int { // 0 => Not done, // 1 => X won, // 2 => O won // 3 => Tie
-        val idx = index.toInt() and 0xFF // remove sign extension
-        val om = idx shr 4		 		 // top bits
-        val os = idx and 0b1111  		 // lower bits
+	fun play(index: Coord): Int { // 0 => Not done, // 1 => X won, // 2 => O won // 3 => Tie
+		val idx = index.toInt() and 0xFF // remove sign extension
+		val om = idx shr 4                 // top bits
+		val os = idx and 0b1111         // lower bits
 
 		val osShift = (1 shl os)
-		val macroGridPlayer : Int
+		val macroGridPlayer: Int
 
 		// Update and extract player local board
 		lastMove = index
-        if (nextPlayX){
-			grids[om] 		= grids[om] or osShift
+		if (nextPlayX) {
+			grids[om] = grids[om] or osShift
 			macroGridPlayer = grids[om] and GRID_MASK
-        } else {
-			grids[om] 		= grids[om] or (osShift shl GRID_BITS)
+		} else {
+			grids[om] = grids[om] or (osShift shl GRID_BITS)
 			macroGridPlayer = grids[om] shr GRID_BITS
 		}
 
 		// Check if the macro is won
 		val omShift = (1 shl om)
-		val macroWin = macroGridPlayer.gridWon()
+		val macroWin = (WIN_GRID[macroGridPlayer / 32] shr (macroGridPlayer % 32)) and 1 != 0
 		if (macroWin) {
-			val mainGridPlayer : Int
+			val mainGridPlayer: Int
 
 			// Update and extract player global board
 			openMacroMask = openMacroMask xor omShift
-			if (nextPlayX){
+			if (nextPlayX) {
 				mainGrid = mainGrid or omShift
 				mainGridPlayer = mainGrid and GRID_MASK
 			} else {
@@ -213,17 +211,17 @@ class BoardUnsafe : Serializable {
 			}
 
 			// Check if the game is won
-			if (mainGridPlayer.gridWon()){
+			if ((WIN_GRID[mainGridPlayer / 32] shr (mainGridPlayer % 32)) and 1 != 0) {
 				openMacroMask = 0
 				return if (nextPlayX) 1 /*WIN X*/ else 2 /*WIN O*/
 			}
-		} else if (Integer.bitCount(grids[om]) == 9){
+		} else if (Integer.bitCount(grids[om]) == 9) {
 			openMacroMask = openMacroMask xor omShift
 		}
 
 		nextPlayX = !nextPlayX
 		return if (openMacroMask != 0) 0 /*NOT FINISHED*/ else 3 /*TIE*/
-    }
+	}
 
 	override fun toString() = toString(true)
 	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
@@ -252,15 +250,13 @@ class BoardUnsafe : Serializable {
 	}
 }
 
-internal inline fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
-private inline fun Int.gridWon() = WIN_GRID[this / 32].hasBit(this % 32)
-private inline fun Int.removeLastSetBit() = this and (this - 1)
+private fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
 
 internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
 	var x = this
 	while (x != 0) {
 		block(Integer.numberOfTrailingZeros(x))
-		x = x.removeLastSetBit()
+		x = x and (x - 1)
 	}
 }
 
