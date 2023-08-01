@@ -101,12 +101,6 @@ class BoardUnsafe : Serializable {
 	 * because this function doesn't allocate an array.
 	 */
 	fun randomPlayWinner(random: RandomGenerator): Boolean { // null => TIE, // True => X WON, // False => O WON
-		// Board is already finished
-		if (openMacroMask == 0) TODO()
-
-		// If empty board force AI to play center => avoid null check in loop
-		if (lastMove == (-1).toByte()) TODO() // this should not occur on an empty board
-
 		var finish = 0
 		while (finish == 0){
 			// Generate macro mask
@@ -119,11 +113,8 @@ class BoardUnsafe : Serializable {
 			macroMask.forEachBit { count -= Integer.bitCount(grids[it])}
 
 			// Pick a random move without allocating array
-			//var rem = random.nextInt(count) + 1 // Statistically superior random ;)
-			var rem = ((random.nextInt() ushr 1) % count) + 1
+			var rem = random.fastRandBoundedInt(count) + 1
 			findMove@while (macroMask != 0) {
-				// TODO check speed versus >>1 eight times to iterate over all bits
-				// Add available moves in macro OM
 				val om = Integer.numberOfTrailingZeros(macroMask)
 				rem += Integer.bitCount(grids[om]) - 9
 
@@ -256,6 +247,12 @@ private inline fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
 private inline fun Int.gridWon() = (WIN_GRID[this / 32] shr (this % 32)) and 1 != 0
 private inline fun Int.removeLastSetBit() = this and (this - 1)
 
+internal inline fun RandomGenerator.fastRandBoundedInt(bound: Int): Int {
+	//return nextInt(bound) // Statistically superior random ;)
+	//return (nextInt() ushr 1) % bound
+	return ((nextInt().toUInt().toULong() * bound.toULong()) shr 32).toInt()
+}
+
 internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
 	var x = this
 	while (x != 0) {
@@ -263,4 +260,3 @@ internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
 		x = x and (x - 1)
 	}
 }
-

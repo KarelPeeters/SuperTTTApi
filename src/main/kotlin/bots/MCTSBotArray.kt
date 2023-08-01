@@ -87,7 +87,7 @@ class MCTSBotArray(
                     if (nodeVisits[childIdx] == 0) countUnexpanded++
                 }
                 if (countUnexpanded > 0) {
-                    var remaining = rand.nextInt(countUnexpanded)
+                    var remaining = rand.fastRandBoundedInt(countUnexpanded)
                     for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
                         if (nodeVisits[childIdx] == 0) {
                             if (remaining == 0) {
