@@ -8,7 +8,7 @@ import java.util.random.RandomGenerator
 import kotlin.math.ln
 import kotlin.math.sqrt
 
-class MCTSBotArray(
+class MCTSBotArray2(
     private val rand: RandomGenerator = RandomGenerator.of("Xoroshiro128PlusPlus"),
     private val maxIterations: Int
 ) : Bot {
@@ -17,7 +17,7 @@ class MCTSBotArray(
     private val INIT_SIZE = 1024 * 8
 
     override fun move(boardOld: Board): Coord {
-        val board = BoardUnsafe(boardOld) // TODO REMOVE
+        val board = BoardUnsafe2(boardOld) // TODO REMOVE
 
         // Flattened tree structure
 		var nodeCoords = ByteArray(INIT_SIZE)       //coord[N]
@@ -50,19 +50,17 @@ class MCTSBotArray(
                     nodeChildStart[nodeIdx] = newIdx
 
                     // Create playable macro mask
-                    var macroMask = GRID_MASK
+                    var openMacroMask = 0
                     if (nodeBoard.lastMove != (-1).toByte()){
                         val tileLastMove = nodeBoard.lastMove.toInt() and 0xF
-                        macroMask = (1 shl tileLastMove) and nodeBoard.openMacroMask
-                        if (macroMask == 0) macroMask = nodeBoard.openMacroMask // free-move
-                    }
-
-                    // Find and store all children
-                    macroMask.forEachBit { om ->
-                        val osFree = ((nodeBoard.grids[om] shr GRID_BITS) or nodeBoard.grids[om]).inv() and GRID_MASK
-                        osFree.forEachBit { os ->
+                        val tileRow = tileLastMove / 3 // this should probably be a lookup TODO
+                        val tileCol = tileLastMove % 3 // this should probably be a lookup TODO
+                        val colShift = tileCol * GRID_BITS
+                        val openRowMask = (nodeBoard.rowX[tileRow] or nodeBoard.rowO[tileRow]).inv() and nodeBoard.rowPlayable[tileRow]
+                        openMacroMask = (openRowMask shr colShift) and GRID_MASK
+                        if (openMacroMask != 0) openMacroMask.forEachBit { os ->
                             // Create child
-                            nodeCoords[newIdx] = ((om shl 4) + os).toByte()
+                            nodeCoords[newIdx] = ((tileRow shl 6) or (tileCol shl 4) or os).toByte()
                             nodeVisits[newIdx] = 0
                             nodeWins[newIdx] = 0
                             newIdx++
@@ -78,6 +76,32 @@ class MCTSBotArray(
                             }
                         }
                     }
+
+                    if (openMacroMask == 0) { // free-move
+                        for (row in 0..<3) {
+                            val openRowMask = (nodeBoard.rowX[row] or nodeBoard.rowO[row]).inv() and nodeBoard.rowPlayable[row]
+                            openRowMask.forEachBit { indexInRow ->
+                                // Create child
+                                val col = indexInRow / 9
+                                val os =  indexInRow % 9
+                                nodeCoords[newIdx] = ((row shl 6) or (col shl 4) or os).toByte()
+                                nodeVisits[newIdx] = 0
+                                nodeWins[newIdx] = 0
+                                newIdx++
+
+                                // Expand (double) arrays if necessary
+                                if (newIdx == nodeCoords.size){
+                                    val newSize = nodeCoords.size * 2
+                                    nodeCoords = nodeCoords.copyOf(newSize)
+                                    nodeVisits = nodeVisits.copyOf(newSize)
+                                    nodeWins = nodeWins.copyOf(newSize)
+                                    nodeChildStart = nodeChildStart.copyOf(newSize)
+                                    nodeChildCount = nodeChildCount.copyOf(newSize)
+                                }
+                            }
+                        }
+                    }
+
                     nodeChildCount[nodeIdx] = newIdx - nodeChildStart[nodeIdx]
                 }
 
@@ -87,7 +111,7 @@ class MCTSBotArray(
                     if (nodeVisits[childIdx] == 0) countUnexpanded++
                 }
                 if (countUnexpanded > 0) {
-                    var remaining = rand.nextInt(countUnexpanded)
+                    var remaining = rand.nextInt(countUnexpanded) // TOOD speed up
                     for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
                         if (nodeVisits[childIdx] == 0) {
                             if (remaining == 0) {
@@ -150,7 +174,9 @@ class MCTSBotArray(
         // TODO remove conversion back
         //val bestMove = (head.children?.maxBy { it.visits }?.coord) ?: throw Exception("NO MOVE FOUND") //TODO
         val bestMoveIdx = bestMove.toInt() and 0xFF // mask out sign extension
-        val bestMoveOm = bestMoveIdx shr 4
+        val bestMoveRow = bestMoveIdx shr 6
+        val bestMoveCol = (bestMoveIdx shr 4) and 0b11
+        val bestMoveOm = bestMoveRow * 3 + bestMoveCol
         val bestMoveOs = bestMoveIdx and 0b1111
         return (bestMoveOm * 9 + bestMoveOs).toByte()
     }
