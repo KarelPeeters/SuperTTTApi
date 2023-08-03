@@ -47,36 +47,23 @@ class MCTSBotArray(
             while (playResult == 0) {
                 /** Init children **/
                 if (nodeChildStart[nodeIdx] == 0) {
-                    nodeChildStart[nodeIdx] = newIdx
-
-                    // Create playable macro mask
-                    var macroMask = GRID_MASK
-                    if (nodeBoard.lastMove != (-1).toByte()){
-                        val tileLastMove = nodeBoard.lastMove.toInt() and 0xF
-                        macroMask = (1 shl tileLastMove) and nodeBoard.openMacroMask
-                        if (macroMask == 0) macroMask = nodeBoard.openMacroMask // free-move
+                    // Expand (double) arrays if less than 128 entries remain
+                    if (nodeCoords.size - newIdx < 128){
+                        val newSize = nodeCoords.size * 2
+                        nodeCoords = nodeCoords.copyOf(newSize)
+                        nodeVisits = nodeVisits.copyOf(newSize)
+                        nodeWins = nodeWins.copyOf(newSize)
+                        nodeChildStart = nodeChildStart.copyOf(newSize)
+                        nodeChildCount =nodeChildCount.copyOf(newSize)
                     }
 
-                    // Find and store all children
-                    macroMask.forEachBit { om ->
-                        val osFree = ((nodeBoard.grids[om] shr GRID_BITS) or nodeBoard.grids[om]).inv() and GRID_MASK
-                        osFree.forEachBit { os ->
-                            // Create child
-                            nodeCoords[newIdx] = ((om shl 4) + os).toByte()
-                            nodeVisits[newIdx] = 0
-                            nodeWins[newIdx] = 0
-                            newIdx++
-
-                            // Expand (double) arrays if necessary
-                            if (newIdx == nodeCoords.size){
-                                val newSize = nodeCoords.size * 2
-                                nodeCoords = nodeCoords.copyOf(newSize)
-                                nodeVisits = nodeVisits.copyOf(newSize)
-                                nodeWins = nodeWins.copyOf(newSize)
-                                nodeChildStart = nodeChildStart.copyOf(newSize)
-                                nodeChildCount =nodeChildCount.copyOf(newSize)
-                            }
-                        }
+                    // Create children
+                    nodeChildStart[nodeIdx] = newIdx
+                    nodeBoard.forAvailableMoves { coord ->
+                        nodeCoords[newIdx] = coord
+                        nodeVisits[newIdx] = 0
+                        nodeWins[newIdx] = 0
+                        newIdx++
                     }
                     nodeChildCount[nodeIdx] = newIdx - nodeChildStart[nodeIdx]
                 }

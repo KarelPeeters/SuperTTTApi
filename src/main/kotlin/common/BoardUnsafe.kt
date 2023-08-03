@@ -49,7 +49,7 @@ class BoardUnsafe : Serializable {
 	var lastMove : Coord; private set // default -1
 
     val isDone get() = openMacroMask == 0
-	val availableMoves get() = availableMoves<Byte> { it }
+	val availableMoves get() = getAvailableMoves<Byte> { it }
 
 	/** Constructs an empty [BoardUnsafe]. */
     constructor() {
@@ -142,30 +142,28 @@ class BoardUnsafe : Serializable {
 		}
 	}
 
-	// TODO check inline
-    @Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
-    inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
-		var macroMask = GRID_MASK // playable macros
-
-		// output vars
-		var size = 0
-		val out = arrayOfNulls<T>(81)
-
-		// If there exists a last move update the playable macro mask
-		if (lastMove != (-1).toByte()){
-			val tileLastMove = lastMove.toInt() and 0xF
-			macroMask = (1 shl tileLastMove) and openMacroMask
-			if (macroMask == 0) macroMask = openMacroMask // free-move
-		}
+	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
+	inline fun forAvailableMoves(block: (coord: Coord) -> Unit) {
+		// Create macro mask, also works for lastMove == -1
+		val tileLastMove = lastMove.toInt() and 0xF
+		var macroMask = (1 shl tileLastMove) and openMacroMask
+		if (macroMask == 0) macroMask = openMacroMask // free-move
 
 		// Iterate over all macros in the macroMask
 		macroMask.forEachBit { om ->
 			val osFree = ((grids[om] shr GRID_BITS) or grids[om]).inv() and GRID_MASK
 			osFree.forEachBit { os ->
-				out[size++] = ((om shl 4) + os).toByte().let(map)
+				block(((om shl 4) + os).toByte())
 			}
 		}
+	}
 
+    inline fun <reified T> getAvailableMoves(map: (Coord) -> T): Array<T> {
+		val out = arrayOfNulls<T>(81)
+		var size = 0
+
+		// Store all moves in an array, return array
+		forAvailableMoves { out[size++] = it.let(map) }
 		return Arrays.copyOf(out, size)
     }
 

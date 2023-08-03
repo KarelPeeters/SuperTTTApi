@@ -50,58 +50,43 @@ class MCTSBotArray2(
                     nodeChildStart[nodeIdx] = newIdx
 
                     // Create playable macro mask
-                    var openMacroMask = 0
+                    var macroMask = GRID_MASK
                     if (nodeBoard.lastMove != (-1).toByte()){
                         val tileLastMove = nodeBoard.lastMove.toInt() and 0xF
-                        val tileRow = tileLastMove / 3 // this should probably be a lookup TODO
-                        val tileCol = tileLastMove % 3 // this should probably be a lookup TODO
-                        val colShift = tileCol * GRID_BITS
-                        val openRowMask = (nodeBoard.rowX[tileRow] or nodeBoard.rowO[tileRow]).inv() and nodeBoard.rowPlayable[tileRow]
-                        openMacroMask = (openRowMask shr colShift) and GRID_MASK
-                        if (openMacroMask != 0) openMacroMask.forEachBit { os ->
-                            // Create child
-                            nodeCoords[newIdx] = ((tileRow shl 6) or (tileCol shl 4) or os).toByte()
-                            nodeVisits[newIdx] = 0
-                            nodeWins[newIdx] = 0
-                            newIdx++
-
-                            // Expand (double) arrays if necessary
-                            if (newIdx == nodeCoords.size){
-                                val newSize = nodeCoords.size * 2
-                                nodeCoords = nodeCoords.copyOf(newSize)
-                                nodeVisits = nodeVisits.copyOf(newSize)
-                                nodeWins = nodeWins.copyOf(newSize)
-                                nodeChildStart = nodeChildStart.copyOf(newSize)
-                                nodeChildCount =nodeChildCount.copyOf(newSize)
-                            }
-                        }
+                        macroMask = (1 shl tileLastMove) and nodeBoard.playableMacroMask
+                        if (macroMask == 0) macroMask = nodeBoard.playableMacroMask // free-move
                     }
 
-                    if (openMacroMask == 0) { // free-move
-                        for (row in 0..<3) {
-                            val openRowMask = (nodeBoard.rowX[row] or nodeBoard.rowO[row]).inv() and nodeBoard.rowPlayable[row]
-                            openRowMask.forEachBit { indexInRow ->
-                                // Create child
-                                val col = indexInRow / 9
-                                val os =  indexInRow % 9
-                                nodeCoords[newIdx] = ((row shl 6) or (col shl 4) or os).toByte()
-                                nodeVisits[newIdx] = 0
-                                nodeWins[newIdx] = 0
-                                newIdx++
+                    // Find and store all children
+                    for (row in 0..<3) {
+                        var rowMerged = (nodeBoard.rowX[row] or nodeBoard.rowO[row]).inv()
+                        for (col in 0..<3) {
+                            //val om = row * 3 + col
+                            if ((macroMask and 1) == 1){
+                                val tileMask = rowMerged and GRID_MASK
+                                tileMask.forEachBit { os ->
+                                    // Create child
+                                    nodeCoords[newIdx] = ((row shl 6) or (col shl 4) or os).toByte()
+                                    nodeVisits[newIdx] = 0
+                                    nodeWins[newIdx] = 0
+                                    newIdx++
 
-                                // Expand (double) arrays if necessary
-                                if (newIdx == nodeCoords.size){
-                                    val newSize = nodeCoords.size * 2
-                                    nodeCoords = nodeCoords.copyOf(newSize)
-                                    nodeVisits = nodeVisits.copyOf(newSize)
-                                    nodeWins = nodeWins.copyOf(newSize)
-                                    nodeChildStart = nodeChildStart.copyOf(newSize)
-                                    nodeChildCount = nodeChildCount.copyOf(newSize)
+                                    // Expand (double) arrays if necessary
+                                    if (newIdx == nodeCoords.size){
+                                        val newSize = nodeCoords.size * 2
+                                        nodeCoords = nodeCoords.copyOf(newSize)
+                                        nodeVisits = nodeVisits.copyOf(newSize)
+                                        nodeWins = nodeWins.copyOf(newSize)
+                                        nodeChildStart = nodeChildStart.copyOf(newSize)
+                                        nodeChildCount =nodeChildCount.copyOf(newSize)
+                                    }
                                 }
                             }
+
+                            rowMerged = rowMerged shr GRID_BITS
+                            macroMask = macroMask shr 1
                         }
                     }
-
                     nodeChildCount[nodeIdx] = newIdx - nodeChildStart[nodeIdx]
                 }
 
@@ -111,7 +96,7 @@ class MCTSBotArray2(
                     if (nodeVisits[childIdx] == 0) countUnexpanded++
                 }
                 if (countUnexpanded > 0) {
-                    var remaining = rand.nextInt(countUnexpanded) // TOOD speed up
+                    var remaining = rand.fastRandBoundedInt(countUnexpanded)
                     for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
                         if (nodeVisits[childIdx] == 0) {
                             if (remaining == 0) {
