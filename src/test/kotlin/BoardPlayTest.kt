@@ -1,12 +1,15 @@
 package com.flaghacker.sttt
 
-import com.flaghacker.sttt.common.Board
+import com.flaghacker.sttt.GeneratePlaythroughs.generatePlaythroughs
+import com.flaghacker.sttt.GeneratePlaythroughs.playthroughsToJSON
+import common.Board
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import org.junit.jupiter.api.Test
 import java.io.InputStreamReader
+import java.io.PrintWriter
 import java.io.Writer
 import java.lang.Exception
 import java.lang.reflect.Type
@@ -30,11 +33,12 @@ class BoardPlayTest {
 	}
 
 	private fun checkPlaythrough(playthrough: Playthrough) {
-		val board = Board()
+		val board = Board(randomizeTie = false)
 
 		for (state in playthrough) {
-			if (state.move != null)
-				board.play(state.move.toByte())
+			if (state.move != (-1).toByte()) {
+				board.play(state.move)
+			}
 			assertBoardMatches(state.expected, board)
 		}
 	}
@@ -43,8 +47,7 @@ class BoardPlayTest {
 private fun loadPlaythroughs(): Sequence<Playthrough> = sequence {
 	val gson = Gson()
 
-	val input = javaClass.getResourceAsStream("/playthroughs.json.gzip")
-	//val input = javaClass.getResourceAsStream("C:\\Users\\henry\\IdeaProjects\\REMOVEME2\\src\\test\\kotlin\\playthroughs.json.gzip")
+	val input = javaClass.getResourceAsStream("/playthroughs.json.gz")
 
 	if (input == null) {
 		throw Exception("NULL")
@@ -68,11 +71,12 @@ object GeneratePlaythroughs {
 	fun generatePlaythroughs(): Sequence<Playthrough> {
 		val random = Random(0)
 		return generateSequence {
-			val board = Board()
+			val board = Board(randomizeTie = false)
 			sequence {
-				yield(State(null, board.toExpected()))
+				yield(State(-1, board.toExpected()))
 				while (!board.isDone) {
-					val move = board.randomAvailableMove(random)
+					val moves = board.availableMoves
+					val move = moves[random.nextInt(moves.size)]
 					board.play(move)
 					yield(State(move, board.toExpected()))
 				}

@@ -1,9 +1,9 @@
 package com.flaghacker.sttt
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Player
-import com.flaghacker.sttt.common.Player.*
-import com.flaghacker.sttt.common.toCoord
+import common.Board
+import common.Player
+import common.Player.*
+import common.toCoord
 import org.apache.commons.lang3.SerializationUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -11,6 +11,10 @@ import org.junit.jupiter.api.assertThrows
 import java.util.*
 import kotlin.math.abs
 
+// Truncate to 8 bit and sign extend
+private fun IntArray.fix() = map { it.fix() }.toIntArray()
+private fun List<Int>.fix() = toIntArray().fix()
+private fun Int.fix() = toByte().toInt()
 
 fun randomBoard(rand: Random, moveCount: Int): Board {
 	return playRandom(Board(), rand, moveCount)
@@ -35,25 +39,22 @@ private fun playedBoard(vararg moves: Int): Board {
 
 private fun playedBoard(player: Player, playerMoves: IntArray, enemyMoves: IntArray, lastMove: Int): Board {
 	val chars = CharArray(81) { coord ->
-		when (coord) {
+		when (coord.idxToCoord().toInt()) {
 			in playerMoves -> player.char
 			in enemyMoves -> player.other().char
 			else -> ' '
 		}
 	}
 
-	val lastMoveChar = chars[lastMove]
-	require(lastMoveChar != ' ') { "lastMove must be an actual move" }
-	chars[lastMove] = lastMoveChar.lowercaseChar()
+	val lastMoveConverted = lastMove.toByte().coordToIdx()
+	val lastMoveChar = chars[lastMoveConverted]
+	require(lastMoveChar != ' ') {
+		"lastMove must be an actual move"
+	}
+	chars[lastMoveConverted] = lastMoveChar.lowercaseChar()
 
 	return Board(String(chars))
 }
-
-private fun playedBoard(player: Player, moves: IntArray, lastMove: Int) =
-		playedBoard(player, moves, IntArray(0), lastMove)
-
-private fun playedBoard(player: Player, vararg moves: Int) =
-		playedBoard(player, moves, IntArray(0), moves.last())
 
 /**
  * These moves represent the following grid, won by neither player:
@@ -61,25 +62,25 @@ private fun playedBoard(player: Player, vararg moves: Int) =
  *   OXX
  *   XOO
  */
-private val TIE_P_MOVES = listOf(0, 1, 4, 5, 6)
-private val TIE_E_MOVES = listOf(2, 3, 7, 8)
+private val TIE_MOVES_A = listOf(1, 3, 4, 6, 8)
+private val TIE_MOVES_B = listOf(0, 2, 5, 7)
 
 private val COMPACT_STRING_PAIRS = listOf(
 		"                                                                                 " to intArrayOf(),
-		"                                                                          x      " to intArrayOf(74),
-		"                                  X                                   o          " to intArrayOf(34, 70),
-		"    x             O                            X                                 " to intArrayOf(47, 18, 4),
-		"                         X   OX                                       o          " to intArrayOf(30, 29, 25, 70),
-		"        OXO                                                     X               x" to intArrayOf(64, 10, 9, 8, 80),
-		"               O     X           o             O           X    X                " to intArrayOf(64, 15, 59, 47, 21, 33),
-		"Ox  O O  X                          X                 X                          " to intArrayOf(9, 4, 36, 6, 54, 0, 1),
-		" X           O         X     o           X   O       O                     X     " to intArrayOf(23, 45, 1, 13, 41, 53, 75, 29),
-		"       X   O             xX          X                             O   XO O      " to intArrayOf(71, 74, 26, 72, 7, 67, 37, 11, 25),
-		"     X  X                         O               O  XO           X  X     o   O " to intArrayOf(5, 50, 53, 79, 66, 34, 69, 54, 8, 75),
-		"      O   O      X                 O                  X  X   X       O  xX      O" to intArrayOf(61, 69, 54, 6, 57, 35, 73, 10, 17, 80, 72),
-		"                X         X             o                 X  O  OO   XXO      OX " to intArrayOf(69, 61, 70, 71, 79, 64, 16, 65, 26, 78, 58, 40),
-		"      X                         X  O            X  O         XO   O O  XOx     X " to intArrayOf(71, 72, 6, 62, 79, 66, 32, 51, 61, 68, 48, 35, 73),
-		"XO O    oX X           OO    X               X      X        X O    O            " to intArrayOf(11, 24, 61, 63, 0, 1, 9, 3, 29, 23, 52, 68, 45, 8)
+		"                                                                          x      " to intArrayOf(130),
+		"                                  X                                   o          " to intArrayOf(55, 119),
+		"    x             O                            X                                 " to intArrayOf(82, 32, 4),
+		"                         X   OX                                       o          " to intArrayOf(51, 50, 39, 119),
+		"        OXO                                                     X               x" to intArrayOf(113, 17, 16, 8, 136),
+		"               O     X           o             O           X    X                " to intArrayOf(113, 22, 101, 82, 35, 54),
+		"Ox  O O  X                          X                 X                          " to intArrayOf(16, 4, 64, 6, 96, 0, 1),
+		" X           O         X     o           X   O       O                     X     " to intArrayOf(37, 80, 1, 20, 69, 88, 131, 50),
+		"       X   O             xX          X                             O   XO O      " to intArrayOf(120, 130, 40, 128, 7, 116, 65, 18, 39),
+		"     X  X                         O               O  XO           X  X     o   O " to intArrayOf(5, 85, 88, 135, 115, 55, 118, 96, 8, 131),
+		"      O   O      X                 O                  X  X   X       O  xX      O" to intArrayOf(103, 118, 96, 6, 99, 56, 129, 17, 24, 136, 128),
+		"                X         X             o                 X  O  OO   XXO      OX " to intArrayOf(118, 103, 119, 120, 135, 113, 23, 114, 40, 134, 100, 68),
+		"      X                         X  O            X  O         XO   O O  XOx     X " to intArrayOf(120, 128, 6, 104, 135, 115, 53, 86, 103, 117, 83, 56, 129),
+		"XO O    oX X           OO    X               X      X        X O    O            " to intArrayOf(18, 38, 103, 112, 0, 1, 16, 3, 50, 37, 87, 117, 80, 8)
 )
 
 class BoardTest {
@@ -94,10 +95,8 @@ class BoardTest {
 	fun testPlayRemembered() {
 		val move = toCoord(4, 4)
 		val board = Board()
-		val player = board.nextPlayer
-
 		board.play(move)
-		assertEquals(player, board.tile(move))
+		assertEquals(PLAYER, board.tile(move))
 	}
 
 	@Test
@@ -108,86 +107,121 @@ class BoardTest {
 
 	@TestPlayersAndMacros
 	fun testManhattanWin(player: Player, om: Int) {
+		val otherOm = (om + 1) % 8
 		for (i in 0..2) {
-			assertEquals(player, playedBoard(player, 0 + 3 * i + 9 * om, 1 + 3 * i + 9 * om, 2 + 3 * i + 9 * om).macro(om.toByte())) {
-				"horizontal $i in macro $om"
-			}
-			assertEquals(player, playedBoard(player, 0 + i + 9 * om, 3 + i + 9 * om, 6 + i + 9 * om).macro(om.toByte())) {
-				"vertical $i in macro $om"
-			}
+			assertEquals(player, playedBoard(player,
+				intArrayOf(0 + 3 * i + (om shl 4), 1 + 3 * i + (om shl 4), 2 + 3 * i + (om shl 4)).fix(),
+				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
+				(if (player == PLAYER) (otherOm shl 4) else (3 * i + (om shl 4))).fix()
+			).macro(om.toByte())) { "diagonal / in macro $om" }
+			assertEquals(player, playedBoard(player,
+				intArrayOf(0 + i + (om shl 4), 3 + i + (om shl 4), 6 + i + (om shl 4)).fix(),
+				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
+				(if (player == PLAYER) (otherOm shl 4) else (i + (om shl 4))).fix()
+			).macro(om.toByte())) { "diagonal \\ in macro $om" }
 		}
 	}
 
 	@TestPlayersAndMacros
 	fun testDiagonalWin(player: Player, om: Int) {
-		assertEquals(player, playedBoard(player, 0 + 9 * om, 4 + 9 * om, 8 + 9 * om).macro(om.toByte())) {
-			"diagonal / in macro $om"
-		}
-		assertEquals(player, playedBoard(player, 2 + 9 * om, 4 + 9 * om, 6 + 9 * om).macro(om.toByte())) {
-			"diagonal \\ in macro $om"
-		}
+		val otherOm = (om + 1) % 8
+		assertEquals(player, playedBoard(player,
+				intArrayOf(0 + (om shl 4), 4 + (om shl 4), 8 + (om shl 4)).fix(),
+				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
+			(if (player == PLAYER) (otherOm shl 4) else (om shl 4)).fix()
+		).macro(om.toByte())) { "diagonal / in macro $om" }
+		assertEquals(player, playedBoard(player,
+			intArrayOf(2 + (om shl 4), 4 + (om shl 4), 6 + (om shl 4)).fix(),
+			intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
+			(if (player == PLAYER) (otherOm shl 4) else (2 + (om shl 4))).fix()
+		).macro(om.toByte())) { "diagonal \\ in macro $om" }
 	}
 
-	@TestPlayers
-	fun testFullWin(player: Player) {
-		val board = playedBoard(player, 6, 7, 8, 15, 16, 17, 24, 25)
-		board.play(65)
-		board.play(26)
-		assertEquals(player, board.wonBy) {
-			"macro top line"
-		}
+	@Test
+	fun testFullWinX() {
+		val board = playedBoard(
+			PLAYER,
+			intArrayOf(6, 7, 8, 6 + 16, 7 + 16, 8 + 16, 6 + 32, 7 + 32),
+			intArrayOf(0, 1, 2, 0 + 16, 1 + 16, 2 + 16, 0 + 32, 1 + 32),
+			2
+		)
+		board.play((8 + 32).toByte())
+		assertEquals(PLAYER, board.wonBy) {"macro top line"}
+	}
+
+	@Test
+	fun testFullWinO() {
+		val board = playedBoard(
+			ENEMY,
+			intArrayOf(6, 7, 8, 6 + 16, 7 + 16, 8 + 16, 6 + 32, 7 + 32),
+			intArrayOf(0, 1, 2, 0 + 16, 1 + 16, 2 + 16, 0 + 32, 1 + 32, 3 /* extra move to balance */),
+			2
+		)
+		board.play((8 + 32).toByte())
+		assertEquals(ENEMY, board.wonBy) {"macro top line"}
 	}
 
 	@TestPlayersAndMacros
 	fun testFullMacro(player: Player, om: Int) {
-		//fill the macro and direct the next move to that macrp
-		val moves = ((9 * om) until (9 * om + 9)).toArray()
-		val lastMove = om * 9 + om
-		val board = playedBoard(player, moves, lastMove)
+		//fill the macro and direct the next move to that macro
+		val otherOm = (om + 1) % 8
+		val movesFullMacro = (((om shl 4)) until ((om shl 4) + 9)).toArray().fix()
+		val movesOther = (0..8).map {
+			if(it != om) ((it shl 4) + om) else ((otherOm shl 4) + otherOm)
+		}.toIntArray().fix()
 
-		assertEquals(81 - 9, board.availableMoves.size) { "freeplay" }
+		val board = playedBoard(
+			player, movesFullMacro, movesOther,
+			(if (player == PLAYER) ((otherOm shl 4) + om) else ((om shl 4) + om)).fix()
+		)
+
+		assertEquals(81 - 9 - 9, board.availableMoves.size) {
+			"freeplay"
+		}
 	}
 
 	@TestPlayersAndMacros
 	fun testFullMixedMacro(player: Player, om: Int) {
-		val lastMove = om * 9 + om
+		val otherOm = (om + 1) % 8
+		val lastMove = ((otherOm shl 4) + om).fix()
+		val movesA = TIE_MOVES_A.map { ((om shl 4) + it)}.fix()
+		val movesB = (TIE_MOVES_B.map { ((om shl 4) + it) } + lastMove).fix()
 		val board = playedBoard(
-				player,
-				TIE_P_MOVES.map { om * 9 + it }.toIntArray(),
-				TIE_E_MOVES.map { om * 9 + it }.toIntArray(),
-				lastMove
+			player, if (player == PLAYER) movesA else movesB, if (player == PLAYER) movesB else movesA, lastMove
 		)
 
-		assertEquals(81 - 9, board.availableMoves.size) { "freeplay" }
+		assertEquals(81 - 10, board.availableMoves.size) { "freeplay" }
 	}
 
-	@TestPlayers
-	fun testNeutralWin(player: Player) {
+	@Test
+	fun testNeutralWin() {
 		val board = playedBoard(
-				player,
-				(0 until 9).flatMap { om -> TIE_P_MOVES.map { om * 9 + it } }.toIntArray(),
-				(0 until 9).flatMap { om -> TIE_E_MOVES.map { om * 9 + it } }.toIntArray(),
-				0
+				PLAYER,
+				(0 until 9).flatMap { om -> (if (om%2 == 0) TIE_MOVES_A else TIE_MOVES_B)
+					.map { (om shl 4) + it } }.fix(),
+				(0 until 9).flatMap { om -> (if (om%2 == 0) TIE_MOVES_B else TIE_MOVES_A)
+					.map { (om shl 4) + it } }.fix(),
+				1
 		)
 
-		assertEquals(NEUTRAL, board.wonBy)
+		//assertEquals(NEUTRAL, board.wonBy) // disabled because random winner is chosen as tiebreaker
 		assertTrue(board.isDone)
+		for (i in 0..<9) assertTrue(board.macro(0) == NEUTRAL)
 	}
 
-	@Test//Players
-	//player: Player
+	@Test
 	fun testWinFullBoard() {
 		val player = PLAYER
-		//fill macros 0-5 without winning anything
-		val pFill = (0 until 6).flatMap { om -> TIE_P_MOVES.map { om * 9 + it } }
-		val eFill = (0 until 6).flatMap { om -> TIE_E_MOVES.map { om * 9 + it } }
+		//fill macros 0..5 without winning anything
+		val pFill = (0 until 6).flatMap { om -> TIE_MOVES_B.map { (om shl 4) + it } }
+		val eFill = (0 until 6).flatMap { om -> TIE_MOVES_A.map { (om shl 4) + it } }
 
-		//almost fill y = 6
+		//almost fill row y = 6
+		val eNotWin = (0 until 2).map { x -> toCoord(x, 7).toInt() }
 		val pWin = (0 until 8).map { x -> toCoord(x, 6).toInt() }
-		//point to bottom right corner
-		val lastMove = 8
 
-		val board = playedBoard(player, (pFill + pWin).toIntArray(), eFill.toIntArray(), lastMove)
+		val lastMove = 8 // point to bottom right corner (part of TIE_MOVES_A mask)
+		val board = playedBoard(player, (pFill + pWin).toIntArray(), (eFill + eNotWin).toIntArray(), lastMove)
 
 		//win the board
 		board.play(toCoord(8, 6))
@@ -204,14 +238,15 @@ class BoardTest {
 		repeat(40) {
 			val counts = IntArray(81)
 			repeat(testCount) {
-				val move = board.randomAvailableMove(random).toInt()
+				val moves = board.availableMoves
+				val move = moves[random.nextInt(moves.size)].coordToIdx()
 				counts[move]++
 			}
 
 			val moves = board.availableMoves
 
-			assertTrue(counts.withIndex().all { (i, c) -> c == 0 || i.toByte() in moves }) { "should only return available moves" }
-			assertTrue(moves.all { i -> counts[i.toInt()] > 0 }) { "should return every available move" }
+			assertTrue(counts.withIndex().all { (i, c) -> c == 0 || i.idxToCoord() in moves }) { "should only return available moves" }
+			assertTrue(moves.all { i -> counts[i.coordToIdx()] > 0 }) { "should return every available move" }
 
 			val maxDev = counts
 					.filter { it != 0 }
@@ -219,21 +254,7 @@ class BoardTest {
 					.max()
 			assertTrue(maxDev < 0.05) { "should be uniformly distributed" }
 
-			board.play(board.randomAvailableMove(random))
-		}
-	}
-
-	@Test
-	fun availableMovesVariants() {
-		val random = Random(12)
-		val board = Board()
-
-		while (!board.isDone) {
-			val t1 = board.availableMoves
-			val t2 = board.availableMoves { it }.toByteArray()
-
-			assertArrayEquals(t1, t2)
-			board.play(board.randomAvailableMove(random))
+			board.play(moves[random.nextInt(moves.size)])
 		}
 	}
 
