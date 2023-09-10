@@ -89,7 +89,7 @@ class MCTSBot(
                 /** Selection: select best node based on win and visit rates **/
                 var selected = nodeChildStart[nodeIdx]
                 var bestValue = Double.NEGATIVE_INFINITY
-                for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){ // TODO move to INLINE function
+                for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
                     val childWins = nodeWins[childIdx].toDouble()
                     val childVisits = nodeVisits[childIdx].toDouble()
                     val visits = nodeVisits[nodeIdx].toDouble()

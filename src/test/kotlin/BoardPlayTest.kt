@@ -33,7 +33,7 @@ class BoardPlayTest {
 	}
 
 	private fun checkPlaythrough(playthrough: Playthrough) {
-		val board = Board(randomizeTie = false)
+		val board = Board()
 
 		for (state in playthrough) {
 			if (state.move != (-1).toByte()) {
@@ -71,7 +71,7 @@ object GeneratePlaythroughs {
 	fun generatePlaythroughs(): Sequence<Playthrough> {
 		val random = Random(0)
 		return generateSequence {
-			val board = Board(randomizeTie = false)
+			val board = Board()
 			sequence {
 				yield(State(-1, board.toExpected()))
 				while (!board.isDone) {

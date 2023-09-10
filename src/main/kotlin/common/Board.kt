@@ -45,7 +45,6 @@ class Board : Serializable {
     internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
     private var mainGrid: Int        // for game, won macros per player (2 x 9b)
     internal var openMacroMask: Int // available macros 9b
-    internal val randomizeTie: Boolean
 
     // Exposed variables
     var nextPlayX: Boolean; internal set
@@ -54,17 +53,18 @@ class Board : Serializable {
     // Exposed derived variables
     val isDone inline get() = openMacroMask == 0
     val availableMoves inline get() = getAvailableMoves<Byte> { it }
-    val wonBy: Player get() = if (!isDone) Player.NEUTRAL else if (nextPlayX) Player.PLAYER else Player.ENEMY
+    val wonBy: Player get() = if (!isDone || tied) Player.NEUTRAL else if (nextPlayX) Player.PLAYER else Player.ENEMY
+    private var tied: Boolean
 
     /** Constructs an empty [Board]. */
-    constructor(randomizeTie: Boolean = true) {
+    constructor() {
         this.random = RandomGenerator.of("Xoroshiro128PlusPlus")
         this.grids = IntArray(9)
         this.mainGrid = 0
         this.openMacroMask = GRID_MASK
         this.nextPlayX = true
         this.lastMove = -1
-        this.randomizeTie = randomizeTie
+        this.tied = false
     }
 
     /** Returns a copy of the current board. */
@@ -77,7 +77,7 @@ class Board : Serializable {
         this.nextPlayX = board.nextPlayX
         this.lastMove = board.lastMove
         this.random = board.random
-        this.randomizeTie = board.randomizeTie
+        this.tied = board.tied
     }
 
     /**
@@ -110,7 +110,7 @@ class Board : Serializable {
         this.grids = IntArray(9)
         this.mainGrid = 0
         this.nextPlayX = true
-        this.randomizeTie = true
+        this.tied = false
 
         // Create coord list
         val xMoves = board.uppercase().mapIndexed { idx, c -> if (c == Player.PLAYER.char) coordMap[idx] else null }
@@ -141,6 +141,7 @@ class Board : Serializable {
         openMacroMask = board.openMacroMask
         nextPlayX = board.nextPlayX
         lastMove = board.lastMove
+        tied = board.tied
     }
 
     /** Play random moves until the board is finished, return winner
@@ -252,7 +253,10 @@ class Board : Serializable {
             openMacroMask = openMacroMask xor omShift
         }
 
-        nextPlayX = if (randomizeTie and (openMacroMask == 0)) random.nextBoolean() else !nextPlayX
+        if (openMacroMask == 0){
+            tied = true
+            nextPlayX = random.nextBoolean() // random hidden winner on tie
+        } else nextPlayX = !nextPlayX
         return macroWin
     }
 

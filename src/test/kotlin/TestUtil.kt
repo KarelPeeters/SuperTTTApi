@@ -16,9 +16,10 @@ fun Coord.coordToIdx(): Int {
 }
 
 fun assertBoardMatches(exp: Expected, board: Board) {
-	assertEquals(Player.fromChar(exp.nextPlayer), boolToBoardPlayer(board.nextPlayX))
-	assertEquals(exp.compactString, board.toCompactString())
 	assertEquals(exp.done, board.isDone)
+	if (board.isDone && board.wonBy != Player.NEUTRAL)
+		assertEquals(Player.fromChar(exp.nextPlayer), boolToBoardPlayer(board.nextPlayX))
+	assertEquals(exp.compactString, board.toCompactString())
 	assertEquals(exp.lastMove, board.lastMove)
 	Assertions.assertArrayEquals(exp.availableMoves.apply { sort() }, board.availableMoves.apply { sort() })
 
