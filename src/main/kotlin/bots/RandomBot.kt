@@ -1,15 +1,14 @@
-package com.flaghacker.sttt.bots
+package bots
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Coord
+import common.Board
+import common.Bot
+import common.Coord
 import java.util.*
 
 class RandomBot(private val random: Random = Random()) : Bot {
-	override fun move(board: Board): Coord? {
+	override fun move(board: Board): Coord {
 		val moves = board.availableMoves
-		if (moves.isEmpty())
-			return null
+		if (moves.isEmpty()) throw Exception("No moves remain")
 		return moves[random.nextInt(moves.size)]
 	}
 

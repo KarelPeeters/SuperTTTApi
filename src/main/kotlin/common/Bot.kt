@@ -1,7 +1,7 @@
-package com.flaghacker.sttt.common
+package common
 
 import java.io.Serializable
 
 interface Bot : Serializable {
-	fun move(board: Board): Coord?
+	fun move(board: Board): Coord
 }

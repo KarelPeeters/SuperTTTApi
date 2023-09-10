@@ -1,112 +1,132 @@
-package com.flaghacker.sttt.bots
+package bots
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Coord
-import com.flaghacker.sttt.common.Player
-import java.util.*
+import common.Board
+import common.Bot
+import common.*
+import java.util.random.RandomGenerator
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 class MCTSBot(
-		private val rand: Random = Random(),
-		private val maxIterations: Int,
-		private val callback: ((Double) -> Unit)? = null
+    private val maxIterations: Int,
+    private val rand: RandomGenerator = RandomGenerator.of("Xoroshiro128PlusPlus")
 ) : Bot {
-	override fun toString() = "MCTSBot"
+    override fun toString() = "MCTSBotArrayModified"
 
-	private class Node(@JvmField val coord: Coord) {
-		@JvmField
-		var children: Array<Node>? = null
-		@JvmField
-		var visits = 0
-		@JvmField
-		var wins = 0
+    private val INIT_SIZE = 1024
 
-		fun print(prefix: String = "", isTail: Boolean = true, depth: Int) {
-			if (depth == 0 || children == null) return
-			println(prefix + (if (isTail) "└── " else "├── ") + "$coord:$wins/$visits")
-			for (i in 0 until children!!.size - 1) children!![i].print(prefix + if (isTail) "    " else "│   ", false, depth - 1)
-			if (children!!.isNotEmpty()) children!![children!!.size - 1].print(prefix + if (isTail) "    " else "│   ", true, depth - 1)
-		}
-	}
+    override fun move(board: Board): Coord {
 
-	override fun move(board: Board): Coord? {
-		callback?.invoke(0.0)
-		var lastIterations = 0
+        // Flattened tree structure
+		var nodeCoords = ByteArray(INIT_SIZE)       //coord[N]
+		var nodeVisits = IntArray(INIT_SIZE)        //visits[N]
+		var nodeWins = IntArray(INIT_SIZE)          //wins[N]
+		var nodeChildStart = IntArray(INIT_SIZE)    //indexFirstChild[N]
+		var nodeChildCount = IntArray(INIT_SIZE)    //nbChildren[N]
 
-		val visited = LinkedList<Node>()
-		val head = Node(-1)
+        // Create (childless) head
+        nodeCoords[0] = -1
+        nodeVisits[0] = 0
+        nodeWins[0] = 0
 
-		while (head.visits < maxIterations) {
-			val iterations = head.visits
-			if (iterations - lastIterations > maxIterations / 100) {
-				callback?.invoke(iterations.toDouble() / maxIterations)
-				lastIterations = iterations
-			}
+        // Bookkeeping vars
+        var newIdx = 1
+        var touchedCount: Int
+        val touched = IntArray(81) // indices of visited nodes for iteration
+        val nodeBoard = board.copy()
 
-			var cNode = head
-			val cBoard = board.copy()
-			visited.clear()
-			visited.add(cNode)
+        while (nodeVisits[0] < maxIterations) {
+            var nodeIdx = 0
+            nodeBoard.loadInstance(board)
+            touchedCount = 0
+            touched[touchedCount++] = nodeIdx
 
-			while (!cBoard.isDone) {
-				//Init children
-				if (cNode.children == null) {
-					cNode.children = cBoard.availableMoves { Node(it) }
-				}
+            while (!nodeBoard.isDone) {
+                /** Init children **/
+                if (nodeChildStart[nodeIdx] == 0) {
+                    // Expand (double) arrays if less than 128 entries remain
+                    if (nodeCoords.size - newIdx < 128){
+                        val newSize = nodeCoords.size * 2
+                        nodeCoords = nodeCoords.copyOf(newSize)
+                        nodeVisits = nodeVisits.copyOf(newSize)
+                        nodeWins = nodeWins.copyOf(newSize)
+                        nodeChildStart = nodeChildStart.copyOf(newSize)
+                        nodeChildCount =nodeChildCount.copyOf(newSize)
+                    }
 
-				//Exploration
-				var count = cNode.children!!.count { it.visits==0 }
-				if (count>0){
-					count = rand.nextInt(count)
-					for (node in cNode.children!!){
-						if (node.visits==0){
-							if (count==0){
-								cNode=node
-								visited.add(cNode)
-								cBoard.play(cNode.coord)
-								break
-							}
-							count--
-						}
-					}
-					break
-				}
+                    // Create children
+                    nodeChildStart[nodeIdx] = newIdx
+                    nodeBoard.forAvailableMoves { coord ->
+                        nodeCoords[newIdx] = coord
+                        nodeVisits[newIdx] = 0
+                        nodeWins[newIdx] = 0
+                        newIdx++
+                    }
+                    nodeChildCount[nodeIdx] = newIdx - nodeChildStart[nodeIdx]
+                }
 
-				//Selection
-				var selected = cNode.children?.first()!!
-				var bestValue = Double.NEGATIVE_INFINITY
-				for (child in cNode.children!!) {
-					val uctValue = (child.wins.toDouble() / child.visits.toDouble()) +
-							sqrt(2.0 * ln(cNode.visits.toDouble()) / (child.visits.toDouble()))
-					if (uctValue > bestValue) {
-						selected = child
-						bestValue = uctValue
-					}
-				}
-				cNode = selected
-				cBoard.play(cNode.coord)
-				visited.add(cNode)
-			}
+                /** Exploration (visit unvisited children, if any) **/
+                var countUnexpanded = 0
+                for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
+                    if (nodeVisits[childIdx] == 0) countUnexpanded++
+                }
+                if (countUnexpanded > 0) {
+                    var remaining = rand.fastRandBoundedInt(countUnexpanded)
+                    for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
+                        if (nodeVisits[childIdx] == 0) {
+                            if (remaining == 0) {
+                                nodeIdx = childIdx
+                                nodeBoard.play(nodeCoords[nodeIdx])
+                                touched[touchedCount++] = nodeIdx
+                                break
+                            }
+                            remaining--
+                        }
+                    }
+                    break
+                }
 
-			//Simulation
-			while (!cBoard.isDone) {
-				cBoard.play(cBoard.randomAvailableMove(rand))
-			}
+                /** Selection: select best node based on win and visit rates **/
+                var selected = nodeChildStart[nodeIdx]
+                var bestValue = Double.NEGATIVE_INFINITY
+                for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){ // TODO move to INLINE function
+                    val childWins = nodeWins[childIdx].toDouble()
+                    val childVisits = nodeVisits[childIdx].toDouble()
+                    val visits = nodeVisits[nodeIdx].toDouble()
 
-			//Update
-			var won = if (cBoard.wonBy != Player.NEUTRAL) cBoard.wonBy == board.nextPlayer else rand.nextBoolean()
-			for (node in visited) {
-				won = !won
-				node.visits++
-				if (won) node.wins += 1
-			}
-		}
+                    val uctValue = (childWins / childVisits) + sqrt(2.0 * ln(visits) / childVisits) / 3
+                    if (uctValue > bestValue) {
+                        selected = childIdx
+                        bestValue = uctValue
+                    }
+                }
+                nodeIdx = selected
+                nodeBoard.play(nodeCoords[nodeIdx])
+                touched[touchedCount++] = nodeIdx
+            }
 
-//		println(head.visits)
+            /** Simulation **/
+            var won = if (nodeBoard.isDone) nodeBoard.nextPlayX == board.nextPlayX
+            else nodeBoard.randomPlayWinner() == board.nextPlayX
 
-//		callback?.invoke(1.0)
-		return head.children?.maxBy { it.visits }?.coord ?: board.randomAvailableMove(rand)
-	}
+            /** Update **/
+            for (i in 0..<touchedCount) {
+                val touchedIdx = touched[i]
+                won = !won
+                nodeVisits[touchedIdx] += 1
+                if (won) nodeWins[touchedIdx] += 1
+            }
+        }
+
+        var bestVisits = 0
+        var bestMove: Byte = nodeCoords[nodeChildStart[0]]
+        for (childIdx in nodeChildStart[0]..<nodeChildStart[0] + nodeChildCount[0]) {
+            if (nodeVisits[childIdx] > bestVisits){
+                bestMove   = nodeCoords[childIdx]
+                bestVisits = nodeVisits[childIdx]
+            }
+        }
+
+        return bestMove
+    }
 }

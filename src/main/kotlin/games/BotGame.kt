@@ -1,8 +1,8 @@
-package com.flaghacker.sttt.games
+package games
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Player
+import common.Board
+import common.Bot
+import common.Player
 import java.util.*
 
 class BotGame(private val p1: Bot, private val p2: Bot) {
@@ -43,7 +43,7 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 				printDetail("Round #" + nextRound++)
 
 				val pMove = p1.move(board.copy())
-				printDetail("p1 move: " + pMove!!)
+				printDetail("p1 move: " + pMove)
 				board.play(pMove)
 
 				printDetail(board.toString())
@@ -52,13 +52,13 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 					continue
 
 				val rMove = p2.move(board.copy())
-				printDetail("p2 move: " + rMove!!)
+				printDetail("p2 move: " + rMove)
 				board.play(rMove)
 
 				printDetail(board.toString())
 			}
 
-			val wonBy = if (!swapped) board.wonBy else board.wonBy?.otherWithNeutral()
+			val wonBy = if (!swapped) board.wonBy else board.wonBy.otherWithNeutral()
 
 			printDetail("done, won by: ${board.wonBy} swapped: $swapped")
 			results[if (wonBy == Player.PLAYER) 0 else if (wonBy == Player.ENEMY) 2 else 1]++

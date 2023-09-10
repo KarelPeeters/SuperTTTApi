@@ -1,4 +1,4 @@
-package com.flaghacker.sttt.common
+package common
 
 enum class Player(val char: Char) {
 	PLAYER('X'),
@@ -12,9 +12,14 @@ enum class Player(val char: Char) {
 		else -> throw IllegalArgumentException("player should be one of [PLAYER, ENEMY]; was $this")
 	}
 
+	fun bool(): Boolean {
+		if (this == NEUTRAL) throw IllegalArgumentException("Function not allowed for neutral")
+		return this == PLAYER
+	}
+
 	companion object {
-		fun legalChar(char: Char) = values().any { it.char == char }
-		fun fromChar(char: Char) = values().find { it.char == char }
+		fun legalChar(char: Char) = entries.any { it.char == char }
+		fun fromChar(char: Char) = entries.find { it.char == char }
 				?: throw IllegalArgumentException("$char is not a valid Player")
 	}
 }

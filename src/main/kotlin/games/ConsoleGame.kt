@@ -1,8 +1,8 @@
-package com.flaghacker.sttt.games
+package games
 
-import com.flaghacker.sttt.common.Board
-import com.flaghacker.sttt.common.Bot
-import com.flaghacker.sttt.common.Coord
+import common.Board
+import common.Bot
+import common.Coord
 import java.util.*
 
 class ConsoleGame(private val bot: Bot) {
@@ -76,7 +76,7 @@ class ConsoleGame(private val bot: Bot) {
 
 				val macros = current.availableMoves.map { it / 9 }
 				return if (macros.all { it == macros.first() })
-					(macros.first() * 9 + os).toByte()
+					((macros.first() shl 4) + os).toByte()
 				else {
 					System.err.println("you are in freemove, please use \"play <om> <os>\"")
 					null

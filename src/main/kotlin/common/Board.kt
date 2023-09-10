@@ -1,351 +1,344 @@
-@file:Suppress("NOTHING_TO_INLINE")
-
-package com.flaghacker.sttt.common
+package common
 
 import java.io.Serializable
 import java.util.*
+import java.util.random.RandomGenerator
 
-typealias Coord = Byte
+fun toCoord(x: Int, y: Int) = ((((x / 3) + (y / 3) * 3) shl 4) + ((x % 3) + (y % 3) * 3)).toByte()
 
-fun toCoord(x: Int, y: Int) = (((x / 3) + (y / 3) * 3) * 9 + ((x % 3) + (y % 3) * 3)).toByte()
-fun Int.toPair() = toByte().toPair()
-fun Coord.toPair(): Pair<Int, Int> {
-	val om = this / 9
-	val os = this % 9
-	return Pair((om % 3) * 3 + (os % 3), (om / 3) * 3 + (os / 3))
-}
-
-private const val FULL_GRID = 0b111111111
-
-private val LINE_MASKS = intArrayOf(
-		0b000_000_111,
-		0b000_111_000,
-		0b111_000_000,
-		0b001_001_001,
-		0b010_010_010,
-		0b100_100_100,
-		0b100_010_001,
-		0b001_010_100
+internal const val GRID_MASK = 0b111111111
+internal const val GRID_BITS = 9
+private val WIN_GRIDS = intArrayOf(
+    0b000_000_111,
+    0b000_111_000,
+    0b111_000_000,
+    0b001_001_001,
+    0b010_010_010,
+    0b100_100_100,
+    0b100_010_001,
+    0b001_010_100
 )
 
-/**
- * Whether `grid` is won:
- * `(WIN_GRID[grid / 32] >> (grid % 32)) & 1 != 0`
- */
-private val WIN_GRID = IntArray(16) {
-	var res = 0
-	for (i in 0 until 32) {
-		val grid = it * 32 + i
-		if (LINE_MASKS.any { line -> grid.isMaskSet(line) })
-			res = res or (1 shl i)
-	}
-	res
+/** Lookup table containing whether a 9b tile grid is won
+ * 2**9 possible combinations => 16 (=512/32) integers
+ *
+ * Usage: `(WIN_GRID[grid/32] >> (grid%32)) & 1 == 1`
+ * **/
+private val WIN_GRID_LUT = IntArray(16) {
+    var res = 0
+    for (i in 0 until 32) {
+        val grid = it * 32 + i
+        if (WIN_GRIDS.any { winGrid -> (grid and winGrid) == winGrid })
+            res = res or (1 shl i)
+    }
+    res
 }
 
+typealias Coord = Byte // 4 top bits contain macro, 4 bottom bits contain tile
+
+@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 class Board : Serializable {
-	/**
-	 * Each element represents two grid grids (one for player and one for enemy)
-	 * first 9 macro: grids[om]
-	 * last 1 main: grids[9]
-	 *
-	 *
-	 * First 9 bits contain the player data, second 9 bits contain the enemy data
-	 * Player grid: grid[om] and FULL_GRID
-	 * Enemy grid: grid[om] shr 9
-	 *
-	 * Format: 0bEEEEEEEEEPPPPPPPPP with P=player E=enemy
-	 * Tile: (grid >> os + 9*p) & 1 (p=0 for player p=1 for enemy)
-	 */
-	private var grids: IntArray
-	private var mainGrid: Int
+    @Transient
+    private var random: RandomGenerator
 
-	/** playable macros for the next move, each set macro is guaranteed to have at least one free tile */
-	private var macroMask: Int
-	/** macros that can be played in , ie they aren't full or won */
-	private var openMacroMask: Int
+    // Unexposed variables
+    internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
+    private var mainGrid: Int        // for game, won macros per player (2 x 9b)
+    internal var openMacroMask: Int // available macros 9b
+    internal val randomizeTie: Boolean
 
-	var lastMove: Coord?; private set
-	var nextPlayer: Player; private set
-	/** null: no one has won, NEUTRAL: tie */
-	var wonBy: Player?; private set
+    // Exposed variables
+    var nextPlayX: Boolean; internal set
+    var lastMove: Coord; internal set // default -1
 
-	val availableMoves get() = availableMoves()
-	val isDone get() = wonBy != null
+    // Exposed derived variables
+    val isDone inline get() = openMacroMask == 0
+    val availableMoves inline get() = getAvailableMoves<Byte> { it }
+    val wonBy: Player get() = if (!isDone) Player.NEUTRAL else if (nextPlayX) Player.PLAYER else Player.ENEMY
 
-	/** Constructs an empty [Board]. */
-	constructor() {
-		grids = IntArray(9)
-		mainGrid = 0
-		macroMask = FULL_GRID
-		openMacroMask = FULL_GRID
-		nextPlayer = Player.PLAYER
-		lastMove = null
-		wonBy = null
-	}
+    /** Constructs an empty [Board]. */
+    constructor(randomizeTie: Boolean = true) {
+        this.random = RandomGenerator.of("Xoroshiro128PlusPlus")
+        this.grids = IntArray(9)
+        this.mainGrid = 0
+        this.openMacroMask = GRID_MASK
+        this.nextPlayX = true
+        this.lastMove = -1
+        this.randomizeTie = randomizeTie
+    }
 
-	/**
-	 * Constructs a Board with a given state. Macro and main wins are calculated automatically.
-	 * @param board 81 Char String containing the board. This string can be generated with toCompactString().
-	 * */
-	constructor(board: String) {
-		if (board.length != 81 || board.uppercase().any { !Player.legalChar(it) } || board.count { it.isLowerCase() } > 1)
-			throw IllegalArgumentException("Illegal board string; $board")
+    /** Returns a copy of the current board. */
+    fun copy() = Board(this)
 
-		val lastMove = board.indexOfFirst { it.isLowerCase() }
-		if (lastMove == -1 && board.any { it != Player.NEUTRAL.char })
-			throw IllegalArgumentException("No lastMove for a non-empty board; $board")
-		if (lastMove != -1 && (lastMove !in 0 until 81 || board[lastMove] == Player.NEUTRAL.char))
-			throw IllegalArgumentException("Illegal lastMove ($lastMove) for board; $board")
+    private constructor(board: Board) {
+        this.grids = board.grids.copyOf()
+        this.mainGrid = board.mainGrid
+        this.openMacroMask = board.openMacroMask
+        this.nextPlayX = board.nextPlayX
+        this.lastMove = board.lastMove
+        this.random = board.random
+        this.randomizeTie = board.randomizeTie
+    }
 
-		//val playCountDiff = board.count { it == Player.PLAYER.char } - board.count { it == Player.ENEMY.char }
-		//if (playCountDiff != 0 && playCountDiff != 1)
-		// throw IllegalArgumentException("The difference between Player and Enemy moves is too big; $playCountDiff")
+    /**
+     * Constructs a Board with a given state. Macro and main wins are calculated automatically.
+     * @param board 81 Char String containing the board. This string can be generated with toCompactString().
+     * */
+    constructor(board: String) {
+        val coordMap = (0..<81).map { it.toCoordsNew() }
 
-		this.openMacroMask = FULL_GRID
-		this.grids = IntArray(9)
-		this.mainGrid = 0
-		this.wonBy = null
+        // Input checking
+        if (board.length != 81 || board.uppercase()
+                .any { !Player.legalChar(it) } || board.count { it.isLowerCase() } > 1
+        ) throw IllegalArgumentException("Illegal board string; $board")
 
-		for (i in 0 until 81) {
-			val owner = Player.fromChar(board[i].uppercaseChar())
-			if (owner != Player.NEUTRAL)
-				setTileAndUpdate(owner.ordinal, i / 9, i % 9)
-		}
+        // Extract last move + input checking
+        val lastMoveIdx = board.indexOfFirst { it.isLowerCase() } // returns -1 if not found
+        var lastMove = (-1).toByte()
+        if (lastMoveIdx != -1){
+            lastMove = coordMap[lastMoveIdx]
+            if (lastMoveIdx !in 0 until 81 || board[lastMoveIdx] == Player.NEUTRAL.char) {
+                throw IllegalArgumentException("Illegal lastMoveIdx ($lastMoveIdx) for board; $board")
+            }
+        } else if (board.any { it != Player.NEUTRAL.char }){
+            throw IllegalArgumentException("No lastMove for a non-empty board; $board")
+        }
 
-		this.lastMove = if (lastMove == -1) null else lastMove.toByte()
-		this.nextPlayer = if (lastMove == -1) Player.PLAYER else Player.fromChar(board[lastMove].uppercaseChar()).other()
-		this.macroMask = if (lastMove == -1) openMacroMask else calcMacroMask(lastMove % 9)
-	}
+        // Set the default values
+        this.random = RandomGenerator.of("Xoroshiro128PlusPlus")
+        this.openMacroMask = GRID_MASK
+        this.grids = IntArray(9)
+        this.mainGrid = 0
+        this.nextPlayX = true
+        this.randomizeTie = true
 
-	/** Returns a copy of the current board. */
-	fun copy() = Board(this)
+        // Create coord list
+        val xMoves = board.uppercase().mapIndexed { idx, c -> if (c == Player.PLAYER.char) coordMap[idx] else null }
+            .filterNotNull()
+        val oMoves = board.uppercase().mapIndexed { idx, c -> if (c == Player.ENEMY.char) coordMap[idx] else null }
+            .filterNotNull()
+        if ((xMoves.size - oMoves.size) !in 0..1)
+            throw IllegalArgumentException("X should have 0-1 more moves than O; actual=${xMoves.size - oMoves.size}")
 
-	/** Copy constructor */
-	private constructor(board: Board) {
-		grids = board.grids.copyOf()
-		mainGrid = board.mainGrid
-		macroMask = board.macroMask
-		openMacroMask = board.openMacroMask
-		lastMove = board.lastMove
-		nextPlayer = board.nextPlayer
-		wonBy = board.wonBy
-	}
+        // Play all the moves
+        val moves = xMoves.zip(oMoves) { x, o -> listOf(x, o) }.flatten()
+            .toMutableList() + if (xMoves.size > oMoves.size) xMoves.drop(oMoves.size) else oMoves.drop(xMoves.size)
+        for (move in moves) {
+            play(move)
+        }
 
-	/**
-	 * Returns which Player owns the requested macro.
-	 * @param macroIndex the index of the macro (0-8)
-	 */
-	fun macro(macroIndex: Byte): Player = when {
-		mainGrid.hasBit(macroIndex.toInt()) -> Player.PLAYER
-		mainGrid.hasBit(macroIndex.toInt() + 9) -> Player.ENEMY
-		else -> Player.NEUTRAL
-	}
+        this.lastMove = lastMove
+        if (lastMoveIdx != -1 && !isDone){ // done boards could have a randomized winner
+            if(this.nextPlayX != Player.fromChar(board[lastMoveIdx].uppercaseChar()).other().bool())
+                throw IllegalArgumentException("The last move belongs to the wrong player")
+        }
+    }
 
-	/**
-	 * Returns which Player owns the requested tile.
-	 * @param index the index of the tile (0-80)
-	 */
-	fun tile(index: Coord): Player = when {
-		grids[index / 9].hasBit(index % 9) -> Player.PLAYER
-		grids[index / 9].hasBit(index % 9 + 9) -> Player.ENEMY
-		else -> Player.NEUTRAL
-	}
+    /** Recycle the instance by loading the game state of another board **/
+    fun loadInstance(board: Board) {
+        for (om in 0..<9) grids[om] = board.grids[om]
+        mainGrid = board.mainGrid
+        openMacroMask = board.openMacroMask
+        nextPlayX = board.nextPlayX
+        lastMove = board.lastMove
+    }
 
-	/**
-	 * Returns the available [Coord]s. The coords are cached so the available moves
-	 * will only be calculated on the first call.
-	 * @return a [ByteArray] containing the available [Coord]s.
-	 */
-	private fun availableMoves(): ByteArray {
-		return if (isDone)
-			ByteArray(0)
-		else {
-			var size = 0
-			val out = ByteArray(81)
-			macroMask.forEachBit { om ->
-				for (os in 0 until 9) {
-					if (!grids[om].hasBit(os) && !grids[om].hasBit(os + 9))
-						out[size++] = (9 * om + os).toByte()
-				}
-			}
-			out.copyOf(size)
-		}
-	}
+    /** Play random moves until the board is finished, return winner
+     *  Note: faster implementation, no array allocations **/
+    fun randomPlayWinner(): Boolean {
+        while (!isDone) {
+            // Generate macro mask
+            val tileLastMove = lastMove.toInt() and 0xF
+            var macroMask = (1 shl tileLastMove) and openMacroMask
+            if (macroMask == 0) macroMask = openMacroMask // free-move
 
-	/**
-	 * Get the available moves mapped to another type.
-	 * Available moves are not cached when using this method.
-	 * @param map the map applied to the available.
-	 * @return An [Array] containing the [Coord]s mapped with the input map.
-	 */
-	@Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
-	inline fun <reified T> availableMoves(map: (Coord) -> T): Array<T> {
-		if (isDone) return Array(0) { null!! }
+            // Count available moves without allocating array
+            var count = 9 * Integer.bitCount(macroMask)
+            macroMask.forEachBit { count -= Integer.bitCount(grids[it]) }
 
-		var size = 0
-		val out = arrayOfNulls<T>(81)
-		macroMask.forEachBit { om ->
-			for (os in 0 until 9) {
-				if (!grids[om].hasBit(os) && !grids[om].hasBit(os + 9))
-					out[size++] = (9 * om + os).toByte().let(map)
-			}
-		}
-		return Arrays.copyOf(out, size)
-	}
+            // Pick a random move without allocating array
+            var rem = random.fastRandBoundedInt(count) + 1
+            findMove@ while (macroMask != 0) {
+                val om = Integer.numberOfTrailingZeros(macroMask)
+                rem += Integer.bitCount(grids[om]) - 9
 
-	/**
-	 * Picks a random available move. Faster than calling [availableMoves]
-	 * because this function doesn't allocate an array.
-	 */
-	fun randomAvailableMove(random: Random): Coord {
-		if (isDone) throw IllegalStateException("isDone")
+                // Check if chosen in range
+                if (rem <= 0) {
+                    // Fetch chosen tile OS
+                    var openTileMask = ((grids[om] shr GRID_BITS) or (grids[om] and GRID_MASK)).inv()
+                    repeat(-rem) { openTileMask = openTileMask.removeLastSetBit() }
+                    val os = Integer.numberOfTrailingZeros(openTileMask)
 
-		var count = 9 * Integer.bitCount(macroMask)
-		macroMask.forEachBit { om ->
-			count -= Integer.bitCount(grids[om])
+                    // Play move and return
+                    play(((om shl 4) + os).toByte())
+                    break@findMove
+                }
 
-		}
+                macroMask = macroMask.removeLastSetBit()
+            }
+        }
 
-		var left = random.nextInt(count) + 1
+        return nextPlayX
+    }
 
-		macroMask.forEachBit { om ->
-			left += Integer.bitCount(grids[om]) - 9
+    /** Execute the block of code for all the available moves
+     * 	Note: this avoids needing to allocate an array **/
+    inline fun forAvailableMoves(block: (coord: Coord) -> Unit) {
+        // Create macro mask, also works for lastMove == -1
+        val tileLastMove = lastMove.toInt() and 0xF
+        var macroMask = (1 shl tileLastMove) and openMacroMask
+        if (macroMask == 0) macroMask = openMacroMask // free-move
 
-			if (left <= 0) {
-				val grid = (grids[om] shr 9) or (grids[om] and FULL_GRID)
-				val os = grid.inv().getNthSetIndex(-left)
-				return (9 * om + os).toByte()
-			}
-		}
+        // Iterate over all macros in the macroMask
+        macroMask.forEachBit { om ->
+            val osFree = ((grids[om] shr GRID_BITS) or grids[om]).inv() and GRID_MASK
+            osFree.forEachBit { os ->
+                block(((om shl 4) + os).toByte())
+            }
+        }
+    }
 
-		throw IllegalStateException()
-	}
+    /** Returns an array of all the available moves **/
+    inline fun <reified T> getAvailableMoves(map: (Coord) -> T): Array<T> {
+        val out = arrayOfNulls<T>(81)
+        var size = 0
 
-	/**
-	 * Plays the given coord on the board.
-	 * @param index the index of the coord to be played (0-80).
-	 * @return Whether the move wins the macro being played in.
-	 */
-	fun play(index: Coord): Boolean {
-		if (isDone) throw IllegalStateException("isDone")
+        // Store all moves in an array, return array
+        forAvailableMoves { out[size++] = it.let(map) }
+        return Arrays.copyOf(out, size)
+    }
 
-		val om = index / 9
-		val os = index % 9
-		val p = nextPlayer.ordinal
+    /** Play a given coord on the board **/
+    fun play(index: Coord): Boolean {
+        val idx = index.toInt() and 0xFF  // remove sign extension
+        val om = idx shr 4                  // top bits
+        val os = idx and 0b1111          // lower bits
 
-		//If the move is not available throw exception
-		if (!macroMask.hasBit(om) || grids[om].hasBit(os) || grids[om].hasBit(os + 9))
-			throw IllegalStateException("Position $index not playable")
+        val osShift = (1 shl os)
+        val macroGridPlayer: Int
 
-		//Actually do the move
-		val macroWin = setTileAndUpdate(p, om, os)
+        // Update and extract player local board
+        lastMove = index
+        if (nextPlayX) {
+            grids[om] = grids[om] or osShift
+            macroGridPlayer = grids[om] and GRID_MASK
+        } else {
+            grids[om] = grids[om] or (osShift shl GRID_BITS)
+            macroGridPlayer = grids[om] shr GRID_BITS
+        }
 
-		//Prepare the board for the next player
-		lastMove = index
-		nextPlayer = nextPlayer.other()
+        // Check if the macro is won
+        val omShift = (1 shl om)
+        val macroWin = macroGridPlayer.gridWon()
+        if (macroWin) {
+            val mainGridPlayer: Int
 
-		return macroWin
-	}
+            // Update and extract player global board
+            openMacroMask = openMacroMask xor omShift
+            if (nextPlayX) {
+                mainGrid = mainGrid or omShift
+                mainGridPlayer = mainGrid and GRID_MASK
+            } else {
+                mainGrid = mainGrid or (omShift shl GRID_BITS)
+                mainGridPlayer = mainGrid shr GRID_BITS
+            }
 
-	/**
-	 * Update [grids], [wonBy], [openMacroMask] and [macroMask] when the given player plays on the given position.
-	 * @return Whether the move wins the macro being played in.
-	 */
-	private fun setTileAndUpdate(p: Int, om: Int, os: Int): Boolean {
-		//Write move to board & check for macro win
-		val newGrid = grids[om] or (1 shl os + 9 * p)
-		grids[om] = newGrid
+            // Check if the game is won
+            if (mainGridPlayer.gridWon()) {
+                openMacroMask = 0
+                return true // early return to not touch nextPlayX
+            }
+        } else if (Integer.bitCount(grids[om]) == 9) {
+            openMacroMask = openMacroMask xor omShift
+        }
 
-		//Check if the current player won
-		val macroWin = newGrid.getPlayer(p).winGrid()
-		if (macroWin) {
-			mainGrid = mainGrid or (1 shl (om + 9 * p))
-			if (mainGrid.getPlayer(p).winGrid())
-				wonBy = nextPlayer
-		}
+        nextPlayX = if (randomizeTie and (openMacroMask == 0)) random.nextBoolean() else !nextPlayX
+        return macroWin
+    }
 
-		//Mark the macro as done if won or full
-		if (macroWin || Integer.bitCount(grids[om]) == 9) {
-			openMacroMask = openMacroMask xor (1 shl om)
-			if (openMacroMask == 0 && wonBy == null)
-				wonBy = Player.NEUTRAL
-		}
-		macroMask = calcMacroMask(os)
+    /** Check owner of macro **/
+    fun macro(macroIndex: Byte): Player = when {
+        mainGrid.hasBit(macroIndex.toInt()) -> Player.PLAYER
+        mainGrid.hasBit(macroIndex.toInt() + 9) -> Player.ENEMY
+        else -> Player.NEUTRAL
+    }
 
-		return macroWin
-	}
+    /** Check owner of tile **/
+    fun tile(index: Coord): Player {
+        val om = (index.toInt() shr 4) and 0b1111      // top bits
+        val os = index.toInt() and 0b1111          // lower bits
+        return when {
+            grids[om].hasBit(os) -> Player.PLAYER
+            grids[om].hasBit(os + GRID_BITS) -> Player.ENEMY
+            else -> Player.NEUTRAL
+        }
+    }
 
-	/**
-	 * Calculates the new macro mask based on the previous move.
-	 * * if the target macro is done, freeplay into all non-done macros
-	 * * otherwise play in the target macro
-	 */
-	private fun calcMacroMask(os: Int) =
-			if (openMacroMask.hasBit(os)) (1 shl os)
-			else openMacroMask
+    fun Int.toCoordsNew() = ((this / 9 shl 4) or this % 9).toByte()
+    fun toCompactString() = (0 until 81).joinToString("") {
+        val tile = tile(it.toCoordsNew()).char.toString()
+        if (it.toCoordsNew() == lastMove) tile.lowercase() else tile
+    }
 
-	fun toCompactString() = (0 until 81).joinToString("") {
-		val coord = it.toByte()
-		val tile = tile(coord).char.toString()
+    override fun toString() = toString(true)
+    fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
+        val coord = toCoord((it % 9), it / 9) // stolen from normal Board
+        when {
+            (it == 0 || it == 80) -> ""
+            (it % 27 == 0) -> "\n---+---+---\n"
+            (it % 9 == 0) -> "\n"
+            (it % 3 == 0 || it % 6 == 0) -> "|"
+            else -> ""
+        } + when {
+            tile(coord) == Player.PLAYER -> "X"
+            tile(coord) == Player.ENEMY -> "O"
+            showAvailableMoves && coord in availableMoves -> "."
+            else -> " "
+        }
+    }
 
-		if (coord == lastMove) tile.lowercase() else tile
-	}
+    override fun hashCode(): Int {
+        var result = grids.contentHashCode()
+        result = 31 * result + mainGrid
+        result = 31 * result + openMacroMask
+        result = 31 * result + nextPlayX.hashCode()
+        result = 31 * result + lastMove
+        return result
+    }
 
-	override fun toString() = toString(false)
-	fun toString(showAvailableMoves: Boolean) = (0 until 81).joinToString("") {
-		val coord = toCoord(it % 9, it / 9)
-		when {
-			(it == 0 || it == 80) -> ""
-			(it % 27 == 0) -> "\n---+---+---\n"
-			(it % 9 == 0) -> "\n"
-			(it % 3 == 0 || it % 6 == 0) -> "|"
-			else -> ""
-		} + when {
-			tile(coord) == Player.PLAYER -> "X"
-			tile(coord) == Player.ENEMY -> "O"
-			showAvailableMoves && coord in availableMoves -> "."
-			else -> " "
-		}
-	}
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Board
 
-	override fun hashCode(): Int {
-		var result = grids.contentHashCode()
-		result = 31 * result + (lastMove ?: 0)
-		result = 31 * result + nextPlayer.hashCode()
-		return result
-	}
-
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as Board
-
-		if (!grids.contentEquals(other.grids)) return false
-		if (nextPlayer != other.nextPlayer) return false
-		if (lastMove != other.lastMove) return false
-
-		return true
-	}
+        return if (!grids.contentEquals(other.grids)) false
+        else if (mainGrid != other.mainGrid) false
+        else if (openMacroMask != other.openMacroMask) false
+        else if (nextPlayX != other.nextPlayX) false
+        else if (lastMove != other.lastMove) false
+        else true
+    }
 }
 
+/** Check if bit at specified index is set **/
 private inline fun Int.hasBit(index: Int) = (this shr index) and 1 != 0
-private inline fun Int.isMaskSet(mask: Int) = this and mask == mask
-private inline fun Int.withoutLastBit() = this and (this - 1)
 
-private inline fun Int.getNthSetIndex(n: Int): Int {
-	var x = this
-	repeat(n) { x = x.withoutLastBit() }
-	return Integer.numberOfTrailingZeros(x)
+/** Check in LUT if mask is won (input is a 9b tile mask) **/
+internal inline fun Int.gridWon() = (WIN_GRID_LUT[this / 32] shr (this % 32)) and 1 != 0
+
+/** Remove the last set bit of the mask **/
+private inline fun Int.removeLastSetBit() = this and (this - 1)
+
+/** Faster statistically inferior version of RandomGenerator.nextInt(bound) **/
+internal inline fun RandomGenerator.fastRandBoundedInt(bound: Int): Int {
+    return ((nextInt().toUInt().toULong() * bound.toULong()) shr 32).toInt()
 }
 
-private inline fun Int.getPlayer(p: Int) = if (p == 0) (this and FULL_GRID) else (this shr 9)
-private inline fun Int.winGrid() = WIN_GRID[this / 32].hasBit(this % 32)
-
-private inline fun Int.forEachBit(block: (index: Int) -> Unit) {
-	var x = this
-	while (x != 0) {
-		block(Integer.numberOfTrailingZeros(x))
-		x = x.withoutLastBit()
-	}
+/** Iterate over the set bits of a mask for each executing the given code block **/
+internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
+    var x = this
+    while (x != 0) {
+        block(Integer.numberOfTrailingZeros(x))
+        x = x and (x - 1)
+    }
 }
