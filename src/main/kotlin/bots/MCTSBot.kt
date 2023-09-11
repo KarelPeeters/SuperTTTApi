@@ -1,15 +1,12 @@
 package bots
 
-import common.Board
-import common.Bot
 import common.*
-import java.util.random.RandomGenerator
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 class MCTSBot(
     private val maxIterations: Int,
-    private val rand: RandomGenerator = RandomGenerator.of("Xoroshiro128PlusPlus")
+    private val rand: Xoroshiro = Xoroshiro()
 ) : Bot {
     override fun toString() = "MCTSBotArrayModified"
 
@@ -71,7 +68,7 @@ class MCTSBot(
                     if (nodeVisits[childIdx] == 0) countUnexpanded++
                 }
                 if (countUnexpanded > 0) {
-                    var remaining = rand.fastRandBoundedInt(countUnexpanded)
+                    var remaining = rand.nextInt(countUnexpanded)
                     for (childIdx in nodeChildStart[nodeIdx]..< nodeChildStart[nodeIdx] + nodeChildCount[nodeIdx]){
                         if (nodeVisits[childIdx] == 0) {
                             if (remaining == 0) {

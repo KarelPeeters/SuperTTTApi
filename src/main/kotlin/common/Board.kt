@@ -38,8 +38,7 @@ typealias Coord = Byte // 4 top bits contain macro, 4 bottom bits contain tile
 
 @Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 class Board : Serializable {
-    @Transient
-    private var random: RandomGenerator
+    @Transient private var random: Xoroshiro
 
     // Unexposed variables
     internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
@@ -58,7 +57,7 @@ class Board : Serializable {
 
     /** Constructs an empty [Board]. */
     constructor() {
-        this.random = RandomGenerator.of("Xoroshiro128PlusPlus")
+        this.random = Xoroshiro()
         this.grids = IntArray(9)
         this.mainGrid = 0
         this.openMacroMask = GRID_MASK
@@ -105,7 +104,7 @@ class Board : Serializable {
         }
 
         // Set the default values
-        this.random = RandomGenerator.of("Xoroshiro128PlusPlus")
+        this.random = Xoroshiro()
         this.openMacroMask = GRID_MASK
         this.grids = IntArray(9)
         this.mainGrid = 0
@@ -158,7 +157,7 @@ class Board : Serializable {
             macroMask.forEachBit { count -= Integer.bitCount(grids[it]) }
 
             // Pick a random move without allocating array
-            var rem = random.fastRandBoundedInt(count) + 1
+            var rem = random.nextInt(count) + 1
             findMove@ while (macroMask != 0) {
                 val om = Integer.numberOfTrailingZeros(macroMask)
                 rem += Integer.bitCount(grids[om]) - 9
@@ -332,11 +331,6 @@ internal inline fun Int.gridWon() = (WIN_GRID_LUT[this / 32] shr (this % 32)) an
 
 /** Remove the last set bit of the mask **/
 private inline fun Int.removeLastSetBit() = this and (this - 1)
-
-/** Faster statistically inferior version of RandomGenerator.nextInt(bound) **/
-internal inline fun RandomGenerator.fastRandBoundedInt(bound: Int): Int {
-    return ((nextInt().toUInt().toULong() * bound.toULong()) shr 32).toInt()
-}
 
 /** Iterate over the set bits of a mask for each executing the given code block **/
 internal inline fun Int.forEachBit(block: (index: Int) -> Unit) {
