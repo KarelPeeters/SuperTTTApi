@@ -6,12 +6,12 @@ import common.Coord
 import kotlin.Float.Companion.NEGATIVE_INFINITY
 import kotlin.math.max
 
-private const val TILE_FACTOR = 1
-private const val MACRO_FACTOR = 32
+private const val TILE_FACTOR = 1.0F
+private const val MACRO_FACTOR = 10e9F
 
-private const val CENTER_FACTOR = 4
-private const val CORNER_FACTOR = 2
-private const val EDGE_FACTOR = 1
+private const val CENTER_FACTOR = 4.0F
+private const val CORNER_FACTOR = 3.0F
+private const val EDGE_FACTOR = 1.0F
 
 class MMBot(private val depth: Int) : Bot {
 	init {

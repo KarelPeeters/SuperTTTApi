@@ -26,7 +26,7 @@ fun assertBoardMatches(exp: Expected, board: Board) {
 	for (o in 0 until 81)
 		assertEquals(Player.fromChar(exp.tiles[o]), board.tile(o.idxToCoord()))
 	for (om in 0 until 9)
-		assertEquals(Player.fromChar(exp.macros[om]), board.macro(om.toByte()))
+		assertEquals(Player.fromChar(exp.macros[om]), board.macro(om))
 }
 
 fun assertBoardEquals(expected: Board, actual: Board) {
@@ -64,7 +64,7 @@ fun Board.toExpected() = Expected(
 		availableMoves = availableMoves,
 		lastMove = lastMove,
 		done = isDone,
-		macros = CharArray(9) { macro(it.toByte().idxToCoord()).char },
+		macros = CharArray(9) { macro(it).char },
 		tiles = CharArray(81) { tile(it.toByte().idxToCoord()).char },
 		compactString = toCompactString()
 )

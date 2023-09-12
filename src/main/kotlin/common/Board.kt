@@ -2,7 +2,6 @@ package common
 
 import java.io.Serializable
 import java.util.*
-import java.util.random.RandomGenerator
 
 fun toCoord(x: Int, y: Int) = ((((x / 3) + (y / 3) * 3) shl 4) + ((x % 3) + (y % 3) * 3)).toByte()
 
@@ -44,16 +43,17 @@ class Board : Serializable {
     internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
     private var mainGrid: Int        // for game, won macros per player (2 x 9b)
     internal var openMacroMask: Int // available macros 9b
+    internal var movesPlayed = 0
 
     // Exposed variables
     var nextPlayX: Boolean; internal set
     var lastMove: Coord; internal set // default -1
+    var tied: Boolean; internal set
 
     // Exposed derived variables
     val isDone inline get() = openMacroMask == 0
     val availableMoves inline get() = getAvailableMoves<Byte> { it }
     val wonBy: Player get() = if (!isDone || tied) Player.NEUTRAL else if (nextPlayX) Player.PLAYER else Player.ENEMY
-    private var tied: Boolean
 
     /** Constructs an empty [Board]. */
     constructor() {
@@ -218,6 +218,7 @@ class Board : Serializable {
         val macroGridPlayer: Int
 
         // Update and extract player local board
+        movesPlayed++
         lastMove = index
         if (nextPlayX) {
             grids[om] = grids[om] or osShift
@@ -260,10 +261,21 @@ class Board : Serializable {
     }
 
     /** Check owner of macro **/
-    fun macro(macroIndex: Byte): Player = when {
-        mainGrid.hasBit(macroIndex.toInt()) -> Player.PLAYER
-        mainGrid.hasBit(macroIndex.toInt() + 9) -> Player.ENEMY
+    fun macro(macroIndex: Int): Player = when {
+        mainGrid.hasBit(macroIndex) -> Player.PLAYER
+        mainGrid.hasBit(macroIndex + 9) -> Player.ENEMY
         else -> Player.NEUTRAL
+    }
+
+    /** Check if macro is tied **/
+    fun macroTied(macroIndex: Int) = (grids[macroIndex] and GRID_MASK or (grids[macroIndex] shr GRID_BITS)) == GRID_MASK
+
+    /** Check if macro is part of win for player **/
+    fun macroPartOfWin(macroIndex: Int): Boolean {
+        if (!isDone || tied) return false
+        val gridWinner = if (nextPlayX) (mainGrid and GRID_MASK) else (mainGrid shr GRID_BITS)
+        val gridMinimal = WIN_GRIDS.filter { x -> ((gridWinner and x) == x) }.reduce { acc, winGrid -> acc or winGrid }
+        return gridMinimal.hasBit(macroIndex)
     }
 
     /** Check owner of tile **/

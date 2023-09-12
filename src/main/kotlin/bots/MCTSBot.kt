@@ -8,7 +8,7 @@ class MCTSBot(
     private val maxIterations: Int,
     private val rand: Xoroshiro = Xoroshiro()
 ) : Bot {
-    override fun toString() = "MCTSBotArrayModified"
+    override fun toString() = "MCTSBot"
 
     private val INIT_SIZE = 1024
 
@@ -32,7 +32,7 @@ class MCTSBot(
         val touched = IntArray(81) // indices of visited nodes for iteration
         val nodeBoard = board.copy()
 
-        while (nodeVisits[0] < maxIterations) {
+        while (nodeBoard.movesPlayed < maxIterations) {
             var nodeIdx = 0
             nodeBoard.loadInstance(board)
             touchedCount = 0

@@ -39,7 +39,7 @@ class ConsoleGame(private val bot: Bot) {
 							printCurrent()
 
 							if (!current.isDone) {
-								val botMove = bot.move(current.copy())!!
+								val botMove = bot.move(current.copy())
 								println("bot played on $botMove")
 								current.play(botMove)
 								history.add(current.copy())

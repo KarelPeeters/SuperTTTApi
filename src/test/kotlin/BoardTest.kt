@@ -113,12 +113,12 @@ class BoardTest {
 				intArrayOf(0 + 3 * i + (om shl 4), 1 + 3 * i + (om shl 4), 2 + 3 * i + (om shl 4)).fix(),
 				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
 				(if (player == PLAYER) (otherOm shl 4) else (3 * i + (om shl 4))).fix()
-			).macro(om.toByte())) { "diagonal / in macro $om" }
+			).macro(om)) { "diagonal / in macro $om" }
 			assertEquals(player, playedBoard(player,
 				intArrayOf(0 + i + (om shl 4), 3 + i + (om shl 4), 6 + i + (om shl 4)).fix(),
 				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
 				(if (player == PLAYER) (otherOm shl 4) else (i + (om shl 4))).fix()
-			).macro(om.toByte())) { "diagonal \\ in macro $om" }
+			).macro(om)) { "diagonal \\ in macro $om" }
 		}
 	}
 
@@ -129,12 +129,12 @@ class BoardTest {
 				intArrayOf(0 + (om shl 4), 4 + (om shl 4), 8 + (om shl 4)).fix(),
 				intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
 			(if (player == PLAYER) (otherOm shl 4) else (om shl 4)).fix()
-		).macro(om.toByte())) { "diagonal / in macro $om" }
+		).macro(om)) { "diagonal / in macro $om" }
 		assertEquals(player, playedBoard(player,
 			intArrayOf(2 + (om shl 4), 4 + (om shl 4), 6 + (om shl 4)).fix(),
 			intArrayOf(0 + (otherOm shl 4), 1 + (otherOm shl 4), 3 + (otherOm shl 4)).fix(),
 			(if (player == PLAYER) (otherOm shl 4) else (2 + (om shl 4))).fix()
-		).macro(om.toByte())) { "diagonal \\ in macro $om" }
+		).macro(om)) { "diagonal \\ in macro $om" }
 	}
 
 	@Test
