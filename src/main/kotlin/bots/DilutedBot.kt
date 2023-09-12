@@ -11,9 +11,13 @@ class DilutedBot(
 ) : Bot {
     private val randomBot = RandomBot()
 
-    override fun move(board: Board): Coord {
+    override fun move(board: Board, percentDone: (Int) -> Unit): Coord {
         val isRealMove = Random.nextDouble() < ratio
-        return if (isRealMove) bot.move(board) else randomBot.move(board)
+        return if (isRealMove) bot.move(board, percentDone) else randomBot.move(board, percentDone)
+    }
+
+    override fun cancel() {
+        TODO("Not yet implemented")
     }
 
     override fun toString(): String {

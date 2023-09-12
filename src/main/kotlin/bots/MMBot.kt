@@ -18,7 +18,7 @@ class MMBot(private val depth: Int) : Bot {
 		require(depth >= 1) { "depth must be >= 1, was $depth" }
 	}
 
-	override fun move(board: Board): Coord {
+	override fun move(board: Board, percentDone: (Int) -> Unit): Coord {
 		if (board.isDone) throw Exception("No moves remain")
 
 		return negaMax(
@@ -69,5 +69,6 @@ class MMBot(private val depth: Int) : Bot {
 		else -> EDGE_FACTOR
 	}
 
+	override fun cancel() {}
 	override fun toString() = "MMBot(d=$depth)"
 }

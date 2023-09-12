@@ -5,14 +5,13 @@ import kotlin.math.ln
 import kotlin.math.sqrt
 
 class MCTSBot(
-    private val maxIterations: Int,
-    private val rand: Xoroshiro = Xoroshiro()
+    private var maxIterations: Int,             // Total moves to play
+    private val rand: Xoroshiro = Xoroshiro()   // Random number generator
 ) : Bot {
-    override fun toString() = "MCTSBot"
-
     private val INIT_SIZE = 1024
+    private val updateIterations = maxIterations/100
 
-    override fun move(board: Board): Coord {
+    override fun move(board: Board, percentDone: (Int) -> Unit): Coord {
 
         // Flattened tree structure
 		var nodeCoords = ByteArray(INIT_SIZE)       //coord[N]
@@ -32,7 +31,16 @@ class MCTSBot(
         val touched = IntArray(81) // indices of visited nodes for iteration
         val nodeBoard = board.copy()
 
+        var nextUpdate = updateIterations
+        percentDone(0)
+
         while (nodeBoard.movesPlayed < maxIterations) {
+            // Update status if needed
+            if (nodeBoard.movesPlayed > nextUpdate){
+                percentDone((100 * nodeBoard.movesPlayed)/maxIterations)
+                nextUpdate += updateIterations
+            }
+
             var nodeIdx = 0
             nodeBoard.loadInstance(board)
             touchedCount = 0
@@ -126,4 +134,7 @@ class MCTSBot(
 
         return bestMove
     }
+
+    override fun cancel() { maxIterations = 0 }
+    override fun toString() = "MCTSBot($updateIterations)"
 }

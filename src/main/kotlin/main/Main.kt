@@ -6,8 +6,8 @@ import bots.MMBot
 import games.BotGame
 
 fun main() {
-	val bot = DilutedBot(MMBot(5),0.83)
-	val randBot = MCTSBot(3000)
+	val bot1 = MCTSBot(1000*25)
+	val bot2 = MCTSBot(6)
 
-	BotGame(bot, randBot).setCount(10000).setShuffling(true).run()
+	BotGameTiming(bot1, bot2).setCount(1000).setShuffling(true).run()
 }

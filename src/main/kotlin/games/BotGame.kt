@@ -42,8 +42,8 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 			while (!board.isDone) {
 				printDetail("Round #" + nextRound++)
 
-				val pMove = p1.move(board.copy())
-				printDetail("p1 move: " + pMove)
+				val pMove = p1.move(board.copy()) {}
+				printDetail("p1 move: $pMove")
 				board.play(pMove)
 
 				printDetail(board.toString())
@@ -51,8 +51,8 @@ class BotGame(private val p1: Bot, private val p2: Bot) {
 				if (board.isDone)
 					continue
 
-				val rMove = p2.move(board.copy())
-				printDetail("p2 move: " + rMove)
+				val rMove = p2.move(board.copy()) {}
+				printDetail("p2 move: $rMove")
 				board.play(rMove)
 
 				printDetail(board.toString())
