@@ -13,6 +13,7 @@ class RandomBot(private val random: Random = Random()) : Bot {
 		return moves[random.nextInt(moves.size)]
 	}
 
+	override fun reset() {}
 	override fun cancel() {}
 	override fun toString() = "RandomBot"
 }

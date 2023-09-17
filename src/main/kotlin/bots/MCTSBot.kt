@@ -5,11 +5,13 @@ import kotlin.math.ln
 import kotlin.math.sqrt
 
 class MCTSBot(
-    private var maxIterations: Int,             // Total moves to play
+    private val maxIterationsCfg: Int,             // Total moves to play
     private val rand: Xoroshiro = Xoroshiro()   // Random number generator
 ) : Bot {
     private val INIT_SIZE = 1024
-    private val updateIterations = maxIterations/100
+    
+    private var maxIterations = maxIterationsCfg
+    private val updateIterations = maxIterationsCfg/100
 
     override fun move(board: Board, percentDone: (Int) -> Unit): Coord {
 
@@ -37,7 +39,7 @@ class MCTSBot(
         while (nodeBoard.movesPlayed < maxIterations) {
             // Update status if needed
             if (nodeBoard.movesPlayed > nextUpdate){
-                percentDone((100.0 * nodeBoard.movesPlayed.toDouble() /maxIterations.toDouble()).toInt())
+                percentDone((100.0 * nodeBoard.movesPlayed.toDouble() /maxIterationsCfg.toDouble()).toInt())
                 nextUpdate += updateIterations
             }
 
@@ -136,6 +138,7 @@ class MCTSBot(
         return bestMove
     }
 
+    override fun reset() {maxIterations = maxIterationsCfg}
     override fun cancel() { maxIterations = 0 }
     override fun toString() = "MCTSBot($updateIterations)"
 }

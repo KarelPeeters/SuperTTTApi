@@ -69,6 +69,7 @@ class MMBot(private val depth: Int) : Bot {
 		else -> EDGE_FACTOR
 	}
 
+	override fun reset() {}
 	override fun cancel() {}
 	override fun toString() = "MMBot(d=$depth)"
 }

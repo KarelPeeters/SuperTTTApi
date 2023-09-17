@@ -16,10 +16,8 @@ class DilutedBot(
         return if (isRealMove) bot.move(board, percentDone) else randomBot.move(board, percentDone)
     }
 
-    override fun cancel() {
-        TODO("Not yet implemented")
-    }
-
+    override fun reset() {}
+    override fun cancel() {}
     override fun toString(): String {
         return "$bot@$ratio"
     }
