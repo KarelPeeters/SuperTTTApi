@@ -1,9 +1,10 @@
 package common
 
+import java.io.Serializable
 import java.util.concurrent.atomic.AtomicLong
 
 // Xorshiro128++ implementation
-class Xoroshiro @JvmOverloads constructor(seed: Long = defaultGen.getAndAdd(GOLDEN_RATIO_64)) {
+class Xoroshiro @JvmOverloads constructor(seed: Long = defaultGen.getAndAdd(GOLDEN_RATIO_64)) : Serializable {
     private var x0: Long
     private var x1: Long
 

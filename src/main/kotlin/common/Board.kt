@@ -37,7 +37,7 @@ typealias Coord = Byte // 4 top bits contain macro, 4 bottom bits contain tile
 
 @Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
 class Board : Serializable {
-    @Transient private var random: Xoroshiro
+    private var random: Xoroshiro
 
     // Unexposed variables
     internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
@@ -46,9 +46,9 @@ class Board : Serializable {
     internal var movesPlayed = 0
 
     // Exposed variables
-    var nextPlayX: Boolean; internal set
-    var lastMove: Coord; internal set // default -1
-    var tied: Boolean; internal set
+    var nextPlayX: Boolean internal set
+    var lastMove: Coord internal set // default -1
+    var tied: Boolean internal set
 
     // Exposed derived variables
     val isDone inline get() = openMacroMask == 0

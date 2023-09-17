@@ -37,7 +37,7 @@ class MCTSBot(
         while (nodeBoard.movesPlayed < maxIterations) {
             // Update status if needed
             if (nodeBoard.movesPlayed > nextUpdate){
-                percentDone((100 * nodeBoard.movesPlayed)/maxIterations)
+                percentDone((100.0 * nodeBoard.movesPlayed.toDouble() /maxIterations.toDouble()).toInt())
                 nextUpdate += updateIterations
             }
 
@@ -132,6 +132,7 @@ class MCTSBot(
             }
         }
 
+        percentDone(100)
         return bestMove
     }
 
