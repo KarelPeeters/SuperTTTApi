@@ -4,13 +4,13 @@ import common.*
 import kotlin.math.ln
 import kotlin.math.sqrt
 
-class MCTSBot(
+open class MCTSBot(
     private val maxIterationsCfg: Int,             // Total moves to play
     private val rand: Xoroshiro = Xoroshiro()   // Random number generator
 ) : Bot {
     private val INIT_SIZE = 1024
     
-    private var maxIterations = maxIterationsCfg
+    protected var maxIterations = maxIterationsCfg
     private val updateIterations = maxIterationsCfg/100
 
     override fun move(board: Board, percentDone: (Int) -> Unit): Coord {

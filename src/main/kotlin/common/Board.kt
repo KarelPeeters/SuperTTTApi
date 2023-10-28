@@ -41,9 +41,9 @@ class Board : Serializable {
 
     // Unexposed variables
     internal var grids: IntArray    // per macro, taken tiles per player (2 x 9b) x 9 macros
-    private var mainGrid: Int        // for game, won macros per player (2 x 9b)
+    private var mainGrid: Int       // for game, won macros per player (2 x 9b)
     internal var openMacroMask: Int // available macros 9b
-    internal var movesPlayed = 0
+    internal var movesPlayed = 0    // Moves played on this class instance ( != number of moves on this board)
 
     // Exposed variables
     var nextPlayX: Boolean internal set
