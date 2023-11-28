@@ -30,7 +30,7 @@ open class MCTSBot(
         // Bookkeeping vars
         var newIdx = 1
         var touchedCount: Int
-        val touched = IntArray(81) // indices of visited nodes for iteration
+        val touched = IntArray(82) // indices of visited nodes for iteration
         val nodeBoard = board.copy()
 
         var nextUpdate = updateIterations
