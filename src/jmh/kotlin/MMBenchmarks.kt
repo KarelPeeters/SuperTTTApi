@@ -14,7 +14,7 @@ open class MMBenchmarks {
 	@BenchmarkMode(Mode.AverageTime)
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	fun averageGame(blackhole: Blackhole) {
-		val mv = MMBot(12).move(Board())
+		val mv = MMBot(12).move(Board()) {}
 		blackhole.consume(mv)
 	}
 }
